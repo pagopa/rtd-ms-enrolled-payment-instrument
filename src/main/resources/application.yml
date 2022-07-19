@@ -6,3 +6,24 @@ spring:
   config:
       activate:
         on-profile: default
+
+  cloud:
+    stream:
+      bindings:
+        enrolledPaymentInstrumentConsumer-in-0:
+          destination: rtd-platform-events
+          group: rtd-enrolled-payment-instrument-consumer-group
+          content-type: application/json
+          binder: kafka-binder
+
+      binders:
+        kafka-binder:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka:
+              binder:
+                auto-create-topics: false
+                brokers: ${KAFKA_BROKER:localhost:29095}
+                consumerProperties:
+                  key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                  value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
