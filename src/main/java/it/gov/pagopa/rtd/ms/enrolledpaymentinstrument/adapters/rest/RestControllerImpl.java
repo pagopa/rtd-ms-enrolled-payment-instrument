@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.rest;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.SomethingService;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @ResponseBody
 @Slf4j
 public class RestControllerImpl implements
-    it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.RestController {
+    it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.rest.RestController {
 
   private final SomethingService somethingService;
 

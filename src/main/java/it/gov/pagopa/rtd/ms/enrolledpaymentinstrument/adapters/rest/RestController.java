@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.rest;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
