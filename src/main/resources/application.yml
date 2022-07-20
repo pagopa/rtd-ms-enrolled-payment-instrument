@@ -6,6 +6,16 @@ spring:
   config:
       activate:
         on-profile: default
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
+    show-sql: ${POSTGRES_SHOW_SQL:true}
+    hibernate.ddl-auto: none
+
+  datasource:
+    url: ${POSTGRES_CONN_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB_NAME:}}
+    username: ${POSTGRES_USERNAME:}
+    password: ${POSTGRES_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
 
   cloud:
     stream:

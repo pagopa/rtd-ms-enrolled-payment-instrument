@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-public class RtdMsEnrolledPaymentInstrumentAppTest {
+public class RtdMsEnrolledEnrolledPaymentInstrumentAppTest {
 
   @Test
   public void contextLoads() {
