@@ -29,6 +29,11 @@ spring:
               binder:
                 auto-create-topics: false
                 brokers: ${KAFKA_BROKER:localhost:29095}
+                configuration:
+                  sasl:
+                    jaas.config: ${KAFKA_SASL_JAAS_CONFIG_CONSUMER_ENROLLED_PI}
+                    mechanism: PLAIN
+                  security.protocol: SASL_SSL
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
