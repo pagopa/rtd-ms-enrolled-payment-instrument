@@ -17,9 +17,9 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
   // an example
   private EnrolledPaymentInstrumentDao dao;
 
-
   @Override
   public Future<String> save(EnrolledPaymentInstrument enrolledPaymentInstrument) {
+    // mapping should be handled by a specific domain-to-entity mapper
     final var entity = EnrolledPaymentInstrumentEntity.builder()
         .something(
             enrolledPaymentInstrument.getSomething1() + enrolledPaymentInstrument.getSomething2())

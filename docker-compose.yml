@@ -5,10 +5,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB_NAME=test-db
-      - POSTGRES_USERNAME=root
-      - POSTGRES_PASSWORD=root
+      - MONGODB_CONNECTION_URI=mongodb://root:root@db:27017/
+      - MONGODB_NAME=rtd
       - KAFKA_BROKER=kafka:29095
     networks:
       - internal-net
@@ -18,14 +16,14 @@ services:
 
   # external services
   db:
-    image: 'bitnami/postgresql:latest'
+    image: 'mongo:latest'
     container_name: db
     ports:
-      - "5432:5432"
+      - "27017:27017"
     environment:
-      - POSTGRESQL_DATABASE=test-db
-      - POSTGRESQL_USERNAME=root
-      - POSTGRESQL_PASSWORD=root
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+      - MONGO_INITDB_DATABASE=rtd
     networks:
       - internal-net
 
