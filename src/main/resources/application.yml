@@ -16,7 +16,7 @@ spring:
     stream:
       bindings:
         enrolledPaymentInstrumentConsumer-in-0:
-          destination: rtd-platform-events
+          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           group: rtd-enrolled-payment-instrument-consumer-group
           content-type: application/json
           binder: kafka-binder
