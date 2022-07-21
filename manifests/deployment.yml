@@ -23,6 +23,8 @@ spec:
                 name: rtd-enrolled-pi-events
             - secretRef:
                 name: mongo-credentials
+            - configMapRef:
+                name: rtd-enrolledpaymentinstrument
           resources:
             limits:
               cpu: 500m
