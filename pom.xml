@@ -76,6 +76,7 @@
       <version>2.6.7</version>
     </dependency>
 
+    <!-- mongo-db dependency -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-mongodb</artifactId>
