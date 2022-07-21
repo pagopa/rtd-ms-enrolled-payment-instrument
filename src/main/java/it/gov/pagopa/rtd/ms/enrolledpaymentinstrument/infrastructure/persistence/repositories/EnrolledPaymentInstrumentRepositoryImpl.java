@@ -29,7 +29,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
   public Optional<EnrolledPaymentInstrument> findById(String id) {
     final var savedEntity = dao.findById(id);
 
-    return savedEntity.map((it) -> {
+    return savedEntity.map(it -> {
       final var somethings = it.getSomething().split(";");
       return new EnrolledPaymentInstrument(somethings[0], somethings[1]);
     });

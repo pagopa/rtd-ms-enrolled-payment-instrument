@@ -10,9 +10,9 @@ import org.springframework.messaging.Message;
 
 @Slf4j
 @Configuration
-public class KafkaAdapter {
+class KafkaAdapter {
   @Bean
-  public Consumer<Message<String>> enrolledPaymentInstrumentConsumer(SomethingService somethingService) {
+  Consumer<Message<String>> enrolledPaymentInstrumentConsumer(SomethingService somethingService) {
     return message -> {
       log.info("Received message {}", message);
       final var result = somethingService.processSomething("1", message.getPayload());

@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Import;
 @DataMongoTest
 @EntityScan("it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model")
 @Import(TestBeanConfiguration.class)
-public class EnrolledPaymentInstrumentRepoTest {
+class EnrolledPaymentInstrumentRepoTest {
 
   @Autowired
   private EnrolledPaymentInstrumentRepositoryImpl repository;
