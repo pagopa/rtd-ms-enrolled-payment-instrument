@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.jpa.model;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
