@@ -15,7 +15,7 @@ public class KafkaAdapter {
   public Consumer<Message<String>> enrolledPaymentInstrumentConsumer(SomethingService somethingService) {
     return message -> {
       log.info("Received message {}", message);
-      final var result = somethingService.processSomething(message.getPayload());
+      final var result = somethingService.processSomething("1", message.getPayload());
       log.info("Message processed {}", result);
     };
   }

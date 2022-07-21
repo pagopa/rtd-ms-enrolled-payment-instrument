@@ -24,7 +24,7 @@ public class RestControllerImpl implements
   @Override
   public String postSomething(String something) {
     log.info("Doing something");
-    final var result = this.somethingService.processSomething(something);
+    final var result = this.somethingService.processSomething("1", something);
     log.info("Result {}", result);
     return "{}";
   }

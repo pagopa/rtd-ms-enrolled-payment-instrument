@@ -40,7 +40,7 @@ public class KafkaAdapterTest {
     final var isSent = stream.send("enrolledPaymentInstrumentConsumer-in-0", message);
 
     assertTrue(isSent);
-    Mockito.verify(somethingService).processSomething("ciao");
+    Mockito.verify(somethingService).processSomething("1", "ciao");
   }
 
 }
