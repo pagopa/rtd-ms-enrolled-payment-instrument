@@ -13,13 +13,15 @@ import org.springframework.messaging.Message;
 @Configuration
 class KafkaAdapter {
   @Bean
-  Consumer<Message<String>> enrolledPaymentInstrumentConsumer(
+  Consumer<Message<EnrolledPaymentInstrumentEvent>> enrolledPaymentInstrumentConsumer(
       EnrolledPaymentInstrumentService paymentInstrumentService) {
     return message -> {
       log.info("Received message {}", message);
+      final var payload = message.getPayload();
       final var result = paymentInstrumentService.handle(
-          new EnrollPaymentInstrumentCommand("123234", "id_pay")
+          new EnrollPaymentInstrumentCommand(payload.getHashPan(), payload.getApp(), payload.isEnabled())
       );
+      // TODO: handle errors
       log.info("Message processed {}", result);
     };
   }

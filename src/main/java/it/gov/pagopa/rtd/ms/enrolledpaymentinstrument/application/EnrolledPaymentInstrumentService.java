@@ -19,8 +19,7 @@ public class EnrolledPaymentInstrumentService {
       final var hashPan = HashPan.create(command.getHashPan());
       final var sourceApp = App.valueOf(command.getSourceApp().toUpperCase());
 
-      // find existing hashpan or create a new one
-      final var paymentInstrument = repository.findById(hashPan.getHashPan())
+      final var paymentInstrument = repository.findById(hashPan.getValue())
           .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp));
 
       paymentInstrument.enrollFrom(sourceApp);

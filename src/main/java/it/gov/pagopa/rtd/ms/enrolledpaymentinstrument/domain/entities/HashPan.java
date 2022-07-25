@@ -11,7 +11,7 @@ public class HashPan {
 
   private static Pattern regex = Pattern.compile("[a-zA-Z0-9]{64}");
 
-  private final String hashPan;
+  private final String value;
 
   public static HashPan create(String hashPan) {
     if (regex.matcher(hashPan).matches()) {

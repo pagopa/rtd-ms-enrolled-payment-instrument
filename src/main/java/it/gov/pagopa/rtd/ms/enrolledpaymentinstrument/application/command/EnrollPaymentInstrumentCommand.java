@@ -8,4 +8,5 @@ import lombok.Data;
 public class EnrollPaymentInstrumentCommand {
   private final String hashPan;
   private final String sourceApp;
+  private final boolean enabled;
 }

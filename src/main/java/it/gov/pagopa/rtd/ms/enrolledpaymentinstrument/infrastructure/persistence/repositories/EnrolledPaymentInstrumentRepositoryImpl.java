@@ -54,7 +54,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
     EnrolledPaymentInstrumentEntity toEntity(EnrolledPaymentInstrument domain) {
       return EnrolledPaymentInstrumentEntity.builder()
           .id(domain.getId())
-          .hashPan(domain.getHashPan().getHashPan())
+          .hashPan(domain.getHashPan().getValue())
           .apps(domain.getEnabledApps().stream().map(Enum::name).collect(Collectors.toList()))
           .insertAt(domain.getCreateAt())
           .updatedAt(domain.getUpdatedAt())

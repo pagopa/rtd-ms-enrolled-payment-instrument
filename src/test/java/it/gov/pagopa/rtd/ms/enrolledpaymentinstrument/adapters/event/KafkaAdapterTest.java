@@ -36,11 +36,18 @@ public class KafkaAdapterTest {
 
   @Test
   public void consumeAnEvent() throws InterruptedException {
-    final var message = MessageBuilder.withPayload("ciao").build();
+    final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
     final var isSent = stream.send("enrolledPaymentInstrumentConsumer-in-0", message);
 
     assertTrue(isSent);
-    Mockito.verify(somethingService).processSomething("1", "ciao");
+    Mockito.verify(somethingService).handle(null);
   }
+
+  private static final String enabledPaymentInstrumentEvent = ""
+      + "{\n"
+      + "  \"hashPan\": \"42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba\",\n"
+      + "  \"app\": \"FA\",\n"
+      + "  \"enable\": true\n"
+      + "}";
 
 }
