@@ -2,7 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.SomethingService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +32,7 @@ public class KafkaAdapterTest {
   private StreamBridge stream;
 
   @MockBean
-  SomethingService somethingService;
+  EnrolledPaymentInstrumentService somethingService;
 
   @Test
   public void consumeAnEvent() throws InterruptedException {
