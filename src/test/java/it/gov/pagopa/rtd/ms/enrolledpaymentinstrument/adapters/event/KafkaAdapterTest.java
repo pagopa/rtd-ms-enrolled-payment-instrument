@@ -1,9 +1,12 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -35,18 +38,24 @@ public class KafkaAdapterTest {
   EnrolledPaymentInstrumentService somethingService;
 
   @Test
-  public void consumeAnEvent() throws InterruptedException {
+  public void consumeAnEvent() {
+    final var captor = ArgumentCaptor.forClass(EnrollPaymentInstrumentCommand.class);
     final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
     final var isSent = stream.send("enrolledPaymentInstrumentConsumer-in-0", message);
 
     assertTrue(isSent);
-    Mockito.verify(somethingService).handle(null);
+    Mockito.verify(somethingService).handle(captor.capture());
+
+    assertEquals(hashPanEvent, captor.getValue().getHashPan());
+    assertEquals(sourceAppEvent, captor.getValue().getSourceApp());
   }
 
+  private static final String hashPanEvent = "42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba";
+  private static final String sourceAppEvent = "FA";
   private static final String enabledPaymentInstrumentEvent = ""
       + "{\n"
-      + "  \"hashPan\": \"42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba\",\n"
-      + "  \"app\": \"FA\",\n"
+      + "  \"hashPan\": \"" + hashPanEvent + "\",\n"
+      + "  \"app\": \"" + sourceAppEvent + "\",\n"
       + "  \"enable\": true\n"
       + "}";
 
