@@ -18,11 +18,15 @@ public class EnrolledPaymentInstrument {
 
   public static EnrolledPaymentInstrument create(
       HashPan hashPan,
-      SourceApp sourceApp
+      SourceApp sourceApp,
+      String issuer,
+      String network
   ) {
     return new EnrolledPaymentInstrument(
         null,
         hashPan,
+        issuer,
+        network,
         new HashSet<>(Collections.singletonList(sourceApp)),
         LocalDateTime.now(),
         null
@@ -31,6 +35,8 @@ public class EnrolledPaymentInstrument {
 
   private final String id;
   private final HashPan hashPan;
+  private String issuer;
+  private String network;
   private Set<SourceApp> enabledApps;
   private LocalDateTime createAt;
   private LocalDateTime updatedAt;
@@ -52,5 +58,4 @@ public class EnrolledPaymentInstrument {
     this.enabledApps.remove(sourceApp);
     this.updatedAt = LocalDateTime.now();
   }
-
 }

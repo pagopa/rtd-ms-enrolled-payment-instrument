@@ -39,12 +39,14 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
 
   private static class DomainMapper {
 
-    private static String upsertUser = "enrolled_payment_instrument";
+    private static final String upsertUser = "enrolled_payment_instrument";
 
     EnrolledPaymentInstrument toDomain(EnrolledPaymentInstrumentEntity entity) {
       return new EnrolledPaymentInstrument(
           entity.getId(),
           HashPan.create(entity.getHashPan()),
+          entity.getIssuer(),
+          entity.getNetwork(),
           entity.getApps().stream().map(SourceApp::valueOf).collect(Collectors.toSet()),
           entity.getInsertAt(),
           entity.getUpdatedAt()
@@ -55,6 +57,8 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
       return EnrolledPaymentInstrumentEntity.builder()
           .id(domain.getId())
           .hashPan(domain.getHashPan().getValue())
+          .network(domain.getNetwork())
+          .issuer(domain.getIssuer())
           .apps(domain.getEnabledApps().stream().map(Enum::name).collect(Collectors.toList()))
           .insertAt(domain.getCreateAt())
           .updatedAt(domain.getUpdatedAt())

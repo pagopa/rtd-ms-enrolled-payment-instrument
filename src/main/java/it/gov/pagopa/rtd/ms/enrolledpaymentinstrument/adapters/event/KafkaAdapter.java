@@ -18,7 +18,13 @@ class KafkaAdapter {
       log.info("Received message {}", message);
       final var payload = message.getPayload();
       final var result = paymentInstrumentService.handle(
-          new EnrollPaymentInstrumentCommand(payload.getHashPan(), payload.getApp(), payload.isEnabled())
+          new EnrollPaymentInstrumentCommand(
+              payload.getHashPan(),
+              payload.getApp(),
+              payload.isEnabled(),
+              payload.getIssuer(),
+              payload.getNetwork()
+          )
       );
       // TODO: handle errors
       log.info("Message processed {}", result);

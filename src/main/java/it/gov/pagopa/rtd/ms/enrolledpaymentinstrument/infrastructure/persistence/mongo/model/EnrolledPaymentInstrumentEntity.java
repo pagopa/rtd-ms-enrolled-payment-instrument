@@ -36,6 +36,12 @@ public class EnrolledPaymentInstrumentEntity {
   @Field(name = "enabledApps")
   private List<String> apps;
 
+  @Field(name = "issuer")
+  private String issuer;
+
+  @Field(name = "network")
+  private String network;
+
   @Field(name = "insertAt")
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
   @JsonSerialize(using = LocalDateTimeSerializer.class)

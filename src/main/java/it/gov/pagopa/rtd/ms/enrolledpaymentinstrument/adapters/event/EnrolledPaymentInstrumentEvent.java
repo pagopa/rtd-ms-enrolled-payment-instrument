@@ -19,4 +19,8 @@ public class EnrolledPaymentInstrumentEvent {
 
   @NotNull
   private final boolean enabled;
+
+  private final String issuer;
+
+  private final String network;
 }

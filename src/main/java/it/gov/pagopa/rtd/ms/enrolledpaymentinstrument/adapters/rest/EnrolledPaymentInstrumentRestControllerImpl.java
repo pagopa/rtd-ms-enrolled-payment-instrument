@@ -29,7 +29,9 @@ public class EnrolledPaymentInstrumentRestControllerImpl implements
     enrolledPaymentInstrumentService.handle(new EnrollPaymentInstrumentCommand(
         "2ac01c6a86e0ada464d7682888d3e01009ed57ff0bfea09575d842039e1030ef",
         "id_pay",
-        true
+        true,
+        null,
+        null
     ));
     return Collections.emptyList();
   }

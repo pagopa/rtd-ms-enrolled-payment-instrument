@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -19,4 +20,7 @@ public class EnrollPaymentInstrumentCommand {
 
   @NotNull
   private final boolean enabled;
+
+  private final String issuer;
+  private final String network;
 }

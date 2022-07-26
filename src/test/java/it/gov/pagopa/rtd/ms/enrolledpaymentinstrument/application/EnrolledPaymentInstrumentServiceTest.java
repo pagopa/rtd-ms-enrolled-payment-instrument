@@ -51,7 +51,9 @@ public class EnrolledPaymentInstrumentServiceTest {
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.ID_PAY.name(),
-        true
+        true,
+        null,
+        null
     );
     final var result = service.handle(command);
 
@@ -69,7 +71,9 @@ public class EnrolledPaymentInstrumentServiceTest {
     final var commands = IntStream.range(0, 3).mapToObj(i -> new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.ID_PAY.name(),
-        true
+        true,
+        null,
+        null
     )).collect(Collectors.toList());
 
     commands.forEach(command -> assertTrue(service.handle(command)));
@@ -82,17 +86,17 @@ public class EnrolledPaymentInstrumentServiceTest {
   @DisplayName("must disable payment instrument for a specific source app")
   @Test
   public void mustDisablePaymentInstrumentForSpecificApp() {
+    final var fullEnrolledInstrument = new EnrolledPaymentInstrument("1234", TEST_HASH_PAN, null, null, new HashSet<>(Arrays.asList(SourceApp.values())), LocalDateTime.now(), null);
     final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.FA.name(),
-        false
+        false,
+        null,
+        null
     );
 
-    Mockito.when(repository.findById(Mockito.any()))
-        .thenReturn(Optional.of(
-            new EnrolledPaymentInstrument("1234", TEST_HASH_PAN, new HashSet<>(Arrays.asList(SourceApp.values())), LocalDateTime.now(), null)
-        ));
+    Mockito.when(repository.findById(Mockito.any())).thenReturn(Optional.of(fullEnrolledInstrument));
 
     assertTrue(service.handle(command));
     Mockito.verify(repository).save(argument.capture());
@@ -106,12 +110,12 @@ public class EnrolledPaymentInstrumentServiceTest {
   @Test
   public void mustThrowExceptionWhenCommandIsInvalid() {
     final var invalidCommands = Arrays.asList(
-        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), "", true),
-        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), null, true),
-        new EnrollPaymentInstrumentCommand("", SourceApp.ID_PAY.name(), true),
-        new EnrollPaymentInstrumentCommand(null, SourceApp.ID_PAY.name(), true),
-        new EnrollPaymentInstrumentCommand("", "", true),
-        new EnrollPaymentInstrumentCommand(null, null, true)
+        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), "", true, null, null),
+        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), null, true, null, null),
+        new EnrollPaymentInstrumentCommand("", SourceApp.ID_PAY.name(), true, null, null),
+        new EnrollPaymentInstrumentCommand(null, SourceApp.ID_PAY.name(), true, null, null),
+        new EnrollPaymentInstrumentCommand("", "", true, null, null),
+        new EnrollPaymentInstrumentCommand(null, null, true, null, null)
     );
 
     assertTrue(invalidCommands.stream().noneMatch(command -> service.handle(command)));

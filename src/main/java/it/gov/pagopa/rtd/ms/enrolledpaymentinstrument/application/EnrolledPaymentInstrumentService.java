@@ -23,7 +23,7 @@ public class EnrolledPaymentInstrumentService {
       final var sourceApp = SourceApp.valueOf(command.getSourceApp().toUpperCase());
 
       final var paymentInstrument = repository.findById(hashPan.getValue())
-          .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp));
+          .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp, command.getIssuer(), command.getNetwork()));
 
       if (command.isEnabled()) {
         paymentInstrument.enableApp(sourceApp);
