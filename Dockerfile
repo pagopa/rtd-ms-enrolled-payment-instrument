@@ -8,10 +8,10 @@ RUN mvn clean package
 FROM adoptopenjdk/openjdk11:alpine-jre as runtime
 
 VOLUME /tmp
-WORKDIR /app
+WORKDIR /sourceApp
 
-COPY --from=buildtime /build/target/*.jar /app/app.jar
+COPY --from=buildtime /build/target/*.jar /sourceApp/sourceApp.jar
 # The agent is enabled at runtime via JAVA_TOOL_OPTIONS.
-ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.2.7/applicationinsights-agent-3.2.7.jar /app/applicationinsights-agent.jar
+ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.2.7/applicationinsights-agent-3.2.7.jar /sourceApp/applicationinsights-agent.jar
 
-ENTRYPOINT [ "java","-jar","/app/app.jar" ]
+ENTRYPOINT [ "java","-jar","/sourceApp/sourceApp.jar" ]

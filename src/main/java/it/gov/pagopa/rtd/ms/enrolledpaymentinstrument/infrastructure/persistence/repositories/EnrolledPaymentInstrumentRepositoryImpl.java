@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.App;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
@@ -45,7 +45,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
       return new EnrolledPaymentInstrument(
           entity.getId(),
           HashPan.create(entity.getHashPan()),
-          entity.getApps().stream().map(App::valueOf).collect(Collectors.toSet()),
+          entity.getApps().stream().map(SourceApp::valueOf).collect(Collectors.toSet()),
           entity.getInsertAt(),
           entity.getUpdatedAt()
       );

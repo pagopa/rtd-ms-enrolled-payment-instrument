@@ -1,0 +1,124 @@
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import java.lang.reflect.Array;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@TestPropertySource(properties = { "spring.config.location=classpath:application-test.yml" }, inheritProperties = false)
+public class EnrolledPaymentInstrumentServiceTest {
+
+  private static final HashPan TEST_HASH_PAN = HashPan.create("4971175b7c192c7eda18d8c4a1fbb30372333445c5b6c5ef738b333a2729a266");
+
+  @MockBean
+  private EnrolledPaymentInstrumentRepository repository;
+
+  @Autowired
+  private EnrolledPaymentInstrumentService service;
+
+  @BeforeEach
+  void setup() {
+    Mockito.reset(repository);
+  }
+
+  @DisplayName("must enable payment instrument for a specific source app")
+  @Test
+  public void mustEnablePaymentInstrumentForSpecificApp() {
+    final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
+    final var command = new EnrollPaymentInstrumentCommand(
+        TEST_HASH_PAN.getValue(),
+        SourceApp.ID_PAY.name(),
+        true
+    );
+    final var result = service.handle(command);
+
+    assertTrue(result);
+
+    Mockito.verify(repository).save(argument.capture());
+    assertEquals(TEST_HASH_PAN, argument.getValue().getHashPan());
+    assertEquals(Collections.singleton(SourceApp.ID_PAY), argument.getValue().getEnabledApps());
+  }
+
+  @DisplayName("must be idempotent when enroll for same app")
+  @Test
+  public void mustBeIdempotentWhenEnableSameApp() {
+    final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
+    final var commands = IntStream.range(0, 3).mapToObj(i -> new EnrollPaymentInstrumentCommand(
+        TEST_HASH_PAN.getValue(),
+        SourceApp.ID_PAY.name(),
+        true
+    )).collect(Collectors.toList());
+
+    commands.forEach(command -> assertTrue(service.handle(command)));
+    Mockito.verify(repository, Mockito.times(3)).save(argument.capture());
+
+    assertEquals(TEST_HASH_PAN, argument.getValue().getHashPan());
+    assertEquals(Collections.singleton(SourceApp.ID_PAY), argument.getValue().getEnabledApps());
+  }
+
+  @DisplayName("must disable payment instrument for a specific source app")
+  @Test
+  public void mustDisablePaymentInstrumentForSpecificApp() {
+    final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
+    final var command = new EnrollPaymentInstrumentCommand(
+        TEST_HASH_PAN.getValue(),
+        SourceApp.FA.name(),
+        false
+    );
+
+    Mockito.when(repository.findById(Mockito.any()))
+        .thenReturn(Optional.of(
+            new EnrolledPaymentInstrument("1234", TEST_HASH_PAN, new HashSet<>(Arrays.asList(SourceApp.values())), LocalDateTime.now(), null)
+        ));
+
+    assertTrue(service.handle(command));
+    Mockito.verify(repository).save(argument.capture());
+
+    assertEquals(TEST_HASH_PAN, argument.getValue().getHashPan());
+    assertTrue(argument.getValue().getEnabledApps().size() > 0);
+    assertTrue(argument.getValue().getEnabledApps().stream().noneMatch(i -> i == SourceApp.FA));
+  }
+
+  @DisplayName("must throw exception when command is invalid")
+  @Test
+  public void mustThrowExceptionWhenCommandIsInvalid() {
+    final var invalidCommands = Arrays.asList(
+        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), "", true),
+        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), null, true),
+        new EnrollPaymentInstrumentCommand("", SourceApp.ID_PAY.name(), true),
+        new EnrollPaymentInstrumentCommand(null, SourceApp.ID_PAY.name(), true),
+        new EnrollPaymentInstrumentCommand("", "", true),
+        new EnrollPaymentInstrumentCommand(null, null, true)
+    );
+
+    assertTrue(invalidCommands.stream().noneMatch(command -> service.handle(command)));
+  }
+}

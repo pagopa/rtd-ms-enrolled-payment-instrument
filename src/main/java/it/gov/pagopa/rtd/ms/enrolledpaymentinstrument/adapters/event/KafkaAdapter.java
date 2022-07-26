@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.App;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
