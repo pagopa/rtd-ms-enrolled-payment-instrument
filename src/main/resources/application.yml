@@ -9,7 +9,7 @@ spring:
 
   data:
     mongodb:
-      uri: ${MONGODB_CONNECTION_URI}
+      uri: ${MONGODB_CONNECTION_URI:mongodb://root:root@localhost:27017}
       database: ${MONGODB_NAME:rtd}
 
   cloud:

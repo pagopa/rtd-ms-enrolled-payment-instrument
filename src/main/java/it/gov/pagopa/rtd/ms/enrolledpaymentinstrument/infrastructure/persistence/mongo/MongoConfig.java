@@ -2,11 +2,13 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistenc
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.MongoTransactionManager;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 @Configuration
+@Profile("default")
 @EnableMongoRepositories(basePackages = "it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model")
 public class MongoConfig {
 
