@@ -63,8 +63,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
           entity.getNetwork(),
           entity.getApps().stream().map(SourceApp::valueOf).collect(Collectors.toSet()),
           entity.getInsertAt(),
-          entity.getUpdatedAt(),
-          entity.get_etag()
+          entity.getUpdatedAt()
       );
     }
 
@@ -79,7 +78,6 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
           .updatedAt(domain.getUpdatedAt())
           .insertUser(upsertUser)
           .updateUser(upsertUser)
-          ._etag(domain.getVersion())
           .build();
     }
   }

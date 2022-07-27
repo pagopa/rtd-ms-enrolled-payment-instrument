@@ -60,7 +60,4 @@ public class EnrolledPaymentInstrumentEntity {
 
   @Field(name = "updateUser")
   private String updateUser;
-
-  @Version
-  private String _etag;
 }

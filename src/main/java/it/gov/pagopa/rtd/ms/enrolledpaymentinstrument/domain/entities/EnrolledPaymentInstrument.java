@@ -33,7 +33,6 @@ public class EnrolledPaymentInstrument {
         network,
         sourceApp,
         LocalDateTime.now(),
-        null,
         null
     );
   }
@@ -45,7 +44,6 @@ public class EnrolledPaymentInstrument {
   private Set<SourceApp> enabledApps;
   private LocalDateTime createAt;
   private LocalDateTime updatedAt;
-  private String version;
 
   /**
    * Add source app as enabled from this instrument
