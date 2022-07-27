@@ -16,9 +16,13 @@ import lombok.Data;
 @AllArgsConstructor
 public class EnrolledPaymentInstrument {
 
+  public static EnrolledPaymentInstrument create(HashPan hashPan, SourceApp sourceApp, String issuer, String network) {
+    return create(hashPan, new HashSet<>(Collections.singletonList(sourceApp)), issuer, network);
+  }
+
   public static EnrolledPaymentInstrument create(
       HashPan hashPan,
-      SourceApp sourceApp,
+      Set<SourceApp> sourceApp,
       String issuer,
       String network
   ) {
@@ -27,8 +31,9 @@ public class EnrolledPaymentInstrument {
         hashPan,
         issuer,
         network,
-        new HashSet<>(Collections.singletonList(sourceApp)),
+        sourceApp,
         LocalDateTime.now(),
+        null,
         null
     );
   }
@@ -40,6 +45,7 @@ public class EnrolledPaymentInstrument {
   private Set<SourceApp> enabledApps;
   private LocalDateTime createAt;
   private LocalDateTime updatedAt;
+  private String version;
 
   /**
    * Add source app as enabled from this instrument

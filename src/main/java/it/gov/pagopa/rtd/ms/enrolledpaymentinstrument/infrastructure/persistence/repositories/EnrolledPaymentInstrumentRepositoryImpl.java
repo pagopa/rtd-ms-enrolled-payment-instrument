@@ -11,29 +11,43 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import org.springframework.data.mongodb.core.FindAndReplaceOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 
 @AllArgsConstructor
 public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentInstrumentRepository {
 
   private final DomainMapper mapper;
   private final EnrolledPaymentInstrumentDao dao;
+  private final MongoTemplate mongoTemplate;
 
-  public EnrolledPaymentInstrumentRepositoryImpl(EnrolledPaymentInstrumentDao dao) {
+  public EnrolledPaymentInstrumentRepositoryImpl(EnrolledPaymentInstrumentDao dao, MongoTemplate template) {
     this.dao = dao;
+    this.mongoTemplate = template;
     this.mapper = new DomainMapper();
   }
 
   @Override
   public Future<String> save(EnrolledPaymentInstrument enrolledPaymentInstrument) {
     // mapping should be handled by a specific domain-to-entity mapper
+    // find and replace ensure to update the same document based on hashPan property
     final var entity = mapper.toEntity(enrolledPaymentInstrument);
-    final var savedEntity = dao.save(entity);
-    return CompletableFuture.completedFuture(savedEntity.getId());
+    final var query = Query.query(Criteria.where("hashPan").is(entity.getHashPan()));
+    final var savedEntity = mongoTemplate.findAndReplace(
+        query,
+        entity,
+        FindAndReplaceOptions.options().upsert().returnNew()
+    );
+    return savedEntity == null ?
+        CompletableFuture.failedFuture(new Exception("Failed to save entity")) :
+        CompletableFuture.completedFuture(savedEntity.getHashPan());
   }
 
   @Override
-  public Optional<EnrolledPaymentInstrument> findById(String id) {
-    final var savedEntity = dao.findByHashPan(id);
+  public Optional<EnrolledPaymentInstrument> findByHashPan(String hashPan) {
+    final var savedEntity = dao.findByHashPan(hashPan);
     return savedEntity.map(mapper::toDomain);
   }
 
@@ -49,7 +63,8 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
           entity.getNetwork(),
           entity.getApps().stream().map(SourceApp::valueOf).collect(Collectors.toSet()),
           entity.getInsertAt(),
-          entity.getUpdatedAt()
+          entity.getUpdatedAt(),
+          entity.get_etag()
       );
     }
 
@@ -64,6 +79,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
           .updatedAt(domain.getUpdatedAt())
           .insertUser(upsertUser)
           .updateUser(upsertUser)
+          ._etag(domain.getVersion())
           .build();
     }
   }

@@ -86,7 +86,7 @@ public class EnrolledPaymentInstrumentServiceTest {
   @DisplayName("must disable payment instrument for a specific source app")
   @Test
   public void mustDisablePaymentInstrumentForSpecificApp() {
-    final var fullEnrolledInstrument = new EnrolledPaymentInstrument("1234", TEST_HASH_PAN, null, null, new HashSet<>(Arrays.asList(SourceApp.values())), LocalDateTime.now(), null);
+    final var fullEnrolledInstrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, new HashSet<>(Arrays.asList(SourceApp.values())), null, null);
     final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
@@ -96,7 +96,7 @@ public class EnrolledPaymentInstrumentServiceTest {
         null
     );
 
-    Mockito.when(repository.findById(Mockito.any())).thenReturn(Optional.of(fullEnrolledInstrument));
+    Mockito.when(repository.findByHashPan(Mockito.any())).thenReturn(Optional.of(fullEnrolledInstrument));
 
     assertTrue(service.handle(command));
     Mockito.verify(repository).save(argument.capture());

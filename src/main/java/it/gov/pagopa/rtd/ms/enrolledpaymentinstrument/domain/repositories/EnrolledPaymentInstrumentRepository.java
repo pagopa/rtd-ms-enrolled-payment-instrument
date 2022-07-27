@@ -6,7 +6,7 @@ import java.util.concurrent.Future;
 
 public interface EnrolledPaymentInstrumentRepository {
   Future<String> save(EnrolledPaymentInstrument enrolledPaymentInstrument);
-  Optional<EnrolledPaymentInstrument> findById(String id);
+  Optional<EnrolledPaymentInstrument> findByHashPan(String id);
 
   // others methods findBy...
 }
