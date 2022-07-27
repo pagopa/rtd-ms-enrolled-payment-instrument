@@ -8,26 +8,26 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 
-//@Slf4j
-//@Configuration
-//class KafkaAdapter {
-//  @Bean
-//  Consumer<Message<EnrolledPaymentInstrumentEvent>> enrolledPaymentInstrumentConsumer(
-//      EnrolledPaymentInstrumentService paymentInstrumentService) {
-//    return message -> {
-//      log.info("Received message {}", message);
-//      final var payload = message.getPayload();
-//      final var result = paymentInstrumentService.handle(
-//          new EnrollPaymentInstrumentCommand(
-//              payload.getHashPan(),
-//              payload.getApp(),
-//              payload.isEnabled(),
-//              payload.getIssuer(),
-//              payload.getNetwork()
-//          )
-//      );
-//      // TODO: handle errors
-//      log.info("Message processed {}", result);
-//    };
-//  }
-//}
+@Slf4j
+@Configuration
+class KafkaAdapter {
+  @Bean
+  Consumer<Message<EnrolledPaymentInstrumentEvent>> enrolledPaymentInstrumentConsumer(
+      EnrolledPaymentInstrumentService paymentInstrumentService) {
+    return message -> {
+      log.info("Received message {}", message);
+      final var payload = message.getPayload();
+      final var result = paymentInstrumentService.handle(
+          new EnrollPaymentInstrumentCommand(
+              payload.getHashPan(),
+              payload.getApp(),
+              payload.isEnabled(),
+              payload.getIssuer(),
+              payload.getNetwork()
+          )
+      );
+      // TODO: handle errors
+      log.info("Message processed {}", result);
+    };
+  }
+}
