@@ -9,17 +9,26 @@ spring:
 
   data:
     mongodb:
-      uri: ${MONGODB_CONNECTION_URI:mongodb://root:root@localhost:27017}
+      uri: ${MONGODB_CONNECTION_URI:mongodb://localhost:27017}
       database: ${MONGODB_NAME:rtd}
 
   cloud:
     stream:
       bindings:
+        enrolledPaymentInstrumentProducer-out-0:
+          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
+          content-type: application/json
+          binder: kafka-binder
+
         enrolledPaymentInstrumentConsumer-in-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           group: rtd-enrolled-payment-instrument-consumer-group
           content-type: application/json
           binder: kafka-binder
+          consumer: # configure consumer to retry to process and event when WriteConflict happens
+            defaultRetryable: false
+            retryableExceptions:
+              it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict: true
 
       binders:
         kafka-binder:
@@ -35,5 +44,8 @@ spring:
                     mechanism: PLAIN
                   security.protocol: SASL_SSL
                 consumerProperties:
+                  key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                  value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                producerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer

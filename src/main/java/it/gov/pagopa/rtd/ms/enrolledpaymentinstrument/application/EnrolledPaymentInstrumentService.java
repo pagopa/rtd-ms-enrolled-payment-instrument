@@ -1,12 +1,16 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
+import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,16 +30,10 @@ public class EnrolledPaymentInstrumentService {
       final var sourceApp = SourceApp.valueOf(command.getSourceApp().toUpperCase());
 
       final var paymentInstrument = repository.findByHashPan(hashPan.getValue())
-          .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp, command.getIssuer(), command.getNetwork()));
+          .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp, command.getIssuer(),
+              command.getNetwork()));
 
-      if (delay) {
-        delay = false;
-        log.info("Sleeping");
-        Thread.sleep(4000);
-      } else {
-        delay = true;
-        log.info("No sleep, restored delay");
-      }
+      simulateConcurrencyEnv();
 
       if (command.isEnabled()) {
         paymentInstrument.enableApp(sourceApp);
@@ -43,12 +41,30 @@ public class EnrolledPaymentInstrumentService {
         paymentInstrument.disableApp(sourceApp);
       }
 
-      repository.save(paymentInstrument);
+      if (paymentInstrument.isShouldBeDeleted()) {
+        repository.delete(paymentInstrument);
+      } else {
+        repository.save(paymentInstrument);
+      }
 
       return true;
+    } catch (WriteConflict writeConflict) {
+      log.error("Concurrency conflict", writeConflict);
+      throw writeConflict;
     } catch (Exception error) {
       log.error("Error during enroll payment instrument", error);
       return false;
+    }
+  }
+
+  private void simulateConcurrencyEnv() throws InterruptedException {
+    if (delay) {
+      delay = false;
+      log.info("Sleeping");
+      Thread.sleep(4000);
+    } else {
+      delay = true;
+      log.info("No sleep, restored delay");
     }
   }
 }

@@ -5,8 +5,11 @@ import java.util.Optional;
 import java.util.concurrent.Future;
 
 public interface EnrolledPaymentInstrumentRepository {
-  Future<String> save(EnrolledPaymentInstrument enrolledPaymentInstrument);
   Optional<EnrolledPaymentInstrument> findByHashPan(String id);
+
+  Future<String> save(EnrolledPaymentInstrument enrolledPaymentInstrument);
+
+  boolean delete(EnrolledPaymentInstrument enrolledPaymentInstrument);
 
   // others methods findBy...
 }

@@ -111,6 +111,25 @@ public class EnrolledPaymentInstrumentServiceTest {
     assertTrue(argument.getValue().getEnabledApps().stream().noneMatch(i -> i == SourceApp.FA));
   }
 
+  @DisplayName("must delete the payment instrument when enabled apps are empties")
+  @Test
+  public void mustDeleteWhenAppsAreEmpties() {
+    final var fullEnrolledInstrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, new HashSet<>(Arrays.asList(SourceApp.values())), null, null);
+    final var commands = Arrays.stream(SourceApp.values()).map(app -> new EnrollPaymentInstrumentCommand(
+        TEST_HASH_PAN.getValue(),
+        app.name(),
+        false,
+        null,
+        null
+    ));
+
+    Mockito.when(repository.findByHashPan(Mockito.any())).thenReturn(Optional.of(fullEnrolledInstrument));
+
+    commands.forEach(command -> service.handle(command));
+
+    Mockito.verify(repository, Mockito.times(1)).delete(Mockito.any());
+  }
+
   @DisplayName("must throw exception when command is invalid")
   @Test
   public void mustThrowExceptionWhenCommandIsInvalid() {

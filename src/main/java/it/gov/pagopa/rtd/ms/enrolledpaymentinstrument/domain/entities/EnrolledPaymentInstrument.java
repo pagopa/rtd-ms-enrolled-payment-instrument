@@ -33,7 +33,8 @@ public class EnrolledPaymentInstrument {
         network,
         sourceApp,
         LocalDateTime.now(),
-        null
+        null,
+        sourceApp.isEmpty()
     );
   }
 
@@ -44,6 +45,7 @@ public class EnrolledPaymentInstrument {
   private Set<SourceApp> enabledApps;
   private LocalDateTime createAt;
   private LocalDateTime updatedAt;
+  private boolean shouldBeDeleted;
 
   /**
    * Add source app as enabled from this instrument
@@ -51,6 +53,7 @@ public class EnrolledPaymentInstrument {
    */
   public void enableApp(SourceApp sourceApp) {
     this.enabledApps.add(sourceApp);
+    this.shouldBeDeleted = false;
     this.updatedAt = LocalDateTime.now();
   }
 
@@ -60,6 +63,7 @@ public class EnrolledPaymentInstrument {
    */
   public void disableApp(SourceApp sourceApp) {
     this.enabledApps.remove(sourceApp);
+    this.shouldBeDeleted = this.enabledApps.isEmpty();
     this.updatedAt = LocalDateTime.now();
   }
 }

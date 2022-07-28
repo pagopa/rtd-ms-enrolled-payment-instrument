@@ -10,7 +10,7 @@ sleep 5
 mongo <<EOF
 var config = {
     "_id": "rs0",
-    "version": 2,
+    "version": 1,
     "members": [
         {
             "_id": 1,
