@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class EnrolledPaymentInstrumentRestControllerImpl implements
     EnrolledPaymentInstrumentRestController {
 
-  private final StreamBridge streamBridge;
   private final EnrolledPaymentInstrumentService enrolledPaymentInstrumentService;
 
   @Autowired
@@ -25,29 +24,17 @@ public class EnrolledPaymentInstrumentRestControllerImpl implements
       StreamBridge streamBridge
   ) {
     this.enrolledPaymentInstrumentService = enrolledPaymentInstrumentService;
-    this.streamBridge = streamBridge;
   }
-
-  private boolean byKafka = true;
 
   @Override
   public void sendEnrolledPaymentEvent(EnrolledPaymentInstrumentEvent paymentInstrumentEvent) {
     log.info("Simulating send enrolled payment event: {}", paymentInstrumentEvent);
-    if (byKafka) {
-      byKafka = false;
-      final var sent = streamBridge.send("enrolledPaymentInstrumentProducer-out-0",
-          paymentInstrumentEvent);
-      log.info("Event sent {}", sent);
-    } else {
-      byKafka = true;
-      enrolledPaymentInstrumentService.handle(new EnrollPaymentInstrumentCommand(
-          paymentInstrumentEvent.getHashPan(),
-          paymentInstrumentEvent.getApp(),
-          Operation.valueOf(paymentInstrumentEvent.getOperation().toUpperCase()),
-          paymentInstrumentEvent.getIssuer(),
-          paymentInstrumentEvent.getNetwork()
-      ));
-      log.info("aaa");
-    }
+    enrolledPaymentInstrumentService.handle(new EnrollPaymentInstrumentCommand(
+        paymentInstrumentEvent.getHashPan(),
+        paymentInstrumentEvent.getApp(),
+        Operation.valueOf(paymentInstrumentEvent.getOperation().toUpperCase()),
+        paymentInstrumentEvent.getIssuer(),
+        paymentInstrumentEvent.getNetwork()
+    ));
   }
 }

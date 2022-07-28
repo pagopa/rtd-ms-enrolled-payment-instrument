@@ -15,11 +15,6 @@ spring:
   cloud:
     stream:
       bindings:
-        enrolledPaymentInstrumentProducer-out-0:
-          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
-          content-type: application/json
-          binder: kafka-binder
-
         enrolledPaymentInstrumentConsumer-in-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           group: rtd-enrolled-payment-instrument-consumer-group
@@ -44,8 +39,5 @@ spring:
                     mechanism: PLAIN
                   security.protocol: SASL_SSL
                 consumerProperties:
-                  key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-                  value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-                producerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
