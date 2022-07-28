@@ -1,9 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories;
 
 import com.mongodb.MongoCommandException;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model.EnrolledPaymentInstrumentDao;
@@ -12,9 +10,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
@@ -23,7 +19,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
 @AllArgsConstructor
-public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentInstrumentRepository {
+public class EnrolledPaymentInstrumentRepositoryImpl implements
+    EnrolledPaymentInstrumentRepository {
 
   private static final int CONFLICT_WRITE_CODE = 112;
 
@@ -31,7 +28,8 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
   private final EnrolledPaymentInstrumentDao dao;
   private final MongoTemplate mongoTemplate;
 
-  public EnrolledPaymentInstrumentRepositoryImpl(EnrolledPaymentInstrumentDao dao, MongoTemplate template) {
+  public EnrolledPaymentInstrumentRepositoryImpl(EnrolledPaymentInstrumentDao dao,
+      MongoTemplate template) {
     this.dao = dao;
     this.mongoTemplate = template;
     this.mapper = new EnrolledPaymentInstrumentMapper();
@@ -58,7 +56,8 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
   @Override
   public boolean delete(EnrolledPaymentInstrument enrolledPaymentInstrument) {
     return catchWriteConflict(() -> mongoTemplate.findAndRemove(
-        Query.query(Criteria.where("hashPan").is(enrolledPaymentInstrument.getHashPan().getValue())),
+        Query.query(
+            Criteria.where("hashPan").is(enrolledPaymentInstrument.getHashPan().getValue())),
         EnrolledPaymentInstrumentEntity.class
     )).isPresent();
   }
@@ -70,11 +69,12 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
   }
 
   /**
-   * Execute a function and try to catch a mongodb write conflict exceptions which is
-   * mapped into a WriteConflict exception.
+   * Execute a function and try to catch a mongodb write conflict exceptions which is mapped into a
+   * WriteConflict exception.
+   *
    * @param function function which can generate a mongodb conflict
+   * @param <T>      Type of object returned by the function
    * @return The object returned by the function
-   * @param <T> Type of object returned by the function
    * @throws WriteConflict The concurrency write conflict exception
    */
   private <T> Optional<T> catchWriteConflict(Supplier<T> function) throws WriteConflict {
@@ -82,10 +82,10 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements EnrolledPaymentI
       final var id = function.get();
       return Optional.ofNullable(id);
     } catch (UncategorizedMongoDbException uncategorizedMongoDbException) {
-      if (uncategorizedMongoDbException.getCause() instanceof MongoCommandException) {
-        if (((MongoCommandException) uncategorizedMongoDbException.getCause()).getErrorCode() == CONFLICT_WRITE_CODE) {
-          throw new WriteConflict(uncategorizedMongoDbException);
-        }
+      if (uncategorizedMongoDbException.getCause() instanceof MongoCommandException
+          && ((MongoCommandException) uncategorizedMongoDbException.getCause()).getErrorCode()
+          == CONFLICT_WRITE_CODE) {
+        throw new WriteConflict(uncategorizedMongoDbException);
       }
     }
     return Optional.empty();

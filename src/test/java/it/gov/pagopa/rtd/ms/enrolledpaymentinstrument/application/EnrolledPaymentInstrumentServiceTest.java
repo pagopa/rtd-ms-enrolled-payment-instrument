@@ -8,7 +8,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPa
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,20 +20,15 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @TestPropertySource(properties = { "spring.config.location=classpath:application-test.yml" }, inheritProperties = false)
-public class EnrolledPaymentInstrumentServiceTest {
+class EnrolledPaymentInstrumentServiceTest {
 
   private static final HashPan TEST_HASH_PAN = HashPan.create("4971175b7c192c7eda18d8c4a1fbb30372333445c5b6c5ef738b333a2729a266");
 
@@ -51,7 +45,7 @@ public class EnrolledPaymentInstrumentServiceTest {
 
   @DisplayName("must enable payment instrument for a specific source app")
   @Test
-  public void mustEnablePaymentInstrumentForSpecificApp() {
+  void mustEnablePaymentInstrumentForSpecificApp() {
     final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
@@ -71,7 +65,7 @@ public class EnrolledPaymentInstrumentServiceTest {
 
   @DisplayName("must be idempotent when enroll for same app")
   @Test
-  public void mustBeIdempotentWhenEnableSameApp() {
+  void mustBeIdempotentWhenEnableSameApp() {
     final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
     final var commands = IntStream.range(0, 3).mapToObj(i -> new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
@@ -90,7 +84,7 @@ public class EnrolledPaymentInstrumentServiceTest {
 
   @DisplayName("must disable payment instrument for a specific source app")
   @Test
-  public void mustDisablePaymentInstrumentForSpecificApp() {
+  void mustDisablePaymentInstrumentForSpecificApp() {
     final var fullEnrolledInstrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, new HashSet<>(Arrays.asList(SourceApp.values())), null, null);
     final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
     final var command = new EnrollPaymentInstrumentCommand(
@@ -113,7 +107,7 @@ public class EnrolledPaymentInstrumentServiceTest {
 
   @DisplayName("must delete the payment instrument when enabled apps are empties")
   @Test
-  public void mustDeleteWhenAppsAreEmpties() {
+  void mustDeleteWhenAppsAreEmpties() {
     final var fullEnrolledInstrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, new HashSet<>(Arrays.asList(SourceApp.values())), null, null);
     final var commands = Arrays.stream(SourceApp.values()).map(app -> new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
@@ -132,7 +126,7 @@ public class EnrolledPaymentInstrumentServiceTest {
 
   @DisplayName("must throw exception when command is invalid")
   @Test
-  public void mustThrowExceptionWhenCommandIsInvalid() {
+  void mustThrowExceptionWhenCommandIsInvalid() {
     final var invalidCommands = Arrays.asList(
         new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), "", true, null, null),
         new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), null, true, null, null),

@@ -30,7 +30,7 @@ import org.springframework.test.context.TestPropertySource;
 @TestPropertySource(properties = { "spring.config.location=classpath:application-test.yml" }, inheritProperties = false)
 @Import(KafkaAdapter.class)
 @EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class }) // exclude jpa initialization
-public class KafkaAdapterTest {
+class KafkaAdapterTest {
   @Autowired
   private StreamBridge stream;
 
@@ -38,7 +38,7 @@ public class KafkaAdapterTest {
   EnrolledPaymentInstrumentService somethingService;
 
   @Test
-  public void consumeAnEvent() {
+  void consumeAnEvent() {
     final var captor = ArgumentCaptor.forClass(EnrollPaymentInstrumentCommand.class);
     final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
     final var isSent = stream.send("enrolledPaymentInstrumentConsumer-in-0", message);

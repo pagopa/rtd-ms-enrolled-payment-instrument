@@ -10,6 +10,4 @@ public interface EnrolledPaymentInstrumentRepository {
   Future<String> save(EnrolledPaymentInstrument enrolledPaymentInstrument);
 
   boolean delete(EnrolledPaymentInstrument enrolledPaymentInstrument);
-
-  // others methods findBy...
 }

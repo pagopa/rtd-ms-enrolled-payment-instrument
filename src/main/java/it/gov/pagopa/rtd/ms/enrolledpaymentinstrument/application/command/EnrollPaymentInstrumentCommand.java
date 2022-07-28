@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Null;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
