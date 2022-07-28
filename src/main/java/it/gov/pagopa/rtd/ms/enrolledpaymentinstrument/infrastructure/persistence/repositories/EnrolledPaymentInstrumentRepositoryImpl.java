@@ -4,7 +4,6 @@ import com.mongodb.MongoCommandException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model.EnrolledPaymentInstrumentEntity;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.mapper.EnrolledPaymentInstrumentMapper;
 import java.util.Optional;
@@ -39,7 +38,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
   public String save(EnrolledPaymentInstrument enrolledPaymentInstrument) {
     // mapping should be handled by a specific domain-to-entity mapper
     // find and replace ensure to update the same document based on hashPan property
-    final var savedId = catchWriteConflict(() -> {
+    final var savedEntity = catchWriteConflict(() -> {
       final var entity = mapper.toEntity(enrolledPaymentInstrument);
       final var query = Query.query(Criteria.where("hashPan").is(entity.getHashPan()));
       return mongoTemplate.findAndReplace(
@@ -49,7 +48,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
       );
     });
 
-    return savedId.map(EnrolledPaymentInstrumentEntity::getHashPan)
+    return savedEntity.map(EnrolledPaymentInstrumentEntity::getHashPan)
         .orElseThrow(() -> new Exception("Failed to save entity"));
   }
 

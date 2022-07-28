@@ -9,7 +9,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPa
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model.EnrolledPaymentInstrumentDao;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
