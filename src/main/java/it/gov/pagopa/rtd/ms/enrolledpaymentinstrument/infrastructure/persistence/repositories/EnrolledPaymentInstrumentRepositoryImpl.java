@@ -8,10 +8,9 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model.EnrolledPaymentInstrumentEntity;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.mapper.EnrolledPaymentInstrumentMapper;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -35,8 +34,9 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
     this.mapper = new EnrolledPaymentInstrumentMapper();
   }
 
+  @SneakyThrows
   @Override
-  public Future<String> save(EnrolledPaymentInstrument enrolledPaymentInstrument) {
+  public String save(EnrolledPaymentInstrument enrolledPaymentInstrument) {
     // mapping should be handled by a specific domain-to-entity mapper
     // find and replace ensure to update the same document based on hashPan property
     final var savedId = catchWriteConflict(() -> {
@@ -49,8 +49,8 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
       );
     });
 
-    return savedId.map(it -> CompletableFuture.completedFuture(it.getHashPan()))
-        .orElse(CompletableFuture.failedFuture(new Exception("Failed to save entity")));
+    return savedId.map(EnrolledPaymentInstrumentEntity::getHashPan)
+        .orElseThrow(() -> new Exception("Failed to save entity"));
   }
 
   @Override

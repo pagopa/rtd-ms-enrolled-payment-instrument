@@ -36,3 +36,13 @@ spring:
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+---
+spring:
+  config:
+    activate:
+      on-profile: mongo-integration-test
+  mongodb.embedded:
+    storage:
+      repl-set-name: "rs0"
+      oplogSize: 10

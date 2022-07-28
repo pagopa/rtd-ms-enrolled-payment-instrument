@@ -33,6 +33,7 @@ public class EnrolledPaymentInstrumentEntity {
   @Field(name = "hashPan")
   private String hashPan;
 
+  @Indexed
   @Field(name = "enabledApps")
   private List<String> apps;
 

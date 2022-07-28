@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 public class EnrolledPaymentInstrumentMapper {
 
-  private static final String upsertUser = "enrolled_payment_instrument";
+  private static final String UPSERT_USER = "enrolled_payment_instrument";
 
   public EnrolledPaymentInstrument toDomain(EnrolledPaymentInstrumentEntity entity) {
     final var apps = entity.getApps().stream().map(SourceApp::valueOf).collect(Collectors.toSet());
@@ -33,8 +33,8 @@ public class EnrolledPaymentInstrumentMapper {
         .apps(domain.getEnabledApps().stream().map(Enum::name).collect(Collectors.toList()))
         .insertAt(domain.getCreateAt())
         .updatedAt(domain.getUpdatedAt())
-        .insertUser(upsertUser)
-        .updateUser(upsertUser)
+        .insertUser(UPSERT_USER)
+        .updateUser(UPSERT_USER)
         .build();
   }
 }
