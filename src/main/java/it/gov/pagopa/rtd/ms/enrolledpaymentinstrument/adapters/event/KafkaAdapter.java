@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,7 @@ class KafkaAdapter {
           new EnrollPaymentInstrumentCommand(
               payload.getHashPan(),
               payload.getApp(),
-              payload.isEnabled(),
+              Operation.valueOf(payload.getOperation().toUpperCase()),
               payload.getIssuer(),
               payload.getNetwork()
           )

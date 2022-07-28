@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.rest;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event.EnrolledPaymentInstrumentEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -42,7 +43,7 @@ public class EnrolledPaymentInstrumentRestControllerImpl implements
       enrolledPaymentInstrumentService.handle(new EnrollPaymentInstrumentCommand(
           paymentInstrumentEvent.getHashPan(),
           paymentInstrumentEvent.getApp(),
-          paymentInstrumentEvent.isEnabled(),
+          Operation.valueOf(paymentInstrumentEvent.getOperation().toUpperCase()),
           paymentInstrumentEvent.getIssuer(),
           paymentInstrumentEvent.getNetwork()
       ));

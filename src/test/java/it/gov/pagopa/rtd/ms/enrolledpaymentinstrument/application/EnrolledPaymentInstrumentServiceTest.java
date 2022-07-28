@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
@@ -50,7 +51,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.ID_PAY.name(),
-        true,
+        Operation.CREATE,
         null,
         null
     );
@@ -70,7 +71,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var commands = IntStream.range(0, 3).mapToObj(i -> new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.ID_PAY.name(),
-        true,
+        Operation.CREATE,
         null,
         null
     )).collect(Collectors.toList());
@@ -90,7 +91,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.FA.name(),
-        false,
+        Operation.DELETE,
         null,
         null
     );
@@ -112,7 +113,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var commands = Arrays.stream(SourceApp.values()).map(app -> new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         app.name(),
-        false,
+        Operation.DELETE,
         null,
         null
     ));
@@ -128,12 +129,12 @@ class EnrolledPaymentInstrumentServiceTest {
   @Test
   void mustThrowExceptionWhenCommandIsInvalid() {
     final var invalidCommands = Arrays.asList(
-        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), "", true, null, null),
-        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), null, true, null, null),
-        new EnrollPaymentInstrumentCommand("", SourceApp.ID_PAY.name(), true, null, null),
-        new EnrollPaymentInstrumentCommand(null, SourceApp.ID_PAY.name(), true, null, null),
-        new EnrollPaymentInstrumentCommand("", "", true, null, null),
-        new EnrollPaymentInstrumentCommand(null, null, true, null, null)
+        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), "", Operation.CREATE, null, null),
+        new EnrollPaymentInstrumentCommand(TEST_HASH_PAN.getValue(), null, Operation.CREATE, null, null),
+        new EnrollPaymentInstrumentCommand("", SourceApp.ID_PAY.name(), Operation.CREATE, null, null),
+        new EnrollPaymentInstrumentCommand(null, SourceApp.ID_PAY.name(), Operation.CREATE, null, null),
+        new EnrollPaymentInstrumentCommand("", "", Operation.CREATE, null, null),
+        new EnrollPaymentInstrumentCommand(null, null, Operation.CREATE, null, null)
     );
 
     assertTrue(invalidCommands.stream().noneMatch(command -> service.handle(command)));

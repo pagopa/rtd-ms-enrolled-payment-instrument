@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
@@ -32,9 +33,9 @@ public class EnrolledPaymentInstrumentService {
 
       simulateConcurrencyEnv();
 
-      if (command.isEnabled()) {
+      if (command.getOperation() == Operation.CREATE) {
         paymentInstrument.enableApp(sourceApp);
-      } else {
+      } else if (command.getOperation() == Operation.DELETE){
         paymentInstrument.disableApp(sourceApp);
       }
 

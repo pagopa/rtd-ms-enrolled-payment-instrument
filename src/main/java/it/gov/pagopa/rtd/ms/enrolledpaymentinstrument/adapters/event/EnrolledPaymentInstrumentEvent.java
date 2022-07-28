@@ -18,7 +18,8 @@ public class EnrolledPaymentInstrumentEvent {
   private final String app;
 
   @NotNull
-  private final boolean enabled;
+  @NotBlank
+  private final String operation;
 
   private final String issuer;
 

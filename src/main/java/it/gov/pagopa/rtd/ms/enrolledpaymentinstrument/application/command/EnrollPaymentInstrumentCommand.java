@@ -18,8 +18,13 @@ public class EnrollPaymentInstrumentCommand {
   private final String sourceApp;
 
   @NotNull
-  private final boolean enabled;
+  private final Operation operation;
 
   private final String issuer;
   private final String network;
+
+   public enum Operation {
+    CREATE,
+    DELETE
+  }
 }
