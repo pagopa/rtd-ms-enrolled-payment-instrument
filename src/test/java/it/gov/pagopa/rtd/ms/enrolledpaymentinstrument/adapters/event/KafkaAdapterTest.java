@@ -1,21 +1,29 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model.EnrolledPaymentInstrumentDao;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.test.context.EmbeddedKafka;
+import org.springframework.messaging.MessageHandlingException;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -28,8 +36,8 @@ import org.springframework.test.context.TestPropertySource;
     bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
 @TestPropertySource(properties = { "spring.config.location=classpath:application-test.yml" }, inheritProperties = false)
-@Import(KafkaAdapter.class)
-@EnableAutoConfiguration(exclude = { DataSourceAutoConfiguration.class }) // exclude jpa initialization
+@Import(value = { KafkaAdapter.class, KafkaAdapterTest.MockConfiguration.class })
+@EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 class KafkaAdapterTest {
   @Autowired
   private StreamBridge stream;
@@ -38,7 +46,7 @@ class KafkaAdapterTest {
   EnrolledPaymentInstrumentService somethingService;
 
   @Test
-  void consumeAnEvent() {
+  void shouldCreateApplicationCommandBasedOnEvent() {
     final var captor = ArgumentCaptor.forClass(EnrollPaymentInstrumentCommand.class);
     final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
     final var isSent = stream.send("enrolledPaymentInstrumentConsumer-in-0", message);
@@ -48,6 +56,16 @@ class KafkaAdapterTest {
 
     assertEquals(hashPanEvent, captor.getValue().getHashPan());
     assertEquals(sourceAppEvent, captor.getValue().getSourceApp());
+    assertEquals(Operation.CREATE, captor.getValue().getOperation());
+  }
+
+  @Test
+  void shouldFailToCreateCommandWithMalformedEvent() {
+    final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent.replace("CREATE", "123")).build();
+
+    final var exception = assertThrows(MessageHandlingException.class, () -> stream.send("enrolledPaymentInstrumentConsumer-in-0", message));
+
+    assertTrue(exception.getCause() instanceof IllegalArgumentException);
   }
 
   private static final String hashPanEvent = "42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba";
@@ -56,7 +74,14 @@ class KafkaAdapterTest {
       + "{\n"
       + "  \"hashPan\": \"" + hashPanEvent + "\",\n"
       + "  \"app\": \"" + sourceAppEvent + "\",\n"
-      + "  \"enable\": true\n"
+      + "  \"operation\": \"CREATE\"\n"
       + "}";
 
+  @Configuration
+  static class MockConfiguration {
+    @MockBean
+    private EnrolledPaymentInstrumentDao dao;
+    @MockBean
+    private EnrolledPaymentInstrumentRepository repository;
+  }
 }
