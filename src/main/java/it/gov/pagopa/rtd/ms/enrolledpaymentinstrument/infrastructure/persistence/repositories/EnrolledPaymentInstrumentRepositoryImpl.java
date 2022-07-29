@@ -33,7 +33,6 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
     this.mapper = new EnrolledPaymentInstrumentMapper();
   }
 
-  @SneakyThrows
   @Override
   public String save(EnrolledPaymentInstrument enrolledPaymentInstrument) {
     // mapping should be handled by a specific domain-to-entity mapper
@@ -49,7 +48,7 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
     });
 
     return savedEntity.map(EnrolledPaymentInstrumentEntity::getHashPan)
-        .orElseThrow(() -> new Exception("Failed to save entity"));
+        .orElseThrow(() -> new RuntimeException("Failed to save entity"));
   }
 
   @Override

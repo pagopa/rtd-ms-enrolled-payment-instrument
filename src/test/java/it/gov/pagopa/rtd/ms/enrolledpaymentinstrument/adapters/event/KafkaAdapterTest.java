@@ -8,9 +8,11 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymen
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -40,6 +42,8 @@ import org.springframework.test.context.TestPropertySource;
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 class KafkaAdapterTest {
 
+  private static final String BINDING_NAME = "enrolledPaymentInstrumentConsumer-in-0";
+
   @Autowired
   private StreamBridge stream;
 
@@ -50,7 +54,7 @@ class KafkaAdapterTest {
   void shouldCreateApplicationCommandBasedOnEvent() {
     final var captor = ArgumentCaptor.forClass(EnrollPaymentInstrumentCommand.class);
     final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
-    final var isSent = stream.send("enrolledPaymentInstrumentConsumer-in-0", message);
+    final var isSent = stream.send(BINDING_NAME, message);
 
     assertTrue(isSent);
     Mockito.verify(somethingService).handle(captor.capture());
@@ -64,9 +68,21 @@ class KafkaAdapterTest {
   void shouldFailToCreateCommandWithMalformedEvent() {
     final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent.replace("CREATE", "123")).build();
 
-    final var exception = assertThrows(MessageHandlingException.class, () -> stream.send("enrolledPaymentInstrumentConsumer-in-0", message));
+    final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
 
     assertTrue(exception.getCause() instanceof IllegalArgumentException);
+  }
+
+  @Test
+  void shouldFailWhenWriteConflict() {
+    // emulate write conflict
+    Mockito.doThrow(new WriteConflict(new Throwable())).when(somethingService)
+        .handle(Mockito.any());
+
+    final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
+
+    final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
+    assertTrue(exception.getCause() instanceof WriteConflict);
   }
 
   private static final String hashPanEvent = "42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba";

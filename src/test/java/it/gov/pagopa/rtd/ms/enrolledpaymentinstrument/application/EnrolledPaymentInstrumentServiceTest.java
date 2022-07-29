@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
@@ -9,6 +10,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPa
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +30,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.messaging.MessageHandlingException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -153,5 +156,22 @@ class EnrolledPaymentInstrumentServiceTest {
         return false;
       }
     }));
+  }
+
+  @DisplayName("should thrown write conflict exception when save is conflicting")
+  @Test
+  void shouldThrowWriteConflictSaveConflicts() {
+    Mockito.doThrow(new WriteConflict(new Throwable())).when(repository)
+        .save(Mockito.any());
+
+    final var command = new EnrollPaymentInstrumentCommand(
+        TEST_HASH_PAN.getValue(),
+        SourceApp.ID_PAY.name(),
+        Operation.CREATE,
+        null,
+        null
+    );
+
+    assertThrows(WriteConflict.class, () -> service.handle(command));
   }
 }
