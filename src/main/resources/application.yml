@@ -32,8 +32,8 @@ spring:
           content-type: application/json
           binder: kafka-binder
           producer:
-            partitionKeyExpression: headers.partitionKey
-            partitionCount: 1
+            partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
+            partitionCount: ${KAFKA_PARTITION_COUNT:1}
 
       binders:
         kafka-binder:
@@ -45,10 +45,10 @@ spring:
                 brokers: ${KAFKA_BROKER:localhost:29095}
                 configuration:
                   max.poll.records: 1
-#                  sasl:
-#                    jaas.config: ${KAFKA_SASL_JAAS_CONFIG_CONSUMER_ENROLLED_PI}
-#                    mechanism: PLAIN
-#                  security.protocol: SASL_SSL
+                  sasl:
+                    jaas.config: ${KAFKA_SASL_JAAS_CONFIG_CONSUMER_ENROLLED_PI}
+                    mechanism: PLAIN
+                  security.protocol: SASL_SSL
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
