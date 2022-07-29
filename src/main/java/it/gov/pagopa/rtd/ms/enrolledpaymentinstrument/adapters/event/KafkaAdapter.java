@@ -21,76 +21,50 @@ import org.springframework.util.backoff.FixedBackOff;
 @Configuration
 class KafkaAdapter {
 
-    private final EnrolledPaymentInstrumentService paymentInstrumentService;
+  private final EnrolledPaymentInstrumentService paymentInstrumentService;
 
-    public KafkaAdapter(EnrolledPaymentInstrumentService paymentInstrumentService) {
-        this.paymentInstrumentService = paymentInstrumentService;
+  public KafkaAdapter(EnrolledPaymentInstrumentService paymentInstrumentService) {
+    this.paymentInstrumentService = paymentInstrumentService;
+  }
+
+  @KafkaListener(topics = "${spring.kafka.consumer.topic}")
+  void enrolledPaymentInstrumentConsumer(@Payload EnrolledPaymentInstrumentEvent payload) {
+    try {
+      log.info("Received enroll event {}", payload);
+      handleEvent(payload);
+    } catch (WriteConflict conflict) {
+      log.error("Write conflict, now retry");
+      throw conflict;
+    } catch (Throwable t) {
+      log.error("Unexpected error, ignoring event", t);
     }
+  }
 
-    @KafkaListener(topics = "${spring.kafka.consumer.topic}")
-    void enrolledPaymentInstrumentConsumer(@Payload String payload) {
-        try {
-            final var event = new ObjectMapper().readValue(payload, EnrolledPaymentInstrumentEvent.class);
-            handleEvent(event);
-        } catch (WriteConflict conflict) {
-            log.error("Write conflict, now retry");
-            throw conflict;
-        } catch (JsonProcessingException e) {
-            log.error("Parse error ignoring event", e);
-        } catch (Throwable t) {
-            log.error("Unexpected error, ignoring event", t);
-        }
-    }
+  private void handleEvent(EnrolledPaymentInstrumentEvent event) {
+    paymentInstrumentService.handle(new EnrollPaymentInstrumentCommand(
+        event.getHashPan(),
+        event.getApp(),
+        Operation.valueOf(event.getOperation().toUpperCase()),
+        event.getIssuer(),
+        event.getNetwork()
+    ));
+  }
 
-    private void handleEvent(EnrolledPaymentInstrumentEvent event) {
-        paymentInstrumentService.handle(new EnrollPaymentInstrumentCommand(
-                event.getHashPan(),
-                event.getApp(),
-                Operation.valueOf(event.getOperation().toUpperCase()),
-                event.getIssuer(),
-                event.getNetwork()
-        ));
-    }
+  @Bean
+  ConcurrentKafkaListenerContainerFactory<?, ?> kafkaListenerContainerFactory(
+      final ConsumerFactory<String, String> consumerFactory) {
 
-    @Bean
-    ConcurrentKafkaListenerContainerFactory<?, ?> kafkaListenerContainerFactory(
-            final ConsumerFactory<String, String> consumerFactory) {
+    final var errorHandler = new DefaultErrorHandler(
+        new FixedBackOff(500, Long.MAX_VALUE)
+    );
+    errorHandler.setAckAfterHandle(false);
+    errorHandler.defaultFalse();
+    errorHandler.addRetryableExceptions(WriteConflict.class);
 
-        final var errorHandler = new DefaultErrorHandler(
-                new FixedBackOff(500, Long.MAX_VALUE)
-        );
-        errorHandler.setAckAfterHandle(false);
-
-        final ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
-        factory.setConsumerFactory(consumerFactory);
-        factory.setCommonErrorHandler(errorHandler);
-        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
-        return factory;
-    }
-
-    // spring boot stream
-//  @SneakyThrows
-//  @Bean
-//  Consumer<Message<EnrolledPaymentInstrumentEvent>> enrolledPaymentInstrumentConsumer() {
-//    return message -> {
-//      log.info("Received message {}", message);
-//      try {
-//        throw new WriteConflict(new Throwable());
-//        //log.info("ooo {}", "ciao");
-//      } catch (WriteConflict conflict) {
-//          log.error("Write conflict, throws to retry");
-//          throw conflict;
-//      }
-////      final var payload = message.getPayload();
-////      final var result = paymentInstrumentService.handle(
-////          new EnrollPaymentInstrumentCommand(
-////              payload.getHashPan(),
-////              payload.getApp(),
-////              Operation.valueOf(payload.getOperation().toUpperCase()),
-////              payload.getIssuer(),
-////              payload.getNetwork()
-////          )
-////      );
-////      log.info("Message processed {}", result);
-//    };
+    final ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
+    factory.setConsumerFactory(consumerFactory);
+    factory.setCommonErrorHandler(errorHandler);
+    factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
+    return factory;
+  }
 }

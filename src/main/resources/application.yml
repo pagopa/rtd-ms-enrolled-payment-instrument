@@ -17,13 +17,14 @@ spring:
       topic: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
       bootstrap-servers: ${KAFKA_BROKER:localhost:29095}
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       group-id: rtd-enrolled-payment-instrument-consumer-group
       enable-auto-commit: false
       isolation-level: read_committed
       auto-offset-reset: earliest
       properties:
-        max.poll.interval.ms: 4000
+        max.poll.interval.ms: 10000
+        spring.json.value.default.type: it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event.EnrolledPaymentInstrumentEvent
       max-poll-records: 1
 
     producer:
