@@ -8,7 +8,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +17,11 @@ public class EnrolledPaymentInstrumentService {
 
   private boolean delay = true;
 
-  @Autowired
-  private EnrolledPaymentInstrumentRepository repository;
+  private final EnrolledPaymentInstrumentRepository repository;
+
+  public EnrolledPaymentInstrumentService(EnrolledPaymentInstrumentRepository repository) {
+    this.repository = repository;
+  }
 
   @Transactional
   public boolean handle(EnrollPaymentInstrumentCommand command) {

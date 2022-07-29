@@ -1,27 +1,30 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class EnrolledPaymentInstrumentEvent {
 
   @NotNull
   @NotBlank
-  private final String hashPan;
+  private String hashPan;
 
   @NotNull
   @NotBlank
-  private final String app;
+  private String app;
 
   @NotNull
   @NotBlank
-  private final String operation;
+  private String operation;
 
-  private final String issuer;
+  private String issuer;
 
-  private final String network;
+  private String network;
 }

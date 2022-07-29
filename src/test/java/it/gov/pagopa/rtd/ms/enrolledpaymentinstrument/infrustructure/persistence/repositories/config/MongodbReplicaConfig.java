@@ -1,15 +1,16 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence.repositories.config;
 
 import com.mongodb.client.MongoClient;
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Profile;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+
+@TestConfiguration
 @Profile("mongo-integration-test")
-@Configuration
 @Slf4j
 public class MongodbReplicaConfig {
 
