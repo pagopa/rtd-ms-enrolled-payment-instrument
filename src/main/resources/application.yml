@@ -12,75 +12,43 @@ spring:
       uri: ${MONGODB_CONNECTION_URI:mongodb://localhost:27017}
       database: ${MONGODB_NAME:rtd}
 
-  kafka:
-    consumer:
-      topic: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
-      bootstrap-servers: ${KAFKA_BROKER:localhost:29095}
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      group-id: rtd-enrolled-payment-instrument-consumer-group
-      enable-auto-commit: false
-      isolation-level: read_committed
-      auto-offset-reset: earliest
-      properties:
-        max.poll.interval.ms: 10000
-        spring.json.value.default.type: it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event.EnrolledPaymentInstrumentEvent
-      max-poll-records: 1
+  cloud:
+    stream:
+      bindings:
+        enrolledPaymentInstrumentConsumer-in-0:
+          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
+          group: rtd-enrolled-payment-instrument-consumer-group
+          content-type: application/json
+          binder: kafka-binder
+          consumer: # configure consumer to retry to process and event when WriteConflict happens
+            defaultRetryable: false
+            autoCommitOnError: false
+            autoCommitOffset: false
+            retryableExceptions:
+              it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict: true
 
-    producer:
-      bootstrap-servers: ${KAFKA_BROKER:localhost:29095}
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        enrolledPaymentInstrumentProducer-out-0:
+          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
+          content-type: application/json
+          binder: kafka-binder
+          producer:
+            partitionKeyExpression: headers.partitionKey
+            partitionCount: 1
 
-    listener:
-      ack-mode: record
-
-#  cloud:
-#    stream:
-#      bindings:
-#        enrolledPaymentInstrumentConsumer-in-0:
-#          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
-#          group: rtd-enrolled-payment-instrument-consumer-group
-#          content-type: application/json
-#          binder: kafka-binder
-#          consumer: # configure consumer to retry to process and event when WriteConflict happens
-#            defaultRetryable: false
-#            autoCommitOnError: false
-#            autoCommitOffset: true
-#            ackEachRecord: true
-#            retryableExceptions:
-#              it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict: true
-#
-#        enrolledPaymentInstrumentProducer-out-0:
-#          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
-#          content-type: application/json
-#          binder: kafka-binder
-##          producer:
-##            partitionKeyExpression: 0 % 2
-##            partitionSelectorExpression: 0 % 2
-##            partitionCount: 2
-#
-#      binders:
-#        kafka-binder:
-#          type: kafka
-#          environment:
-#            spring.cloud.stream.kafka:
-#              binder:
-#                auto-create-topics: false
-#                brokers: ${KAFKA_BROKER:localhost:29095}
-#                configuration:
-#                  max.poll.interval.ms: 4000
-#                  max.poll.records: 1
-#                  isolation-level: read_committed
-#                  enable-auto-commit: false
-#                  auto-offset-reset: earliest
-##                  sasl:
-##                    jaas.config: ${KAFKA_SASL_JAAS_CONFIG_CONSUMER_ENROLLED_PI}
-##                    mechanism: PLAIN
-##                  security.protocol: SASL_SSL
-#                consumerProperties:
-#                  key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#                  value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#                producerProperties:
-#                  key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#                  value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      binders:
+        kafka-binder:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka:
+              binder:
+                auto-create-topics: false
+                brokers: ${KAFKA_BROKER:localhost:29095}
+                configuration:
+                  max.poll.records: 1
+#                  sasl:
+#                    jaas.config: ${KAFKA_SASL_JAAS_CONFIG_CONSUMER_ENROLLED_PI}
+#                    mechanism: PLAIN
+#                  security.protocol: SASL_SSL
+                consumerProperties:
+                  key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                  value.deserializer: org.apache.kafka.common.serialization.StringDeserializer

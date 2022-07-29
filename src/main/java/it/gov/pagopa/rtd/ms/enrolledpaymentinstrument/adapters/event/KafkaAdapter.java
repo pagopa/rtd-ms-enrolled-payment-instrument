@@ -1,25 +1,28 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
+import java.util.Optional;
+import java.util.function.Consumer;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.AbstractMessageListenerContainer;
+import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
 import org.springframework.util.backoff.FixedBackOff;
 
 @Slf4j
 @Configuration
 class KafkaAdapter {
+
+  private static final int BACKOFF_TIMEOUT_MS = 500;
 
   private final EnrolledPaymentInstrumentService paymentInstrumentService;
 
@@ -27,17 +30,20 @@ class KafkaAdapter {
     this.paymentInstrumentService = paymentInstrumentService;
   }
 
-  @KafkaListener(topics = "${spring.kafka.consumer.topic}")
-  void enrolledPaymentInstrumentConsumer(@Payload EnrolledPaymentInstrumentEvent payload) {
-    try {
-      log.info("Received enroll event {}", payload);
-      handleEvent(payload);
-    } catch (WriteConflict conflict) {
-      log.error("Write conflict, now retry");
-      throw conflict;
-    } catch (Throwable t) {
-      log.error("Unexpected error, ignoring event", t);
-    }
+  @SneakyThrows
+  @Bean
+  Consumer<Message<EnrolledPaymentInstrumentEvent>> enrolledPaymentInstrumentConsumer() {
+    return message -> {
+      final var partitionId = Optional.ofNullable(message.getHeaders().get(
+          KafkaHeaders.PARTITION_ID)).orElse("");
+      log.info("Received message {} on partition {}", message, partitionId);
+      try {
+        handleEvent(message.getPayload());
+      } catch (WriteConflict conflict) {
+        log.error("Write conflict, throws to retry");
+        throw conflict;
+      }
+    };
   }
 
   private void handleEvent(EnrolledPaymentInstrumentEvent event) {
@@ -51,20 +57,17 @@ class KafkaAdapter {
   }
 
   @Bean
-  ConcurrentKafkaListenerContainerFactory<?, ?> kafkaListenerContainerFactory(
-      final ConsumerFactory<String, String> consumerFactory) {
+  ListenerContainerCustomizer<AbstractMessageListenerContainer<?, ?>> listenerCustomization() {
+    return (container, dest, group) -> {
+      final var errorHandler = new DefaultErrorHandler(
+          new FixedBackOff(BACKOFF_TIMEOUT_MS, Long.MAX_VALUE)
+      );
+      errorHandler.setAckAfterHandle(false);
+      errorHandler.defaultFalse();
+      errorHandler.addRetryableExceptions(WriteConflict.class);
 
-    final var errorHandler = new DefaultErrorHandler(
-        new FixedBackOff(500, Long.MAX_VALUE)
-    );
-    errorHandler.setAckAfterHandle(false);
-    errorHandler.defaultFalse();
-    errorHandler.addRetryableExceptions(WriteConflict.class);
-
-    final ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
-    factory.setConsumerFactory(consumerFactory);
-    factory.setCommonErrorHandler(errorHandler);
-    factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
-    return factory;
+      container.getContainerProperties().setAckMode(AckMode.RECORD);
+      container.setCommonErrorHandler(errorHandler);
+    };
   }
 }
