@@ -19,7 +19,4 @@ public interface EnrolledPaymentInstrumentRestController {
   void sendEnrolledPaymentEvent(@RequestBody EnrolledPaymentInstrumentEvent paymentInstrumentEvent)
       throws JsonProcessingException;
 
-  @PutMapping(value = "/send-direct")
-  @ResponseStatus(HttpStatus.OK)
-  void sendEnrolledPaymentEventDirect(@RequestBody EnrolledPaymentInstrumentEvent paymentInstrumentEvent);
 }
