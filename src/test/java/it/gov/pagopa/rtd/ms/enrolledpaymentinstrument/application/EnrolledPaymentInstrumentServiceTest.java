@@ -64,9 +64,8 @@ class EnrolledPaymentInstrumentServiceTest {
         null,
         null
     );
-    final var result = service.handle(command);
 
-    assertTrue(result);
+    service.handle(command);
 
     Mockito.verify(repository).save(argument.capture());
     assertEquals(TEST_HASH_PAN, argument.getValue().getHashPan());
@@ -85,7 +84,7 @@ class EnrolledPaymentInstrumentServiceTest {
         null
     )).collect(Collectors.toList());
 
-    commands.forEach(command -> assertTrue(service.handle(command)));
+    commands.forEach(command -> service.handle(command));
     Mockito.verify(repository, Mockito.times(3)).save(argument.capture());
 
     assertEquals(TEST_HASH_PAN, argument.getValue().getHashPan());
@@ -107,7 +106,7 @@ class EnrolledPaymentInstrumentServiceTest {
 
     Mockito.when(repository.findByHashPan(Mockito.any())).thenReturn(Optional.of(fullEnrolledInstrument));
 
-    assertTrue(service.handle(command));
+    service.handle(command);
     Mockito.verify(repository).save(argument.capture());
 
     assertEquals(TEST_HASH_PAN, argument.getValue().getHashPan());
@@ -146,6 +145,13 @@ class EnrolledPaymentInstrumentServiceTest {
         new EnrollPaymentInstrumentCommand(null, null, Operation.CREATE, null, null)
     );
 
-    assertTrue(invalidCommands.stream().noneMatch(command -> service.handle(command)));
+    assertTrue(invalidCommands.stream().noneMatch(command -> {
+      try {
+        service.handle(command);
+        return true;
+      } catch (Throwable t) {
+        return false;
+      }
+    }));
   }
 }

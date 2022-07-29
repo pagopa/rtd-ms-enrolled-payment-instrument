@@ -9,6 +9,8 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.MongoConfig;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence.repositories.config.EmbeddedConfigMondodb;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence.repositories.config.MongodbReplicaConfig;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,7 +29,9 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 @SpringBootTest
 @ActiveProfiles("mongo-integration-test")
@@ -35,7 +39,7 @@ import org.springframework.test.context.TestPropertySource;
     "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
 @Import(value = MongoConfig.class)
 @AutoConfigureBefore(EmbeddedMongoAutoConfiguration.class)
-@EnableConfigurationProperties({MongoProperties.class, EmbeddedMongoProperties.class})
+@EnableConfigurationProperties({ MongoProperties.class, EmbeddedMongoProperties.class })
 public class EnrolledPaymentInstrumentRepositoryTest {
 
   private static final HashPan TEST_HASH_PAN = HashPan.create(
@@ -70,52 +74,5 @@ public class EnrolledPaymentInstrumentRepositoryTest {
     repository.delete(instrument);
     assertTrue(repository.findByHashPan(TEST_HASH_PAN.getValue()).isEmpty());
   }
-/*
-  @Test
-  void concurrencyWriteMustThrowWriteConflict() {
-    final var instruments = Arrays.stream(SourceApp.values()).map(app ->
-        EnrolledPaymentInstrument.create(TEST_HASH_PAN, app, null, null)
-    ).collect(Collectors.toList());
 
-    final var futures = instruments.stream().map(instrument ->
-        executor.submit(() -> saveTransactionally(instrument))
-    );
-
-    final var writeConflicts = futures.map(future -> {
-      try {
-        future.get(5, TimeUnit.SECONDS);
-        return false;
-      } catch (WriteConflict e) {
-        e.printStackTrace();
-        return true;
-      } catch (Exception e) {
-        e.printStackTrace();
-        return false;
-      }
-    }).collect(Collectors.toList());
-
-    final var aa = repository.findByHashPan(TEST_HASH_PAN.getValue());
-    assertTrue(true);
-    //assertEquals(instruments.size() - 1, writeConflicts.stream().filter(i -> i).count());
-  }
-
-  @Transactional
-  private void saveTransactionally(EnrolledPaymentInstrument instrument) {
-    delayConditionally(2000, () -> instrument.getEnabledApps().contains(SourceApp.ID_PAY));
-    repository.save(instrument);
-  }
-
-  private void delayConditionally(int delay, Supplier<Boolean> supplier) {
-    if (supplier.get()) {
-      delay(delay);
-    }
-  }
-
-  private void delay(int delay) {
-    try {
-      Thread.sleep(delay);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-  }*/
 }

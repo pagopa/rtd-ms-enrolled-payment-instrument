@@ -39,6 +39,7 @@ import org.springframework.test.context.TestPropertySource;
 @Import(value = { KafkaAdapter.class, KafkaAdapterTest.MockConfiguration.class })
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 class KafkaAdapterTest {
+
   @Autowired
   private StreamBridge stream;
 
