@@ -9,7 +9,7 @@ spring:
 
   data:
     mongodb:
-      uri: ${MONGODB_CONNECTION_URI}
+      uri: ${MONGODB_CONNECTION_URI:mongodb://localhost:27017}
       database: ${MONGODB_NAME:rtd}
 
   cloud:
@@ -20,6 +20,20 @@ spring:
           group: rtd-enrolled-payment-instrument-consumer-group
           content-type: application/json
           binder: kafka-binder
+          consumer: # configure consumer to retry to process and event when WriteConflict happens
+            defaultRetryable: false
+            autoCommitOnError: false
+            autoCommitOffset: false
+            retryableExceptions:
+              it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict: true
+
+        enrolledPaymentInstrumentProducer-out-0:
+          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
+          content-type: application/json
+          binder: kafka-binder
+          producer:
+            partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
+            partitionCount: ${KAFKA_PARTITION_COUNT:1}
 
       binders:
         kafka-binder:
@@ -30,6 +44,7 @@ spring:
                 auto-create-topics: false
                 brokers: ${KAFKA_BROKER:localhost:29095}
                 configuration:
+                  max.poll.records: 1
                   sasl:
                     jaas.config: ${KAFKA_SASL_JAAS_CONFIG_CONSUMER_ENROLLED_PI}
                     mechanism: PLAIN

@@ -1,22 +1,11 @@
 version: "3.9"
 services:
-  enrolled-payment-instrument:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - MONGODB_CONNECTION_URI=mongodb://root:root@db:27017/
-      - MONGODB_NAME=rtd
-      - KAFKA_BROKER=kafka:29095
-    networks:
-      - internal-net
-    depends_on:
-      - kafka
-      - db
 
   # external services
   db:
-    image: 'mongo:latest'
+    build:
+      context: .
+      dockerfile: mongo-replica.dockerfile
     container_name: db
     ports:
       - "27017:27017"
@@ -26,7 +15,6 @@ services:
       - MONGO_INITDB_DATABASE=rtd
     networks:
       - internal-net
-
   zookeeper:
     image: confluentinc/cp-zookeeper
     container_name: zookeeper
@@ -45,7 +33,7 @@ services:
       - "29095:29095"
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://kafka:29095
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_HOST://localhost:29095
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_BROKER_ID: 1

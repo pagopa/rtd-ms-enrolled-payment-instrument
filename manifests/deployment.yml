@@ -23,6 +23,8 @@ spec:
                 name: rtd-enrolled-pi-events
             - secretRef:
                 name: mongo-credentials
+            - secretRef:
+                name: application-insights
             - configMapRef:
                 name: rtd-enrolledpaymentinstrument
           resources:
@@ -32,3 +34,31 @@ spec:
             requests:
               cpu: 50m
               memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 20

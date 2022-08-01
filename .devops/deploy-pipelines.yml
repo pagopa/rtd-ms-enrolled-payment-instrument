@@ -35,21 +35,21 @@ variables:
     containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(DEV_AGENT_POOL)
 
-#  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
-#    environment: 'UAT'
-#    isToDeploy: true
-#    dockerRegistryServiceConnection: '$(UAT_CONTAINER_REGISTRY_SERVICE_CONN)'
-#    kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
-#    containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
-#    selfHostedAgentPool: $(UAT_AGENT_POOL)
-#
-#  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-#    environment: 'PROD'
-#    isToDeploy: true
-#    dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
-#    kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
-#    containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
-#    selfHostedAgentPool: $(PROD_AGENT_POOL)
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
+    environment: 'UAT'
+    isToDeploy: true
+    dockerRegistryServiceConnection: '$(UAT_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(UAT_AGENT_POOL)
+
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    environment: 'PROD'
+    isToDeploy: true
+    dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(PROD_AGENT_POOL)
 
 stages:
   - stage: Release
