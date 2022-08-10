@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
