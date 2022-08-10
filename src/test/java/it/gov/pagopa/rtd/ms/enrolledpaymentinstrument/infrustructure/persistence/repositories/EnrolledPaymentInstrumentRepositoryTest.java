@@ -40,15 +40,13 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 @Import(value = MongoConfig.class)
 @AutoConfigureBefore(EmbeddedMongoAutoConfiguration.class)
 @EnableConfigurationProperties({ MongoProperties.class, EmbeddedMongoProperties.class })
-public class EnrolledPaymentInstrumentRepositoryTest {
+class EnrolledPaymentInstrumentRepositoryTest {
 
   private static final HashPan TEST_HASH_PAN = HashPan.create(
       "4971175b7c192c7eda18d8c4a1fbb30372333445c5b6c5ef738b333a2729a266");
 
   @Resource
   private EnrolledPaymentInstrumentRepositoryImpl repository;
-
-  private final ExecutorService executor = Executors.newFixedThreadPool(3);
 
   @BeforeAll
   static void setupAll(@Autowired MongoTemplate mongoTemplate) {

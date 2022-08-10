@@ -15,15 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class EnrolledPaymentInstrumentRestControllerImpl implements
     EnrolledPaymentInstrumentRestController {
 
-  private final EnrolledPaymentInstrumentService enrolledPaymentInstrumentService;
   private final StreamBridge streamBridge;
 
   @Autowired
   EnrolledPaymentInstrumentRestControllerImpl(
-      EnrolledPaymentInstrumentService enrolledPaymentInstrumentService,
       StreamBridge streamBridge
   ) {
-    this.enrolledPaymentInstrumentService = enrolledPaymentInstrumentService;
     this.streamBridge = streamBridge;
   }
 

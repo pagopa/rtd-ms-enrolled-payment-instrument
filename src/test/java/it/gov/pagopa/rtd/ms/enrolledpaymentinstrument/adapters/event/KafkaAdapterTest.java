@@ -12,7 +12,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -48,7 +47,7 @@ class KafkaAdapterTest {
   private StreamBridge stream;
 
   @MockBean
-  EnrolledPaymentInstrumentService somethingService;
+  EnrolledPaymentInstrumentService paymentInstrumentService;
 
   @Test
   void shouldCreateApplicationCommandBasedOnEvent() {
@@ -57,7 +56,7 @@ class KafkaAdapterTest {
     final var isSent = stream.send(BINDING_NAME, message);
 
     assertTrue(isSent);
-    Mockito.verify(somethingService).handle(captor.capture());
+    Mockito.verify(paymentInstrumentService).handle(captor.capture());
 
     assertEquals(hashPanEvent, captor.getValue().getHashPan());
     assertEquals(sourceAppEvent, captor.getValue().getSourceApp());
@@ -76,7 +75,7 @@ class KafkaAdapterTest {
   @Test
   void shouldFailWhenWriteConflict() {
     // emulate write conflict
-    Mockito.doThrow(new WriteConflict(new Throwable())).when(somethingService)
+    Mockito.doThrow(new WriteConflict(new Throwable())).when(paymentInstrumentService)
         .handle(Mockito.any());
 
     final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
