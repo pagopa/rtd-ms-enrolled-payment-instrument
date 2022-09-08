@@ -37,12 +37,8 @@ class KafkaAdapter {
       final var partitionId = Optional.ofNullable(message.getHeaders().get(
           KafkaHeaders.PARTITION_ID)).orElse("");
       log.info("Received message {} on partition {}", message, partitionId);
-      try {
-        handleEvent(message.getPayload());
-      } catch (WriteConflict conflict) {
-        log.error("Write conflict, throws to retry");
-        throw conflict;
-      }
+      handleEvent(message.getPayload());
+      log.info("Message successfully handled");
     };
   }
 
