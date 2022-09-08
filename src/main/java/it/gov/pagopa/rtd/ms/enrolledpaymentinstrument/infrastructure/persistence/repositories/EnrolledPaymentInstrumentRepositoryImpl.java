@@ -6,17 +6,19 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.Enroll
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.model.EnrolledPaymentInstrumentEntity;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.mapper.EnrolledPaymentInstrumentMapper;
-import java.util.Optional;
-import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.data.mongodb.core.FindAndReplaceOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
+import java.util.Optional;
+import java.util.function.Supplier;
+
 @AllArgsConstructor
+@Slf4j
 public class EnrolledPaymentInstrumentRepositoryImpl implements
     EnrolledPaymentInstrumentRepository {
 
@@ -80,11 +82,14 @@ public class EnrolledPaymentInstrumentRepositoryImpl implements
       final var id = function.get();
       return Optional.ofNullable(id);
     } catch (UncategorizedMongoDbException uncategorizedMongoDbException) {
+      log.error("Error during write on mongodb", uncategorizedMongoDbException);
       if (uncategorizedMongoDbException.getCause() instanceof MongoCommandException
           && ((MongoCommandException) uncategorizedMongoDbException.getCause()).getErrorCode()
           == CONFLICT_WRITE_CODE) {
         throw new WriteConflict(uncategorizedMongoDbException);
       }
+    } catch (Exception  exception) {
+      log.error("Error during write on mongodb", exception);
     }
     return Optional.empty();
   }
