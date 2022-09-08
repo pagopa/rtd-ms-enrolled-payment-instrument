@@ -1,0 +1,157 @@
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - uat
+  paths:
+    include:
+      - src/*
+      - pom.xml
+
+pr: none
+
+resources:
+  - repo: self
+
+variables:
+
+  vmImageNameDefault: 'ubuntu-latest'
+
+  imageRepository: '$(K8S_IMAGE_REPOSITORY_NAME)'
+  deployNamespace: '$(DEPLOY_NAMESPACE)'
+  settingsXmlROsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
+  settingsXmlSecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
+
+  # If the branch is develop or a feature branch starting with CEN, deploy in DEV environment
+  ${{ if or(startsWith(variables['Build.SourceBranch'], 'refs/heads/develop'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/TAE'), startsWith(variables['Build.SourceBranch'], 'refs/heads/RTD')) ) }}:
+    environment: 'DEV'
+    isToDeploy: true
+    dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(DEV_AGENT_POOL)
+
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
+    environment: 'UAT'
+    isToDeploy: true
+    dockerRegistryServiceConnection: '$(UAT_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(UAT_AGENT_POOL)
+
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+    environment: 'PROD'
+    isToDeploy: true
+    dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(PROD_AGENT_POOL)
+
+stages:
+  - stage: Release
+    displayName: Release
+    condition: eq(variables.isToDeploy, true)
+    jobs:
+      - job: POM
+        displayName: POM
+        pool:
+          vmImage: $(vmImageNameDefault)
+        steps:
+          - task: Bash@3
+            displayName: Get POM version
+            name: getpomversion
+            condition: and(succeeded(), eq(variables.isToDeploy, true))
+            inputs:
+              targetType: 'inline'
+              script: |
+                version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+                echo "##vso[task.setvariable variable=outputpomversion;isOutput=true]$version"
+              failOnStderr: true
+  - stage: 'Build'
+    displayName: 'Build_and_Publish_to_${{ variables.environment }}'
+    dependsOn: Release
+    condition: and(succeeded(), eq(variables.isToDeploy, true))
+    variables:
+      pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
+    jobs:
+      - job: Build
+        displayName: Build
+        pool:
+          vmImage: $(vmImageNameDefault)
+        steps:
+          - task: Docker@2
+            displayName: 'Publish_image_to_${{ variables.environment }}'
+            condition: succeeded()
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)'
+              command: 'buildAndPush'
+              tags: |
+                $(Build.BuildId)
+                latest
+                $(pomversion)
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Artifact manifests'
+            condition: and(succeeded(), eq(variables.isToDeploy, true))
+            inputs:
+              targetPath: '$(Build.Repository.LocalPath)/manifests'
+              artifact: 'manifests'
+              publishLocation: 'pipeline'
+
+  - stage: 'Deploy'
+    displayName: 'Deploy to ${{ variables.environment }} K8S'
+    dependsOn: [ 'Release', 'Build' ]
+    condition: and(succeeded(), eq(variables.isToDeploy, true))
+    variables:
+      pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
+    jobs:
+      - deployment: 'Deploy_to_${{ variables.environment }}'
+        displayName: 'Deploy to ${{ variables.environment }} K8S'
+        pool:
+          name: $(selfHostedAgentPool)
+        environment: '$(environment)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: none
+                - task: DownloadPipelineArtifact@2
+                  inputs:
+                    buildType: 'current'
+                    artifactName: 'manifests'
+                    targetPath: '$(Pipeline.Workspace)/manifests'
+
+                - task: Bash@3
+                  displayName: Generate Kustomization
+                  name: generateKustomization
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      cd $(Pipeline.Workspace)/manifests
+                      rm -rf kustomization.*
+                      curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+                      ./kustomize create --autodetect
+                      ./kustomize edit set image rtd-ms-enrolledpaymentinstrument=$(containerRegistry)/$(imageRepository):latest
+                      rm -rf kustomize
+                      cd $(Pipeline.Workspace)
+                    failOnStderr: true
+                - task: KubernetesManifest@0
+                  displayName: Customize Manifest
+                  name: customizeManifest
+                  inputs:
+                    action: bake
+                    renderType: kustomize
+                    kustomizationPath: $(Pipeline.Workspace)/manifests
+                - task: KubernetesManifest@0
+                  displayName: Deploy to Kubernetes Cluster
+                  inputs:
+                    action: deploy
+                    rolloutStatusTimeout: 180
+                    kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
+                    namespace: '$(deployNamespace)'
+                    manifests: $(customizeManifest.manifestsBundle)
+                    containers: "${variables.containerRegistry}/${variables.imageRepository}:${variables.pomversion}"

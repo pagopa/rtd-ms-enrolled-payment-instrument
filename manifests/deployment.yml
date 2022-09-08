@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtd-ms-enrolledpaymentinstrument
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rtd-ms-enrolledpaymentinstrument
+  template:
+    metadata:
+      labels:
+        app: rtd-ms-enrolledpaymentinstrument
+    spec:
+      containers:
+        - name: rtd-ms-enrolledpaymentinstrument
+          image: rtd-ms-enrolledpaymentinstrument
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: rtd-enrolled-pi-events
+            - secretRef:
+                name: mongo-credentials
+            - secretRef:
+                name: application-insights
+            - configMapRef:
+                name: rtd-enrolledpaymentinstrument
+          resources:
+            limits:
+              cpu: 500m
+              memory: 4Gi
+            requests:
+              cpu: 50m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 20
