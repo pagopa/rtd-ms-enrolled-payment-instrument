@@ -44,7 +44,7 @@ public class EnrolledPaymentInstrumentService {
       }
 
     } catch (WriteConflict writeConflict) {
-      log.error("Concurrency conflict", writeConflict);
+      log.error("A write conflict happens", writeConflict);
       throw writeConflict;
     }
   }
