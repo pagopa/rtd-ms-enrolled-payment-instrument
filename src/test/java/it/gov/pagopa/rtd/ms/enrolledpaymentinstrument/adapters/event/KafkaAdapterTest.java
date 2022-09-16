@@ -1,14 +1,9 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -28,6 +23,8 @@ import org.springframework.messaging.MessageHandlingException;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -70,18 +67,6 @@ class KafkaAdapterTest {
     final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
 
     assertTrue(exception.getCause() instanceof IllegalArgumentException);
-  }
-
-  @Test
-  void shouldFailWhenWriteConflict() {
-    // emulate write conflict
-    Mockito.doThrow(new WriteConflict(new Throwable())).when(paymentInstrumentService)
-        .handle(Mockito.any());
-
-    final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
-
-    final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
-    assertTrue(exception.getCause() instanceof WriteConflict);
   }
 
   private static final String hashPanEvent = "42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba";

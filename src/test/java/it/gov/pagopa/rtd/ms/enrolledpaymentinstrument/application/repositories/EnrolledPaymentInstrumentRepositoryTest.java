@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence.repositories;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.repositories;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,13 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.MongoConfig;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence.repositories.config.EmbeddedConfigMondodb;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence.repositories.config.MongodbReplicaConfig;
+
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.annotation.Resource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -24,20 +20,16 @@ import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoCo
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 @SpringBootTest
 @ActiveProfiles("mongo-integration-test")
 @TestPropertySource(properties = {
     "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@Import(value = MongoConfig.class)
 @AutoConfigureBefore(EmbeddedMongoAutoConfiguration.class)
 @EnableConfigurationProperties({ MongoProperties.class, EmbeddedMongoProperties.class })
 class EnrolledPaymentInstrumentRepositoryTest {

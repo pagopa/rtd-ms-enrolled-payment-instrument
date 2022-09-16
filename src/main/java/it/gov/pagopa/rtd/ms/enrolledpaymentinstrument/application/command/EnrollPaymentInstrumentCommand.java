@@ -18,6 +18,7 @@ public class EnrollPaymentInstrumentCommand {
   private final String sourceApp;
 
   @NotNull
+  @NotBlank
   private final Operation operation;
 
   private final String issuer;
