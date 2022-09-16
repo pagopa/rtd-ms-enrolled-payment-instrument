@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.repositories;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

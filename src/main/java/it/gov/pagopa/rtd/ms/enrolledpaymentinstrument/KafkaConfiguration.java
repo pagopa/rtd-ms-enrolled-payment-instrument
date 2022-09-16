@@ -4,11 +4,14 @@ import com.mongodb.MongoException;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.RecoverableDataAccessException;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 
+import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
@@ -25,13 +28,18 @@ public class KafkaConfiguration {
                 ConnectException.class,
                 UnknownHostException.class,
                 IOException.class,
-                MongoException.class
+                MongoException.class,
+                RecoverableDataAccessException.class,
+                TransientDataAccessException.class
         );
     }
 
     @Bean("fatalExceptions")
     Set<Class<? extends Exception>> kafkaFatalExceptions() {
-        return Set.of(IllegalArgumentException.class);
+        return Set.of(
+                IllegalArgumentException.class,
+                ConstraintViolationException.class
+        );
     }
 
     @Bean

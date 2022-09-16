@@ -7,11 +7,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 
-import javax.validation.Valid;
-import java.util.Optional;
+import javax.validation.Validator;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -26,17 +24,22 @@ class KafkaAdapter {
 
   @SneakyThrows
   @Bean
-  Consumer<Message<EnrolledPaymentInstrumentEvent>> enrolledPaymentInstrumentConsumer() {
+  Consumer<Message<EnrolledPaymentInstrumentEvent>> enrolledPaymentInstrumentConsumer(
+          Validator validator
+  ) {
     return message -> {
-      final var partitionId = Optional.ofNullable(message.getHeaders().get(
-          KafkaHeaders.PARTITION_ID)).orElse("");
-      log.info("Received message {} on partition {}", message, partitionId);
-      handleEvent(message.getPayload());
-      log.info("Message successfully handled");
+      log.info("Received message {}", message);
+      final var payload = message.getPayload();
+      if (validator.validate(payload).isEmpty()) {
+        handleEvent(payload);
+        log.info("Message successfully handled");
+      } else {
+        log.error("Malformed event {}", payload);
+      }
     };
   }
 
-  private void handleEvent(@Valid EnrolledPaymentInstrumentEvent event) {
+  private void handleEvent(EnrolledPaymentInstrumentEvent event) {
     paymentInstrumentService.handle(new EnrollPaymentInstrumentCommand(
         event.getHashPan(),
         event.getApp(),

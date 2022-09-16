@@ -15,6 +15,9 @@ spring:
   cloud:
     stream:
       bindings:
+        enrolledPaymentInstrumentProcessor-out-0:
+          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
+
         enrolledPaymentInstrumentConsumer-in-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           group: rtd-enrolled-payment-instrument-consumer-group

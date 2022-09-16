@@ -22,6 +22,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import javax.validation.ConstraintViolationException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -146,12 +147,11 @@ class EnrolledPaymentInstrumentServiceTest {
         new EnrollPaymentInstrumentCommand(null, null, Operation.CREATE, null, null)
     );
 
-    assertTrue(invalidCommands.stream().limit(1).noneMatch(command -> {
+    assertTrue(invalidCommands.stream().noneMatch(command -> {
       try {
         service.handle(command);
         return true;
-      } catch (Throwable t) {
-        t.printStackTrace();
+      } catch (ConstraintViolationException | IllegalArgumentException t) {
         return false;
       }
     }));

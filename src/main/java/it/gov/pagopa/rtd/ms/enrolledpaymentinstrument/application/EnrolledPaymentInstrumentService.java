@@ -8,9 +8,13 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.Valid;
 
 @Service
 @Slf4j
+@Validated
 public class EnrolledPaymentInstrumentService {
 
   private final EnrolledPaymentInstrumentRepository repository;
@@ -19,7 +23,7 @@ public class EnrolledPaymentInstrumentService {
     this.repository = repository;
   }
 
-  public void handle(EnrollPaymentInstrumentCommand command) {
+  public void handle(@Valid EnrollPaymentInstrumentCommand command) {
     final var hashPan = HashPan.create(command.getHashPan());
     final var sourceApp = SourceApp.valueOf(command.getSourceApp().toUpperCase());
 
