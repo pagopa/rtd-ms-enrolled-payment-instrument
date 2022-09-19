@@ -24,6 +24,8 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import javax.validation.ConstraintViolationException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -62,11 +64,24 @@ class KafkaAdapterTest {
 
   @Test
   void shouldFailToCreateCommandWithMalformedEvent() {
-    final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent.replace("CREATE", "123")).build();
+    final var message = MessageBuilder
+            .withPayload(enabledPaymentInstrumentEvent.replace("CREATE", "123"))
+            .build();
 
     final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
 
     assertTrue(exception.getCause() instanceof IllegalArgumentException);
+  }
+
+  @Test
+  void mustNotHandleEventWhenMissingMandatoryEventField() {
+    final var message = MessageBuilder
+            .withPayload(enabledPaymentInstrumentEvent.replace("CREATE", ""))
+            .build();
+
+    final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
+
+    assertTrue(exception.getCause() instanceof ConstraintViolationException);
   }
 
   private static final String hashPanEvent = "42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba";

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 
+import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 import java.util.function.Consumer;
 
@@ -30,11 +31,13 @@ class KafkaAdapter {
     return message -> {
       log.info("Received message {}", message);
       final var payload = message.getPayload();
-      if (validator.validate(payload).isEmpty()) {
+      final var violations = validator.validate(payload);
+      if (violations.isEmpty()) {
         handleEvent(payload);
         log.info("Message successfully handled");
       } else {
         log.error("Malformed event {}", payload);
+        throw new ConstraintViolationException(violations);
       }
     };
   }
