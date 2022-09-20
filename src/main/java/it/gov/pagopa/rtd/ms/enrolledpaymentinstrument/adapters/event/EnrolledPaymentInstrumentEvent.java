@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +7,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
 public class EnrolledPaymentInstrumentEvent {
 

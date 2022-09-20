@@ -13,8 +13,27 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=root
       - MONGO_INITDB_DATABASE=rtd
+    volumes:
+      - db1:/data/db
+#    depends_on:
+#      - db2
     networks:
       - internal-net
+  db2:
+    image: mongo:4.0
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    container_name: db2
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+      - MONGO_INITDB_DATABASE=rtd
+    volumes:
+      - db2:/data/db
+    networks:
+      - internal-net
+
   zookeeper:
     image: confluentinc/cp-zookeeper
     container_name: zookeeper
@@ -43,6 +62,10 @@ services:
       - internal-net
     depends_on:
       - zookeeper
+
+volumes:
+  db1:
+  db2:
 
 networks:
   internal-net:

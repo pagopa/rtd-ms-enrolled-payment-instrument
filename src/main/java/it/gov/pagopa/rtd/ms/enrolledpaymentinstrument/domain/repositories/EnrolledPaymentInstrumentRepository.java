@@ -6,7 +6,7 @@ import java.util.Optional;
 public interface EnrolledPaymentInstrumentRepository {
   Optional<EnrolledPaymentInstrument> findByHashPan(String id);
 
-  String save(EnrolledPaymentInstrument enrolledPaymentInstrument);
+  void save(EnrolledPaymentInstrument enrolledPaymentInstrument);
 
-  boolean delete(EnrolledPaymentInstrument enrolledPaymentInstrument);
+  void delete(EnrolledPaymentInstrument enrolledPaymentInstrument);
 }

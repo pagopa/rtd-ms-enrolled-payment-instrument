@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence.repositories.config;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.repositories.config;
 
 import com.mongodb.client.MongoClient;
 import javax.annotation.PostConstruct;
