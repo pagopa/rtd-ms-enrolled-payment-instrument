@@ -27,6 +27,8 @@ spec:
                 name: application-insights
             - configMapRef:
                 name: rtd-enrolledpaymentinstrument
+            - configMapRef:
+                name: rtd-producer-enrolledpaymentinstrument
           resources:
             limits:
               cpu: 500m

@@ -1,23 +1,12 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,9 +19,19 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.messaging.MessageHandlingException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+
+import javax.validation.ConstraintViolationException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest()
 @ActiveProfiles("test")
@@ -152,26 +151,9 @@ class EnrolledPaymentInstrumentServiceTest {
       try {
         service.handle(command);
         return true;
-      } catch (Throwable t) {
+      } catch (ConstraintViolationException | IllegalArgumentException t) {
         return false;
       }
     }));
-  }
-
-  @DisplayName("should thrown write conflict exception when save is conflicting")
-  @Test
-  void shouldThrowWriteConflictSaveConflicts() {
-    Mockito.doThrow(new WriteConflict(new Throwable())).when(repository)
-        .save(Mockito.any());
-
-    final var command = new EnrollPaymentInstrumentCommand(
-        TEST_HASH_PAN.getValue(),
-        SourceApp.ID_PAY.name(),
-        Operation.CREATE,
-        null,
-        null
-    );
-
-    assertThrows(WriteConflict.class, () -> service.handle(command));
   }
 }

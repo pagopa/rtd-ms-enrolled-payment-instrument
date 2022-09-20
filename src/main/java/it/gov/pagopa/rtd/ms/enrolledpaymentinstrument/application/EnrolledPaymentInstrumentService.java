@@ -6,13 +6,15 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPa
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.exception.WriteConflict;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
+
+import javax.validation.Valid;
 
 @Service
 @Slf4j
+@Validated
 public class EnrolledPaymentInstrumentService {
 
   private final EnrolledPaymentInstrumentRepository repository;
@@ -21,31 +23,24 @@ public class EnrolledPaymentInstrumentService {
     this.repository = repository;
   }
 
-  @Transactional
-  public void handle(EnrollPaymentInstrumentCommand command) {
-    try {
-      final var hashPan = HashPan.create(command.getHashPan());
-      final var sourceApp = SourceApp.valueOf(command.getSourceApp().toUpperCase());
+  public void handle(@Valid EnrollPaymentInstrumentCommand command) {
+    final var hashPan = HashPan.create(command.getHashPan());
+    final var sourceApp = SourceApp.valueOf(command.getSourceApp().toUpperCase());
 
-      final var paymentInstrument = repository.findByHashPan(hashPan.getValue())
-          .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp, command.getIssuer(),
-              command.getNetwork()));
+    final var paymentInstrument = repository.findByHashPan(hashPan.getValue())
+            .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp, command.getIssuer(),
+                    command.getNetwork()));
 
-      if (command.getOperation() == Operation.CREATE) {
-        paymentInstrument.enableApp(sourceApp);
-      } else if (command.getOperation() == Operation.DELETE){
-        paymentInstrument.disableApp(sourceApp);
-      }
+    if (command.getOperation() == Operation.CREATE) {
+      paymentInstrument.enableApp(sourceApp);
+    } else if (command.getOperation() == Operation.DELETE){
+      paymentInstrument.disableApp(sourceApp);
+    }
 
-      if (paymentInstrument.isShouldBeDeleted()) {
-        repository.delete(paymentInstrument);
-      } else {
-        repository.save(paymentInstrument);
-      }
-
-    } catch (WriteConflict writeConflict) {
-      log.error("A write conflict happens", writeConflict);
-      throw writeConflict;
+    if (paymentInstrument.isShouldBeDeleted()) {
+      repository.delete(paymentInstrument);
+    } else {
+      repository.save(paymentInstrument);
     }
   }
 }
