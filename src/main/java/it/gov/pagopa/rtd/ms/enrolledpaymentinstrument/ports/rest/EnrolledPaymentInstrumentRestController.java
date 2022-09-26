@@ -2,12 +2,11 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.EnrolledPaymentInstrumentEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest.resource.EnrolledPaymentInstrumentDto;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 
 @RequestMapping("")
 @Validated
@@ -19,4 +18,7 @@ public interface EnrolledPaymentInstrumentRestController {
   void sendEnrolledPaymentEvent(@RequestBody EnrolledPaymentInstrumentEvent paymentInstrumentEvent)
       throws JsonProcessingException;
 
+
+  @GetMapping("/{hashPan}")
+  EnrolledPaymentInstrumentDto getEnrolledPaymentInstrument(@PathVariable String hashPan);
 }

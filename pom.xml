@@ -19,7 +19,7 @@
     <maven.compiler.target>11</maven.compiler.target>
     <java.version>11</java.version>
     <spring-cloud.version>2021.0.4</spring-cloud.version>
-    <sonar.exclusions>**/*Configuration.java,**/*Application.java</sonar.exclusions>
+    <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/*</sonar.exclusions>
   </properties>
 
   <dependencies>
@@ -168,6 +168,17 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*Configuration.java</exclude>
+            <exclude>**/*Application.java</exclude>
+            <exclude>**/ports/rest/**/*</exclude>
+          </excludes>
+        </configuration>
       </plugin>
     </plugins>
   </build>
