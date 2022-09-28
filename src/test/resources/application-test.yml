@@ -3,6 +3,7 @@ logging:
     root: INFO
 
 test.kafka.topic: "embedded-test-topic"
+test.kafka.topic-tkm: "embedded-test-topic-tkm"
 
 spring:
   config:
@@ -18,12 +19,20 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
   cloud:
+    function:
+      definition: enrolledPaymentInstrumentConsumer;tkmTokenUpdateConsumer
     stream:
       bindings:
         enrolledPaymentInstrumentConsumer-in-0:
-            destination: ${test.kafka.topic}
-            group: rtd-enrolled-payment-instrument-consumer-group
-            binder: kafka-binder
+          destination: ${test.kafka.topic}
+          group: rtd-enrolled-payment-instrument-consumer-group
+          binder: kafka-binder
+
+        tkmTokenUpdateConsumer-in-0:
+          destination: ${test.kafka.topic-tkm}
+          group: rtd-pim-consumer-group
+          content-type: application/json
+          binder: kafka-binder
 
       binders:
         kafka-binder:
