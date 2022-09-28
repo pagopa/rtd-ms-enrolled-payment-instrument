@@ -77,6 +77,13 @@
       <optional>true</optional>
     </dependency>
 
+    <!-- fix snakeyml CVE -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.32</version>
+    </dependency>
+
     <!-- test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
