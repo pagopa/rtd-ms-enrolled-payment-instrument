@@ -22,6 +22,8 @@ spec:
             - secretRef:
                 name: rtd-enrolled-pi-events
             - secretRef:
+                name: rtd-tkm-write-update-consumer
+            - secretRef:
                 name: mongo-credentials
             - secretRef:
                 name: application-insights
