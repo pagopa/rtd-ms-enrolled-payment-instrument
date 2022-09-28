@@ -20,8 +20,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{base_url}}/enroll",
-					"protocol": "http",
+					"raw": "{{base_url}}/enroll",
 					"host": [
 						"{{base_url}}"
 					],
@@ -58,8 +57,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://{{base_url}}/tkm-update",
-					"protocol": "http",
+					"raw": "{{base_url}}/tkm-update",
 					"host": [
 						"{{base_url}}"
 					],
