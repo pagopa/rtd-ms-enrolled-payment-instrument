@@ -41,11 +41,11 @@ spring:
             partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
             partitionCount: ${KAFKA_PARTITION_COUNT:1}
 
-#      kafka:
-#        binder:
-#          configuration:
-#            security.protocol: SASL_SSL
-#            sasl.mechanism: PLAIN
+      kafka:
+        binder:
+          configuration:
+            security.protocol: SASL_SSL
+            sasl.mechanism: PLAIN
 
       binders:
         kafka-enrolled-binder:
