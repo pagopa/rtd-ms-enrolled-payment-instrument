@@ -1,7 +1,6 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.rest;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event.EnrolledPaymentInstrumentEvent;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.EnrolledPaymentInstrumentEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;

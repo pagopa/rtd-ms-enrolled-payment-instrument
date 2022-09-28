@@ -1,7 +1,7 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.rest;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event.EnrolledPaymentInstrumentEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.EnrolledPaymentInstrumentEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PutMapping;
