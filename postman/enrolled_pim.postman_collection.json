@@ -1,0 +1,99 @@
+{
+	"info": {
+		"_postman_id": "a47c4a1c-93d2-405a-92e5-af73f06a49ec",
+		"name": "enrolled payment instrument manager",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Send fake enrolled payment instrument",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"hashPan\": \"2ac01c6a86e0ada464d7682888d3e01009ed57ff0bfea09575d842039e1030aa\",\n    \"app\": \"FA\",\n    \"operation\": \"CREATE\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/enroll",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"enroll"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send fake tkm event",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.variables.set('current_timestamp', new Date().getTime());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"taxCode\": \"CFCFCF\",\n    \"timestamp\": {{current_timestamp}},\n    \"cards\": []\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/tkm-update",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"tkm-update"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "default"
+		}
+	]
+}

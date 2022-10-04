@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
@@ -36,9 +36,9 @@ import static org.junit.jupiter.api.Assertions.*;
     bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
 @TestPropertySource(properties = { "spring.config.location=classpath:application-test.yml" }, inheritProperties = false)
-@Import(value = { KafkaAdapter.class, KafkaAdapterTest.MockConfiguration.class })
+@Import(value = { KafkaEnrolledInstrumentEventsAdapter.class, KafkaEnrolledInstrumentEventsAdapterTest.MockConfiguration.class })
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-class KafkaAdapterTest {
+class KafkaEnrolledInstrumentEventsAdapterTest {
 
   private static final String BINDING_NAME = "enrolledPaymentInstrumentConsumer-in-0";
 

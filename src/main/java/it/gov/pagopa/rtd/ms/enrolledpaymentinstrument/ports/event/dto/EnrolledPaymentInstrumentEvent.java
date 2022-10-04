@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
