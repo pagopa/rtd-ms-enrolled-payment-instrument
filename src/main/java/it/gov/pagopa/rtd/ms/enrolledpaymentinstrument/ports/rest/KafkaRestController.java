@@ -1,7 +1,8 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.rest;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.adapters.event.EnrolledPaymentInstrumentEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.EnrolledPaymentInstrumentEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TkmUpdateEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -11,12 +12,16 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 @RequestMapping("")
 @Validated
-public interface EnrolledPaymentInstrumentRestController {
+public interface KafkaRestController {
 
 
-  @PutMapping(value = "/send")
+  @PutMapping(value = "/enroll")
   @ResponseStatus(HttpStatus.OK)
   void sendEnrolledPaymentEvent(@RequestBody EnrolledPaymentInstrumentEvent paymentInstrumentEvent)
       throws JsonProcessingException;
+
+  @PutMapping(value = "/tkm-update")
+  @ResponseStatus(HttpStatus.OK)
+  void sendTkmUpdateEvent(@RequestBody TkmUpdateEvent event);
 
 }
