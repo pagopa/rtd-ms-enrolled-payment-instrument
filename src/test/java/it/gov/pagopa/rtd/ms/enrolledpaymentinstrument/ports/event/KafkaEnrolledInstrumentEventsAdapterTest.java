@@ -5,6 +5,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.Enroll
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.messaging.MessageHandlingException;
 import org.springframework.messaging.support.MessageBuilder;
@@ -38,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(properties = { "spring.config.location=classpath:application-test.yml" }, inheritProperties = false)
 @Import(value = { KafkaEnrolledInstrumentEventsAdapter.class, KafkaEnrolledInstrumentEventsAdapterTest.MockConfiguration.class })
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
+@Slf4j
 class KafkaEnrolledInstrumentEventsAdapterTest {
 
   private static final String BINDING_NAME = "enrolledPaymentInstrumentConsumer-in-0";
