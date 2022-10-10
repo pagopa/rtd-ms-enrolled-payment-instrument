@@ -68,8 +68,8 @@ public class KafkaConfiguration {
         final var errorHandler = new DefaultErrorHandler(
                 new FixedBackOff(3000L, FixedBackOff.UNLIMITED_ATTEMPTS)
         );
-        errorHandler.setAckAfterHandle(false);
-        errorHandler.setCommitRecovered(false);
+        //errorHandler.setAckAfterHandle(false);
+        //errorHandler.setCommitRecovered(false);
         retryableExceptions.forEach(errorHandler::addRetryableExceptions);
         fatalExceptions.forEach(errorHandler::addNotRetryableExceptions);
         return errorHandler;
