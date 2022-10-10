@@ -18,6 +18,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
@@ -74,7 +75,7 @@ class EnrolledPaymentInstrumentRepositoryTest {
   }
 
   @Test
-  void shouldRaiseDuplicateKeyWhenTryToSaveExistingHashPan() {
+  void shouldRaiseDuplicateKeyWhenTryToSaveNewPaymentInstrumentWithSameHashPan() {
     final var instrument = List.of(
             EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(SourceApp.values()), null, null),
             EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(SourceApp.values()), null, null)
@@ -82,5 +83,19 @@ class EnrolledPaymentInstrumentRepositoryTest {
     repository.save(instrument.get(0));
 
     assertThrowsExactly(DuplicateKeyException.class, () -> repository.save(instrument.get(1)));
+  }
+
+  @Test
+  void shouldRaiseOptimisticLockWhenTryToSaveConcurrently() {
+    repository.save(EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(SourceApp.values()), null, null));
+
+    final var instrument1 = repository.findByHashPan(TEST_HASH_PAN.getValue()).get();
+    final var instrument2 = repository.findByHashPan(TEST_HASH_PAN.getValue()).get();
+
+    instrument1.disableApp(SourceApp.FA);
+    instrument2.enableApp(SourceApp.FA);
+
+    repository.save(instrument1);
+    assertThrowsExactly(OptimisticLockingFailureException.class, () -> repository.save(instrument2));
   }
 }

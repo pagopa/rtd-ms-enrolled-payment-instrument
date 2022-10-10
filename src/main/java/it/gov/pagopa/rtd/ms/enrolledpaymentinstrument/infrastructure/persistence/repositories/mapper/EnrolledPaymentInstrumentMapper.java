@@ -24,7 +24,8 @@ public class EnrolledPaymentInstrumentMapper {
             PaymentInstrumentState.valueOf(entity.getState()),
             apps,
             entity.getIssuer(),
-            entity.getNetwork()
+            entity.getNetwork(),
+            entity.getVersion()
     );
   }
 
@@ -42,6 +43,7 @@ public class EnrolledPaymentInstrumentMapper {
             .updatedAt(LocalDateTime.now())
             .insertUser(UPSERT_USER)
             .updateUser(UPSERT_USER)
+            .version(domain.getVersion())
             .build();
   }
 }

@@ -37,7 +37,8 @@ public class EnrolledPaymentInstrument {
             apps.isEmpty() ? PaymentInstrumentState.NOT_ENROLLED : PaymentInstrumentState.READY,
             new HashSet<>(apps),
             issuer,
-            network
+            network,
+            0
     );
   }
 
@@ -49,6 +50,7 @@ public class EnrolledPaymentInstrument {
   private Set<SourceApp> enabledApps;
   private String issuer;
   private String network;
+  private final int version;
 
   /**
    * Add source app as enabled from this instrument
