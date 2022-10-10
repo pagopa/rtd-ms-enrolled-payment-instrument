@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Sort.Direction;
@@ -33,8 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("mongo-integration-test")
 @TestPropertySource(properties = {
         "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@AutoConfigureBefore(EmbeddedMongoAutoConfiguration.class)
-@EnableConfigurationProperties({MongoProperties.class, EmbeddedMongoProperties.class})
+@AutoConfigureDataMongo
 class EnrolledPaymentInstrumentRepositoryTest {
 
   private static final HashPan TEST_HASH_PAN = HashPan.create(

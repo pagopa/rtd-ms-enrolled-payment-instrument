@@ -14,10 +14,9 @@ public class AppConfiguration {
 
   @Bean
   public EnrolledPaymentInstrumentRepository enrolledPaymentInstrumentRepository(
-      EnrolledPaymentInstrumentDao dao,
-      MongoTemplate mongoTemplate
+          EnrolledPaymentInstrumentDao dao
   ) {
-    return new EnrolledPaymentInstrumentRepositoryImpl(dao, mongoTemplate);
+    return new EnrolledPaymentInstrumentRepositoryImpl(dao);
   }
 
 }
