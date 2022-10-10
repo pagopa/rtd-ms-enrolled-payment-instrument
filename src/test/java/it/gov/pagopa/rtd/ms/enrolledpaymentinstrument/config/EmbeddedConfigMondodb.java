@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.repositories.config;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.config;
 
 import de.flapdoodle.embed.mongo.config.ImmutableMongodConfig;
 import de.flapdoodle.embed.mongo.config.MongoCmdOptions;

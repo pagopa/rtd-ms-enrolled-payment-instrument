@@ -1,17 +1,14 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence;
 
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
-
-import java.util.Set;
-import javax.annotation.Resource;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -25,6 +22,12 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+
+import javax.annotation.Resource;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @ActiveProfiles("mongo-integration-test")
@@ -40,10 +43,15 @@ class EnrolledPaymentInstrumentRepositoryTest {
   @Resource
   private EnrolledPaymentInstrumentRepositoryImpl repository;
 
-  @BeforeAll
-  static void setupAll(@Autowired MongoTemplate mongoTemplate) {
+  @BeforeEach
+  void setup(@Autowired MongoTemplate mongoTemplate) {
     mongoTemplate.indexOps("enrolled_payment_instrument")
         .ensureIndex(new Index().on("hashPan", Direction.ASC).unique());
+  }
+
+  @AfterEach
+  void clean(@Autowired MongoTemplate mongoTemplate) {
+    mongoTemplate.dropCollection(EnrolledPaymentInstrumentEntity.class);
   }
 
   @Test
