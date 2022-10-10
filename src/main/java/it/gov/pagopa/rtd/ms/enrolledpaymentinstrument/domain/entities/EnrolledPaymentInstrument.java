@@ -59,7 +59,7 @@ public class EnrolledPaymentInstrument {
    */
   public void enableApp(SourceApp sourceApp) {
     this.enabledApps.add(sourceApp);
-    this.state = PaymentInstrumentState.READY;
+    this.state = state == PaymentInstrumentState.REVOKED ? this.state : PaymentInstrumentState.READY;
   }
 
   /**
@@ -69,11 +69,16 @@ public class EnrolledPaymentInstrument {
    */
   public void disableApp(SourceApp sourceApp) {
     this.enabledApps.remove(sourceApp);
-    this.state = this.enabledApps.isEmpty() ? PaymentInstrumentState.DELETE : this.state;
+    this.state = this.state != PaymentInstrumentState.REVOKED && this.enabledApps.isEmpty() ? PaymentInstrumentState.DELETE : this.state;
+  }
+
+  public void revokeInstrument() {
+    this.state = PaymentInstrumentState.REVOKED;
   }
 
   /**
    * Allow to associate a par to this payment instrument
+   *
    * @param par A valid par (not null and not blank)
    */
   public void associatePar(String par) {
@@ -82,6 +87,7 @@ public class EnrolledPaymentInstrument {
 
   /**
    * Add a hashpan as a child this payment instrument (use for hash token)
+   *
    * @param hashPan A valid hashpan, also an hash token is a valid hashpan
    */
   public void addHashPanChild(HashPan hashPan) {
@@ -90,6 +96,7 @@ public class EnrolledPaymentInstrument {
 
   /**
    * Remove a child hashpan from payment instrument (use for hash token)
+   *
    * @param hashPan A valid hashpan, also an hash token is a valid hashpan
    */
   public void removeHashPanChild(HashPan hashPan) {
@@ -102,6 +109,10 @@ public class EnrolledPaymentInstrument {
 
   public boolean isReady() {
     return this.state == PaymentInstrumentState.READY;
+  }
+
+  public boolean isRevoked() {
+    return this.state == PaymentInstrumentState.REVOKED;
   }
 
   public boolean shouldBeDeleted() {

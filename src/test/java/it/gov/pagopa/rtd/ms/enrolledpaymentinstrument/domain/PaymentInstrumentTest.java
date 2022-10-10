@@ -70,4 +70,43 @@ class PaymentInstrumentTest {
     paymentInstrument.disableApp(SourceApp.ID_PAY);
     assertTrue(paymentInstrument.shouldBeDeleted());
   }
+
+  @Test
+  void whenRevokeAReadyInstrumentThenShouldBeRevoked() {
+    final var paymentInstrument = EnrolledPaymentInstrument.create(
+            TestUtils.generateRandomHashPan(),
+            Set.of(SourceApp.FA, SourceApp.ID_PAY),
+            "",
+            ""
+    );
+    paymentInstrument.revokeInstrument();
+    assertTrue(paymentInstrument.isRevoked());
+  }
+
+
+  @Test
+  void whenUnenrollAllAppsFromRevokeCardThenShouldBeDeleted() {
+    final var paymentInstrument = EnrolledPaymentInstrument.create(
+            TestUtils.generateRandomHashPan(),
+            Set.of(SourceApp.FA, SourceApp.ID_PAY),
+            "",
+            ""
+    );
+    paymentInstrument.revokeInstrument();
+    paymentInstrument.disableApp(SourceApp.ID_PAY);
+    paymentInstrument.disableApp(SourceApp.FA);
+    assertTrue(paymentInstrument.isRevoked());
+  }
+
+  @Test
+  void whenEnrollAppToRevokedInstrumentThenItKeepRevokedState() {
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(
+            TestUtils.generateRandomHashPan(),
+            "",
+            ""
+    );
+    paymentInstrument.revokeInstrument();
+    paymentInstrument.enableApp(SourceApp.ID_PAY);
+    assertTrue(paymentInstrument.isRevoked());
+  }
 }
