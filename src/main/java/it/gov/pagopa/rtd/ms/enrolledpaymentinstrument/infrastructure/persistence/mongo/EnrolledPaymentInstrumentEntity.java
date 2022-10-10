@@ -34,8 +34,18 @@ public class EnrolledPaymentInstrumentEntity {
   private String hashPan;
 
   @Indexed
+  @Field("hashPanChildren")
+  private List<String> hashPanChildren;
+
+  @Indexed
   @Field(name = "enabledApps")
   private List<String> apps;
+
+  @Field(name = "par")
+  private String par;
+
+  @Field(name = "state")
+  private String state;
 
   @Field(name = "issuer")
   private String issuer;
