@@ -4,6 +4,8 @@ import com.mongodb.MongoException;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
@@ -30,7 +32,9 @@ public class KafkaConfiguration {
                 IOException.class,
                 MongoException.class,
                 RecoverableDataAccessException.class,
-                TransientDataAccessException.class
+                TransientDataAccessException.class,
+                DuplicateKeyException.class,
+                OptimisticLockingFailureException.class
         );
     }
 
