@@ -51,7 +51,3 @@ spring:
   config:
     activate:
       on-profile: mongo-integration-test
-  mongodb.embedded:
-    storage:
-      repl-set-name: "rs0"
-      oplogSize: 10
