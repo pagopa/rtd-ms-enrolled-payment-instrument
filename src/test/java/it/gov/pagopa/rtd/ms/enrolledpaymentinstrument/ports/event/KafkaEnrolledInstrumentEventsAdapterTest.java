@@ -19,7 +19,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.messaging.MessageHandlingException;
 import org.springframework.messaging.support.MessageBuilder;
@@ -33,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @EmbeddedKafka(
-    topics = { "test.kafka.topic" },
+    topics = { "${test.kafka.topic}" },
     partitions = 1,
     bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
