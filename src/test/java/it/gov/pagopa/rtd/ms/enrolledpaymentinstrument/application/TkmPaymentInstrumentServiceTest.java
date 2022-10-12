@@ -172,5 +172,18 @@ public class TkmPaymentInstrumentServiceTest {
 
       Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
     }
+
+    @Test
+    void whenHandleRevokeOnNonExistingCardThenOnlyNotifyToDownstream() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
+
+      Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(Optional.empty());
+
+      service.handle(revokeCommand);
+
+      Mockito.verify(repository, Mockito.times(0)).save(Mockito.any());
+      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+    }
   }
 }
