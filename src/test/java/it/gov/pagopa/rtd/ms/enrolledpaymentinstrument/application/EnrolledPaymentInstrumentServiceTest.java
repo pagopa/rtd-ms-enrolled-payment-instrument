@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
@@ -37,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 class EnrolledPaymentInstrumentServiceTest {
 
-  private static final HashPan TEST_HASH_PAN = HashPan.create("4971175b7c192c7eda18d8c4a1fbb30372333445c5b6c5ef738b333a2729a266");
+  private static final HashPan TEST_HASH_PAN = TestUtils.generateRandomHashPan();
 
   @MockBean
   private EnrolledPaymentInstrumentDao dao;

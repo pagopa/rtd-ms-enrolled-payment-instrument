@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.config;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
