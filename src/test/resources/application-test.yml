@@ -10,14 +10,6 @@ spring:
     activate:
       on-profile: test
 
-  kafka:
-    template.default-topic: ${test.kafka.topic}
-    bootstrap-servers:
-      - ${spring.embedded.kafka.brokers}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
   cloud:
     function:
       definition: enrolledPaymentInstrumentConsumer;tkmTokenUpdateConsumer
@@ -33,7 +25,6 @@ spring:
           group: rtd-pim-consumer-group
           content-type: application/json
           binder: kafka-binder
-
       binders:
         kafka-binder:
           type: kafka
@@ -45,13 +36,12 @@ spring:
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                producerProperties:
+                  key.serializer: org.apache.kafka.common.serialization.StringSerializer
+                  value.serializer: org.apache.kafka.common.serialization.StringSerializer
 
 ---
 spring:
   config:
     activate:
       on-profile: mongo-integration-test
-  mongodb.embedded:
-    storage:
-      repl-set-name: "rs0"
-      oplogSize: 10

@@ -20,7 +20,6 @@ import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoCo
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Arrays;
@@ -35,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest()
 @ActiveProfiles("test")
-@TestPropertySource(properties = { "spring.config.location=classpath:application-test.yml" }, inheritProperties = false)
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 class EnrolledPaymentInstrumentServiceTest {
 
@@ -156,4 +154,5 @@ class EnrolledPaymentInstrumentServiceTest {
       }
     }));
   }
+
 }

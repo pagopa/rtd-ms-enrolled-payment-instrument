@@ -4,6 +4,8 @@ import com.mongodb.MongoException;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
@@ -30,7 +32,9 @@ public class KafkaConfiguration {
                 IOException.class,
                 MongoException.class,
                 RecoverableDataAccessException.class,
-                TransientDataAccessException.class
+                TransientDataAccessException.class,
+                DuplicateKeyException.class,
+                OptimisticLockingFailureException.class
         );
     }
 
@@ -64,8 +68,8 @@ public class KafkaConfiguration {
         final var errorHandler = new DefaultErrorHandler(
                 new FixedBackOff(3000L, FixedBackOff.UNLIMITED_ATTEMPTS)
         );
-        errorHandler.setAckAfterHandle(false);
-        errorHandler.setCommitRecovered(false);
+        //errorHandler.setAckAfterHandle(false);
+        //errorHandler.setCommitRecovered(false);
         retryableExceptions.forEach(errorHandler::addRetryableExceptions);
         fatalExceptions.forEach(errorHandler::addNotRetryableExceptions);
         return errorHandler;
