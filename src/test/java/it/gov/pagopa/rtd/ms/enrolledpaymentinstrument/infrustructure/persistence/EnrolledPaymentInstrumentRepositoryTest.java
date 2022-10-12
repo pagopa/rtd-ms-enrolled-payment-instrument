@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence;
 
 
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
@@ -38,8 +39,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @AutoConfigureDataMongo
 class EnrolledPaymentInstrumentRepositoryTest {
 
-  private static final HashPan TEST_HASH_PAN = HashPan.create(
-          "4971175b7c192c7eda18d8c4a1fbb30372333445c5b6c5ef738b333a2729a266");
+  private static final HashPan TEST_HASH_PAN = TestUtils.generateRandomHashPan();
+  private static final HashPan TEST_CHILD_HASH_PAN = TestUtils.generateRandomHashPan();
+  private static final String TEST_PAR = "par";
 
   @Resource
   private EnrolledPaymentInstrumentRepositoryImpl repository;
@@ -58,6 +60,8 @@ class EnrolledPaymentInstrumentRepositoryTest {
   @Test
   void shouldSaveDomainToRightDocument() {
     final var instrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(SourceApp.values()), null, null);
+    instrument.addHashPanChild(TEST_CHILD_HASH_PAN);
+    instrument.associatePar(TEST_PAR);
 
     repository.save(instrument);
 
@@ -65,6 +69,9 @@ class EnrolledPaymentInstrumentRepositoryTest {
 
     assertEquals(TEST_HASH_PAN, savedDomain.getHashPan());
     assertEquals(Set.of(SourceApp.values()), savedDomain.getEnabledApps());
+    assertEquals(Set.of(TEST_CHILD_HASH_PAN), savedDomain.getHashPanChildren());
+    assertEquals(TEST_PAR, savedDomain.getPar());
+    assertTrue(instrument.isReady());
   }
 
   @Test
