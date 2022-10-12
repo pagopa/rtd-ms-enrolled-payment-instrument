@@ -10,14 +10,6 @@ spring:
     activate:
       on-profile: test
 
-#  kafka:
-#    template.default-topic: ${test.kafka.topic}
-#    bootstrap-servers:
-#      - ${spring.embedded.kafka.brokers}
-#    producer:
-#      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-#      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
   cloud:
     function:
       definition: enrolledPaymentInstrumentConsumer;tkmTokenUpdateConsumer

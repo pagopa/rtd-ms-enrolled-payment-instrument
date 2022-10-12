@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.config.KafkaTestConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -23,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
         bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
 @TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@Import(value = {KafkaEnrolledInstrumentEventsAdapter.class, KafkaEnrolledInstrumentEventsAdapterTest.MockConfiguration.class})
+@Import(value = {KafkaEnrolledInstrumentEventsAdapter.class, KafkaTestConfiguration.class})
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 class KafkaTkmTokenUpdateEventsAdapterTest {
 
