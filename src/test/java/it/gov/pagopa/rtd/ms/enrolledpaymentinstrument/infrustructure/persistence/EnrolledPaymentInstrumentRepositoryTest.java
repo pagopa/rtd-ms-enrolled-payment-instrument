@@ -23,6 +23,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -33,6 +34,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("mongo-integration-test")
 @TestPropertySource(properties = {
         "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
@@ -43,7 +45,7 @@ class EnrolledPaymentInstrumentRepositoryTest {
   private static final HashPan TEST_CHILD_HASH_PAN = TestUtils.generateRandomHashPan();
   private static final String TEST_PAR = "par";
 
-  @Resource
+  @Autowired
   private EnrolledPaymentInstrumentRepositoryImpl repository;
 
   @BeforeEach

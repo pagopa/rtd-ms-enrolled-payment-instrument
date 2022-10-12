@@ -58,8 +58,8 @@ import static org.junit.jupiter.api.Assertions.*;
 )
 @Import({ KafkaEnrolledInstrumentEventsAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class })
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-@Slf4j
 @ExtendWith(MockitoExtension.class)
+@Slf4j
 class KafkaEnrolledInstrumentEventsAdapterTest {
 
   private static final String BINDING_NAME = "enrolledPaymentInstrumentConsumer-in-0";

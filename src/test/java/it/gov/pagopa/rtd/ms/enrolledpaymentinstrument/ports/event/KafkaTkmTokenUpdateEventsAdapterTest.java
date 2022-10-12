@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @EmbeddedKafka(
-        topics = {"test.kafka.topic"},
+        topics = {"${test.kafka.topic}"},
         partitions = 1,
         bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
