@@ -41,7 +41,10 @@ public class PaymentInstrumentEventRouter implements MessageRoutingCallback  {
   @Override
   public FunctionRoutingResult routingResult(Message<?> message) {
     final var typeRef = new TypeReference<HashMap<String,Object>>() {};
-    final var payload = objectMapper.readValue(message.getPayload().toString(), typeRef);
+    final var payload = objectMapper.readValue(
+                    message.getPayload() instanceof String ? message.getPayload().toString() : new String((byte[]) message.getPayload()),
+                    typeRef
+            );
     if (TKM_FILTER.test(payload)) {
       return new FunctionRoutingResult(tkmUpdateConsumerName);
     } else {

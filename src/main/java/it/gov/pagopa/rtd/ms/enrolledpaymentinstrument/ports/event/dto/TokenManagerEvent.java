@@ -1,15 +1,14 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.stream.Collectors;
 
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,15 +18,31 @@ public class TokenManagerEvent {
   @NotBlank
   private String hashPan;
 
+  private String taxCode;
+
   private String par;
 
   private List<HashToken> hashTokens;
 
-  private String operation;
+  @NotNull
+  @NotBlank
+  private CardAction operation;
 
   @Data
-  static class HashToken {
+  public static class HashToken {
     final String hashToken;
-    final String operation;
+    final HashTokenAction operation;
+  }
+
+  public static List<TkmUpdateCommand.TkmTokenCommand> buildTokenUpdateCommands(TokenManagerEvent event) {
+    return event.getHashTokens()
+            .stream()
+            .map(it -> new TkmUpdateCommand.TkmTokenCommand(
+                            it.getHashToken(),
+                            it.getOperation() == HashTokenAction.UPDATE ?
+                                    TkmUpdateCommand.TkmTokenCommand.Action.UPDATE : TkmUpdateCommand.TkmTokenCommand.Action.DELETE
+                    )
+            )
+            .collect(Collectors.toList());
   }
 }

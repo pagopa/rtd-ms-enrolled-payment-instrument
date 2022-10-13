@@ -52,17 +52,17 @@ import static org.junit.jupiter.api.Assertions.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
 @EmbeddedKafka(
-    topics = { "${test.kafka.topic}" },
-    partitions = 1,
-    bootstrapServersProperty = "spring.embedded.kafka.brokers"
+        topics = {"${test.kafka.topic}"},
+        partitions = 1,
+        bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
-@Import({ KafkaApplicationEnrollEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class })
+@Import({KafkaTestConfiguration.class, KafkaConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)
 @Slf4j
 class KafkaApplicationEnrollEventAdapterTest {
 
-  private static final String BINDING_NAME = "enrolledPaymentInstrumentConsumer-in-0";
+  private static final String BINDING_NAME = "functionRouter-in-0";
 
   @Value("${test.kafka.topic}")
   private String topic;
@@ -75,6 +75,7 @@ class KafkaApplicationEnrollEventAdapterTest {
 
   private KafkaTemplate<String, ApplicationEnrollEvent> kafkaTemplate;
   private ObjectMapper objectMapper;
+  private ApplicationEnrollEvent.ApplicationEnrollEventBuilder applicationEnrollEventBuilder;
 
   @BeforeEach
   void setup(@Autowired EmbeddedKafkaBroker broker) {
@@ -83,6 +84,10 @@ class KafkaApplicationEnrollEventAdapterTest {
             new DefaultKafkaProducerFactory<>(KafkaTestUtils.producerProps(broker), new StringSerializer(), new JsonSerializer<>())
     );
     objectMapper = new ObjectMapper();
+    applicationEnrollEventBuilder = ApplicationEnrollEvent.builder()
+            .hashPan(hashPanEvent)
+            .app(sourceAppEvent)
+            .operation("CREATE");
   }
 
   @AfterEach
@@ -93,7 +98,7 @@ class KafkaApplicationEnrollEventAdapterTest {
   @Test
   void shouldCreateApplicationCommandBasedOnEvent() {
     final var captor = ArgumentCaptor.forClass(EnrollPaymentInstrumentCommand.class);
-    final var message = MessageBuilder.withPayload(enabledPaymentInstrumentEvent).build();
+    final var message = MessageBuilder.withPayload(applicationEnrollEventBuilder.build()).build();
     final var isSent = stream.send(BINDING_NAME, message);
 
     assertTrue(isSent);
@@ -107,7 +112,7 @@ class KafkaApplicationEnrollEventAdapterTest {
   @Test
   void shouldFailToCreateCommandWithMalformedEvent() {
     final var message = MessageBuilder
-            .withPayload(enabledPaymentInstrumentEvent.replace("CREATE", "123"))
+            .withPayload(applicationEnrollEventBuilder.operation("123").build())
             .build();
 
     final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
@@ -118,7 +123,7 @@ class KafkaApplicationEnrollEventAdapterTest {
   @Test
   void mustNotHandleEventWhenMissingMandatoryEventField() {
     final var message = MessageBuilder
-            .withPayload(enabledPaymentInstrumentEvent.replace("CREATE", ""))
+            .withPayload(applicationEnrollEventBuilder.operation("").build())
             .build();
 
     final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
@@ -143,7 +148,7 @@ class KafkaApplicationEnrollEventAdapterTest {
             .when(paymentInstrumentService)
             .handle(Mockito.any());
 
-    kafkaTemplate.send(topic, objectMapper.readValue(enabledPaymentInstrumentEvent, ApplicationEnrollEvent.class));
+    kafkaTemplate.send(topic, applicationEnrollEventBuilder.build());
 
     await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(Mockito.any());
@@ -158,21 +163,15 @@ class KafkaApplicationEnrollEventAdapterTest {
             .when(paymentInstrumentService)
             .handle(Mockito.any());
 
-    kafkaTemplate.send(topic, objectMapper.readValue(enabledPaymentInstrumentEvent, ApplicationEnrollEvent.class));
+    kafkaTemplate.send(topic, applicationEnrollEventBuilder.build());
 
     await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(Mockito.any());
     });
 
-    System.out.println( Mockito.mockingDetails(paymentInstrumentService).getInvocations());
+    System.out.println(Mockito.mockingDetails(paymentInstrumentService).getInvocations());
   }
 
   private static final String hashPanEvent = "42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba";
   private static final String sourceAppEvent = "FA";
-  private static final String enabledPaymentInstrumentEvent = ""
-      + "{\n"
-      + "  \"hashPan\": \"" + hashPanEvent + "\",\n"
-      + "  \"app\": \"" + sourceAppEvent + "\",\n"
-      + "  \"operation\": \"CREATE\"\n"
-      + "}";
 }

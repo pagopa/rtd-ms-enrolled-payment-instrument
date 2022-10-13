@@ -15,7 +15,7 @@ spring:
 
   cloud:
     function:
-      definition: functionRouter;tkmTokenUpdateConsumer
+      definition: functionRouter;tkmWalletEventConsumer
     stream:
       function:
         routing:
@@ -29,7 +29,7 @@ spring:
           consumer:
             max-attempts: 1
 
-        tkmTokenUpdateConsumer-in-0:
+        tkmWalletEventConsumer-in-0:
           destination: ${KAFKA_TOPIC_TKM_BROKER:tkm-write-update-token}
           group: rtd-pim-consumer-group
           content-type: application/json

@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,11 +36,15 @@ public class TkmPaymentInstrumentService {
     final var paymentInstrument = repository.findByHashPan(command.getHashPan())
             .orElse(EnrolledPaymentInstrument.createUnEnrolledInstrument(hashPan, "", ""));
 
-    final var tokenToUpdate = command.getTokens().stream()
+    final var tokenToUpdate = Optional.ofNullable(command.getTokens())
+            .orElse(Collections.emptyList())
+            .stream()
             .filter(token -> token.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)
             .collect(Collectors.toList());
 
-    final var tokenToRemove = command.getTokens().stream()
+    final var tokenToRemove = Optional.ofNullable(command.getTokens())
+            .orElse(Collections.emptyList())
+            .stream()
             .filter(token -> token.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.DELETE)
             .collect(Collectors.toList());
 

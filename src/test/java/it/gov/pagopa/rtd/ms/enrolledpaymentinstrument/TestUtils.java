@@ -2,6 +2,9 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardAction;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.HashTokenAction;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerEvent;
 
 import java.util.List;
 import java.util.Random;
@@ -23,6 +26,24 @@ public final class TestUtils {
             .collect(Collectors.joining(""));
   }
 
+  public static TokenManagerEvent.TokenManagerEventBuilder prepareRandomTokenManagerEvent(CardAction action) {
+    return TokenManagerEvent.builder()
+            .par(randomString(4))
+            .hashPan(generateRandomHashPan().getValue())
+            .taxCode(randomString(10))
+            .hashTokens(generateRandomHashTokenEvent(10))
+            .operation(action);
+  }
+
+  public static List<TokenManagerEvent.HashToken> generateRandomHashTokenEvent(int which) {
+    final var random = new Random();
+    return IntStream.range(0, which)
+            .mapToObj(i -> new TokenManagerEvent.HashToken(
+                    generateRandomHashPan().getValue(),
+                    random.nextDouble() < 0.5 ? HashTokenAction.DELETE : HashTokenAction.UPDATE
+            ))
+            .collect(Collectors.toList());
+  }
 
   public static List<TkmUpdateCommand.TkmTokenCommand> generateRandomUpdateTokenCommand(int which) {
     final var random = new Random();
