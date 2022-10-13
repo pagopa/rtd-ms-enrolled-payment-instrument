@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,11 @@ public class AppConfiguration {
           EnrolledPaymentInstrumentDao dao
   ) {
     return new EnrolledPaymentInstrumentRepositoryImpl(dao);
+  }
+
+  @Bean
+  public InstrumentRevokeNotificationService revokeService() {
+    return (taxCode, hashPan) -> false;
   }
 
 }

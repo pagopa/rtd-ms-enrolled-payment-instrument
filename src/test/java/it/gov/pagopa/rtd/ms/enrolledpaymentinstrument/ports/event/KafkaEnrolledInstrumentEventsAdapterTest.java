@@ -6,7 +6,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.config.KafkaTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.EnrolledPaymentInstrumentEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -58,8 +58,8 @@ import static org.junit.jupiter.api.Assertions.*;
 )
 @Import({ KafkaEnrolledInstrumentEventsAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class })
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-@Slf4j
 @ExtendWith(MockitoExtension.class)
+@Slf4j
 class KafkaEnrolledInstrumentEventsAdapterTest {
 
   private static final String BINDING_NAME = "enrolledPaymentInstrumentConsumer-in-0";

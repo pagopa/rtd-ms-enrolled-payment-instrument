@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.config.KafkaTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @EmbeddedKafka(
-        topics = {"test.kafka.topic"},
+        topics = {"${test.kafka.topic}"},
         partitions = 1,
         bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
