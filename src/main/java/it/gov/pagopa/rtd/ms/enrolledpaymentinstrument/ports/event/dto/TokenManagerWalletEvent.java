@@ -27,6 +27,6 @@ public final class TokenManagerWalletEvent {
   @Data
   public static class HashTokenItem {
     private final String htoken;
-    private final String haction;
+    private final HashTokenAction haction;
   }
 }

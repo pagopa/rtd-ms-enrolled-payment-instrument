@@ -35,10 +35,10 @@ public final class TestUtils {
             .operation(action);
   }
 
-  public static List<TokenManagerEvent.HashToken> generateRandomHashTokenEvent(int which) {
+  public static List<TokenManagerEvent.HashTokenEvent> generateRandomHashTokenEvent(int which) {
     final var random = new Random();
     return IntStream.range(0, which)
-            .mapToObj(i -> new TokenManagerEvent.HashToken(
+            .mapToObj(i -> new TokenManagerEvent.HashTokenEvent(
                     generateRandomHashPan().getValue(),
                     random.nextDouble() < 0.5 ? HashTokenAction.DELETE : HashTokenAction.UPDATE
             ))

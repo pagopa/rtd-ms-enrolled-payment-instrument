@@ -22,14 +22,14 @@ public class TokenManagerEvent {
 
   private String par;
 
-  private List<HashToken> hashTokens;
+  private List<HashTokenEvent> hashTokens;
 
   @NotNull
   @NotBlank
   private CardAction operation;
 
   @Data
-  public static class HashToken {
+  public static class HashTokenEvent {
     final String hashToken;
     final HashTokenAction operation;
   }
