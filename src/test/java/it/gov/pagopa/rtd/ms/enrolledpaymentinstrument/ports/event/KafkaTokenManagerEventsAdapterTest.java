@@ -24,9 +24,9 @@ import static org.junit.jupiter.api.Assertions.*;
         bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
 @TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@Import(value = {KafkaEnrolledInstrumentEventsAdapter.class, KafkaTestConfiguration.class})
+@Import(value = {KafkaApplicationEnrollEventAdapter.class, KafkaTestConfiguration.class})
 @EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-class KafkaTkmTokenUpdateEventsAdapterTest {
+class KafkaTokenManagerEventsAdapterTest {
 
     private static final String BINDING_NAME = "tkmTokenUpdateConsumer-in-0";
 

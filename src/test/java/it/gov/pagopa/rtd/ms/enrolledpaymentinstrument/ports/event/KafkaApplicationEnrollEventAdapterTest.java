@@ -7,7 +7,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymen
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.EnrolledPaymentInstrumentEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
@@ -56,11 +56,11 @@ import static org.junit.jupiter.api.Assertions.*;
     partitions = 1,
     bootstrapServersProperty = "spring.embedded.kafka.brokers"
 )
-@Import({ KafkaEnrolledInstrumentEventsAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class })
+@Import({ KafkaApplicationEnrollEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class })
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)
 @Slf4j
-class KafkaEnrolledInstrumentEventsAdapterTest {
+class KafkaApplicationEnrollEventAdapterTest {
 
   private static final String BINDING_NAME = "enrolledPaymentInstrumentConsumer-in-0";
 
@@ -73,7 +73,7 @@ class KafkaEnrolledInstrumentEventsAdapterTest {
   @Autowired
   EnrolledPaymentInstrumentService paymentInstrumentService;
 
-  private KafkaTemplate<String, EnrolledPaymentInstrumentEvent> kafkaTemplate;
+  private KafkaTemplate<String, ApplicationEnrollEvent> kafkaTemplate;
   private ObjectMapper objectMapper;
 
   @BeforeEach
@@ -129,7 +129,7 @@ class KafkaEnrolledInstrumentEventsAdapterTest {
   @Test
   void whenReceivedMalformedEventThenRejectIt() {
     Mockito.doNothing().when(paymentInstrumentService).handle(Mockito.any());
-    kafkaTemplate.send(topic, new EnrolledPaymentInstrumentEvent());
+    kafkaTemplate.send(topic, ApplicationEnrollEvent.builder().build());
 
     await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(Mockito.any());
@@ -143,7 +143,7 @@ class KafkaEnrolledInstrumentEventsAdapterTest {
             .when(paymentInstrumentService)
             .handle(Mockito.any());
 
-    kafkaTemplate.send(topic, objectMapper.readValue(enabledPaymentInstrumentEvent, EnrolledPaymentInstrumentEvent.class));
+    kafkaTemplate.send(topic, objectMapper.readValue(enabledPaymentInstrumentEvent, ApplicationEnrollEvent.class));
 
     await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(Mockito.any());
@@ -158,7 +158,7 @@ class KafkaEnrolledInstrumentEventsAdapterTest {
             .when(paymentInstrumentService)
             .handle(Mockito.any());
 
-    kafkaTemplate.send(topic, objectMapper.readValue(enabledPaymentInstrumentEvent, EnrolledPaymentInstrumentEvent.class));
+    kafkaTemplate.send(topic, objectMapper.readValue(enabledPaymentInstrumentEvent, ApplicationEnrollEvent.class));
 
     await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(Mockito.any());

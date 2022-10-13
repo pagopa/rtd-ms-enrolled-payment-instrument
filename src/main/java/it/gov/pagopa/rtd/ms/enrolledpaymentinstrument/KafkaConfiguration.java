@@ -1,6 +1,10 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoException;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes.PaymentInstrumentEventRouter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.function.context.MessageRoutingCallback;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -75,5 +79,13 @@ public class KafkaConfiguration {
         return errorHandler;
     }
 
+    @Bean
+    MessageRoutingCallback kafkaRouter(@Autowired ObjectMapper objectMapper) {
+        return new PaymentInstrumentEventRouter(
+                "tkmUpdateEventConsumer",
+                "enrolledPaymentInstrumentConsumer",
+                objectMapper
+        );
+    }
 
 }

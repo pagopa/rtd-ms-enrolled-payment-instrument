@@ -2,6 +2,7 @@ logging:
   level:
     root: INFO
 
+
 spring:
   config:
     activate:
@@ -14,10 +15,13 @@ spring:
 
   cloud:
     function:
-      definition: enrolledPaymentInstrumentConsumer;tkmTokenUpdateConsumer
+      definition: functionRouter;tkmTokenUpdateConsumer
     stream:
+      function:
+        routing:
+          enabled: true
       bindings:
-        enrolledPaymentInstrumentConsumer-in-0:
+        functionRouter-in-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           group: rtd-enrolled-payment-instrument-consumer-group
           content-type: application/json

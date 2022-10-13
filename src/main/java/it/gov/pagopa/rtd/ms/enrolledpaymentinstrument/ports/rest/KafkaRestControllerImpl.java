@@ -1,7 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.EnrolledPaymentInstrumentEvent;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TkmUpdateEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -25,7 +25,7 @@ public class KafkaRestControllerImpl implements
   }
 
   @Override
-  public void sendEnrolledPaymentEvent(EnrolledPaymentInstrumentEvent paymentInstrumentEvent) {
+  public void sendEnrolledPaymentEvent(ApplicationEnrollEvent paymentInstrumentEvent) {
     log.info("Simulating send enrolled payment event: {}", paymentInstrumentEvent);
     final var sent = streamBridge.send(
         "enrolledPaymentInstrumentProducer-out-0",
@@ -37,7 +37,7 @@ public class KafkaRestControllerImpl implements
   }
 
   @Override
-  public void sendTkmUpdateEvent(TkmUpdateEvent event) {
+  public void sendTkmUpdateEvent(TokenManagerWalletEvent event) {
     log.info("Sending tkm event {}", event);
     final var sent = streamBridge.send(
             "tkmTokenUpdateConsumer-in-0",
