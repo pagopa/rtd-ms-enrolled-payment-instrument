@@ -24,6 +24,8 @@ spec:
             - secretRef:
                 name: rtd-tkm-write-update-consumer
             - secretRef:
+                name: rtd-revoke-pi-producer
+            - secretRef:
                 name: mongo-credentials
             - secretRef:
                 name: application-insights
