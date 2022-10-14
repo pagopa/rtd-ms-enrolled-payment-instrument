@@ -37,7 +37,7 @@ spring:
           consumer:
             max-attempts: 1
 
-        enrolledPaymentInstrumentProducer-out-0:
+        rtdEnrolledPimProducer-out-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           content-type: application/json
           binder: kafka-enrolled-binder
