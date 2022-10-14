@@ -1,6 +1,9 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto;
 
-public enum CardAction {
+/**
+ * Type of change by over a card. Its send by TKM
+ */
+public enum CardChangeType {
   UPDATE,
   REVOKE
 }

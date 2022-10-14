@@ -2,9 +2,9 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardAction;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.HashTokenAction;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.HashTokenChangeType;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 
 import java.util.List;
 import java.util.Random;
@@ -26,21 +26,21 @@ public final class TestUtils {
             .collect(Collectors.joining(""));
   }
 
-  public static TokenManagerEvent.TokenManagerEventBuilder prepareRandomTokenManagerEvent(CardAction action) {
-    return TokenManagerEvent.builder()
+  public static TokenManagerCardChanged.TokenManagerCardChangedBuilder prepareRandomTokenManagerEvent(CardChangeType action) {
+    return TokenManagerCardChanged.builder()
             .par(randomString(4))
             .hashPan(generateRandomHashPan().getValue())
             .taxCode(randomString(10))
             .hashTokens(generateRandomHashTokenEvent(10))
-            .operation(action);
+            .changeType(action);
   }
 
-  public static List<TokenManagerEvent.HashTokenEvent> generateRandomHashTokenEvent(int which) {
+  public static List<TokenManagerCardChanged.HashTokenEvent> generateRandomHashTokenEvent(int which) {
     final var random = new Random();
     return IntStream.range(0, which)
-            .mapToObj(i -> new TokenManagerEvent.HashTokenEvent(
+            .mapToObj(i -> new TokenManagerCardChanged.HashTokenEvent(
                     generateRandomHashPan().getValue(),
-                    random.nextDouble() < 0.5 ? HashTokenAction.DELETE : HashTokenAction.UPDATE
+                    random.nextDouble() < 0.5 ? HashTokenChangeType.DELETE : HashTokenChangeType.UPDATE
             ))
             .collect(Collectors.toList());
   }

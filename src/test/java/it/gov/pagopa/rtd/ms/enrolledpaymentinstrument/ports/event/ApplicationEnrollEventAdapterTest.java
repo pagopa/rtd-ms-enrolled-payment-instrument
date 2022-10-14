@@ -60,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)
 @Slf4j
-class KafkaApplicationEnrollEventAdapterTest {
+class ApplicationEnrollEventAdapterTest {
 
   private static final String BINDING_NAME = "functionRouter-in-0";
 

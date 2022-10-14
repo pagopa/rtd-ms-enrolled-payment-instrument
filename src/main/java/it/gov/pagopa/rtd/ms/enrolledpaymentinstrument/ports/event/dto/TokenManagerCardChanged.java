@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TokenManagerEvent {
+public class TokenManagerCardChanged {
 
   @NotNull
   @NotBlank
@@ -25,22 +25,22 @@ public class TokenManagerEvent {
   private List<HashTokenEvent> hashTokens;
 
   @NotNull
-  @NotBlank
-  private CardAction operation;
+  private CardChangeType changeType;
 
   @Data
   public static class HashTokenEvent {
     final String hashToken;
-    final HashTokenAction operation;
+    final HashTokenChangeType changeType;
   }
 
-  public static List<TkmUpdateCommand.TkmTokenCommand> buildTokenUpdateCommands(TokenManagerEvent event) {
+  public static List<TkmUpdateCommand.TkmTokenCommand> buildTokenUpdateCommands(TokenManagerCardChanged event) {
     return event.getHashTokens()
             .stream()
             .map(it -> new TkmUpdateCommand.TkmTokenCommand(
                             it.getHashToken(),
-                            it.getOperation() == HashTokenAction.UPDATE ?
-                                    TkmUpdateCommand.TkmTokenCommand.Action.UPDATE : TkmUpdateCommand.TkmTokenCommand.Action.DELETE
+                            it.getChangeType() == HashTokenChangeType.UPDATE ?
+                                    TkmUpdateCommand.TkmTokenCommand.Action.UPDATE :
+                                    TkmUpdateCommand.TkmTokenCommand.Action.DELETE
                     )
             )
             .collect(Collectors.toList());

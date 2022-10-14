@@ -6,8 +6,8 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInst
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardAction;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -58,7 +58,7 @@ class TokenManagerEventAdapterTest {
   @Value("${test.kafka.topic}")
   private String topic;
 
-  private KafkaTemplate<String, TokenManagerEvent> kafkaTemplate;
+  private KafkaTemplate<String, TokenManagerCardChanged> kafkaTemplate;
 
   @Autowired
   private TkmPaymentInstrumentService service;
@@ -79,7 +79,7 @@ class TokenManagerEventAdapterTest {
   @Test
   void whenTkmUpdateACardThenAdapterCreateUpdateCommand() {
     final var captor = ArgumentCaptor.forClass(TkmUpdateCommand.class);
-    final var event = TestUtils.prepareRandomTokenManagerEvent(CardAction.UPDATE).build();
+    final var event = TestUtils.prepareRandomTokenManagerEvent(CardChangeType.UPDATE).build();
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(DEFAULT_AT_MOST_TIMEOUT)).untilAsserted(() -> {
@@ -87,15 +87,15 @@ class TokenManagerEventAdapterTest {
 
       assertEquals(captor.getValue().getPar(), event.getPar());
       assertEquals(captor.getValue().getHashPan(), event.getHashPan());
-      assertThat(captor.getValue().getTokens()).hasSameElementsAs(TokenManagerEvent.buildTokenUpdateCommands(event));
+      assertThat(captor.getValue().getTokens()).hasSameElementsAs(TokenManagerCardChanged.buildTokenUpdateCommands(event));
     });
   }
 
   @Test
   void whenTkmUpdateACardWithMissingMandatoryFieldsThenAdapterShouldNotCallService() {
-    final var event = TokenManagerEvent.builder()
+    final var event = TokenManagerCardChanged.builder()
             .hashPan(null)
-            .operation(null)
+            .changeType(null)
             .build();
     kafkaTemplate.send(topic, event);
 
@@ -113,7 +113,7 @@ class TokenManagerEventAdapterTest {
             .when(service)
             .handle(Mockito.any(TkmUpdateCommand.class));
 
-    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardAction.UPDATE).build());
+    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.UPDATE).build());
 
     await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmUpdateCommand.class));
@@ -123,7 +123,7 @@ class TokenManagerEventAdapterTest {
   @Test
   void whenTkmRevokeACardThenAdapterCreateRevokeCommand() {
     final var captor = ArgumentCaptor.forClass(TkmRevokeCommand.class);
-    final var event = TestUtils.prepareRandomTokenManagerEvent(CardAction.REVOKE)
+    final var event = TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE)
             .hashTokens(List.of())
             .build();
     kafkaTemplate.send(topic, event);
@@ -144,7 +144,7 @@ class TokenManagerEventAdapterTest {
             .when(service)
             .handle(Mockito.any(TkmRevokeCommand.class));
 
-    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardAction.REVOKE).build());
+    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).build());
 
     await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmRevokeCommand.class));

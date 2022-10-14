@@ -5,8 +5,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardAction;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +40,10 @@ public class PaymentInstrumentEventRouterTest {
 
   @Test
   void whenReceiveParOrHashTokenPayloadThenRedirectToTkmConsumer() throws JsonProcessingException {
-    final var tkmEvent = TokenManagerEvent.builder()
+    final var tkmEvent = TokenManagerCardChanged.builder()
             .par("123")
             .hashTokens(List.of())
-            .operation(CardAction.REVOKE)
+            .changeType(CardChangeType.REVOKE)
             .build();
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsString(tkmEvent)).build()
@@ -66,7 +66,7 @@ public class PaymentInstrumentEventRouterTest {
 
   @Test
   void whenReceiveBytePayloadThenSuccessfullyParseAndRedirect() throws JsonProcessingException {
-    final var event = TokenManagerEvent.builder().par("123").build();
+    final var event = TokenManagerCardChanged.builder().par("123").build();
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsBytes(event)).build()
     );

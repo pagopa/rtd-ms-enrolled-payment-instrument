@@ -55,7 +55,7 @@ public class TkmPaymentInstrumentServiceTest {
   @DisplayName("Tests for update command")
   class UpdateCommandCases {
     @Test
-    void whenHandleTkmUpdateCommandThenPaymentInstrumentIsNotEnrolled() {
+    void whenHandleFirstTkmUpdateCommandThenPaymentInstrumentIsNotEnrolled() {
       final var updateCommand = new TkmUpdateCommand(
               TestUtils.generateRandomHashPan().getValue(),
               null,

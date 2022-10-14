@@ -3,9 +3,11 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.ValidatedConsumer;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.ApplicationEnrollEventAdapter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.TokenManagerEventAdapter;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerEvent;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes.PaymentInstrumentEventRouter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,12 +47,20 @@ public class KafkaConfiguration {
   }
 
   @Bean
-  Consumer<TokenManagerEvent> tkmUpdateEventConsumer(Validator validator, TokenManagerEventAdapter eventAdapter) {
+  Consumer<ApplicationEnrollEvent> enrolledPaymentInstrumentConsumer(
+          Validator validator,
+          ApplicationEnrollEventAdapter eventAdapter
+  ) {
     return new ValidatedConsumer<>(validator, eventAdapter);
   }
 
   @Bean
-  Consumer<TokenManagerWalletEvent> tkmWalletEventConsumer() {
+  Consumer<TokenManagerCardChanged> tkmUpdateEventConsumer(Validator validator, TokenManagerEventAdapter eventAdapter) {
+    return new ValidatedConsumer<>(validator, eventAdapter);
+  }
+
+  @Bean
+  Consumer<TokenManagerWalletChanged> tkmWalletEventConsumer() {
     return message -> log.info("TKM event: {}", message);
   }
 

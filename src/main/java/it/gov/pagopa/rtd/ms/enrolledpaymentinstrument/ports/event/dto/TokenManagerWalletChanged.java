@@ -11,7 +11,7 @@ import java.util.List;
  * provide better horizontal scalability using Splitter EIP
  */
 @Data
-public final class TokenManagerWalletEvent {
+public final class TokenManagerWalletChanged {
 
   private final String taxCode;
   private final Date timestamp;
@@ -27,6 +27,6 @@ public final class TokenManagerWalletEvent {
   @Data
   public static class HashTokenItem {
     private final String htoken;
-    private final HashTokenAction haction;
+    private final HashTokenChangeType haction;
   }
 }

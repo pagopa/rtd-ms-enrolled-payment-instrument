@@ -3,8 +3,8 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardAction;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 @Slf4j
 @Component
-public class TokenManagerEventAdapter implements Consumer<TokenManagerEvent> {
+public class TokenManagerEventAdapter implements Consumer<TokenManagerCardChanged> {
 
   private final TkmPaymentInstrumentService tkmPaymentInstrumentService;
 
@@ -21,11 +21,11 @@ public class TokenManagerEventAdapter implements Consumer<TokenManagerEvent> {
   }
 
   @Override
-  public void accept(TokenManagerEvent event) {
-    if (event.getOperation() == CardAction.UPDATE) {
-      final var tokenUpdateCommands = TokenManagerEvent.buildTokenUpdateCommands(event);
+  public void accept(TokenManagerCardChanged event) {
+    if (event.getChangeType() == CardChangeType.UPDATE) {
+      final var tokenUpdateCommands = TokenManagerCardChanged.buildTokenUpdateCommands(event);
       tkmPaymentInstrumentService.handle(new TkmUpdateCommand(event.getHashPan(), event.getPar(), tokenUpdateCommands));
-    } else if (event.getOperation() == CardAction.REVOKE) {
+    } else if (event.getChangeType() == CardChangeType.REVOKE) {
       tkmPaymentInstrumentService.handle(new TkmRevokeCommand(event.getTaxCode(), event.getHashPan(), event.getPar()));
     }
   }
