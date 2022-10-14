@@ -69,7 +69,9 @@ public class EnrolledPaymentInstrument {
    */
   public void disableApp(SourceApp sourceApp) {
     this.enabledApps.remove(sourceApp);
-    this.state = this.state != PaymentInstrumentState.REVOKED && this.enabledApps.isEmpty() ? PaymentInstrumentState.DELETE : this.state;
+    this.state = this.enabledApps.isEmpty()
+            ? PaymentInstrumentState.DELETE :
+            this.state;
   }
 
   public void revokeInstrument() {

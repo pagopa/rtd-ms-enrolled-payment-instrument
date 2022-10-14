@@ -18,6 +18,7 @@ public class TkmUpdateCommand {
 
   private final String par;
 
+  @NotNull
   @Valid
   private final List<TkmTokenCommand> tokens;
 

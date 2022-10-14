@@ -74,7 +74,6 @@ class ApplicationEnrollEventAdapterTest {
   EnrolledPaymentInstrumentService paymentInstrumentService;
 
   private KafkaTemplate<String, ApplicationEnrollEvent> kafkaTemplate;
-  private ObjectMapper objectMapper;
   private ApplicationEnrollEvent.ApplicationEnrollEventBuilder applicationEnrollEventBuilder;
 
   @BeforeEach
@@ -83,7 +82,6 @@ class ApplicationEnrollEventAdapterTest {
     kafkaTemplate = new KafkaTemplate<>(
             new DefaultKafkaProducerFactory<>(KafkaTestUtils.producerProps(broker), new StringSerializer(), new JsonSerializer<>())
     );
-    objectMapper = new ObjectMapper();
     applicationEnrollEventBuilder = ApplicationEnrollEvent.builder()
             .hashPan(hashPanEvent)
             .app(sourceAppEvent)
@@ -143,7 +141,7 @@ class ApplicationEnrollEventAdapterTest {
 
   @ParameterizedTest
   @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
-  void whenServiceFailWithWriteConflictsThenRetryContinuously(Class<? extends Exception> exception) throws JsonProcessingException {
+  void whenServiceFailWithWriteConflictsThenRetryContinuously(Class<? extends Exception> exception) {
     Mockito.doThrow(exception)
             .when(paymentInstrumentService)
             .handle(Mockito.any());
@@ -156,7 +154,7 @@ class ApplicationEnrollEventAdapterTest {
   }
 
   @Test
-  void whenServiceFailsWithTransientErrorThenRetryUntilSucceed() throws JsonProcessingException, InterruptedException {
+  void whenServiceFailsWithTransientErrorThenRetryUntilSucceed() {
     Mockito.doThrow(OptimisticLockingFailureException.class)
             .doThrow(DuplicateKeyException.class)
             .doNothing()

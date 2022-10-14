@@ -5,7 +5,9 @@ import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Getter
@@ -33,8 +35,9 @@ public class TokenManagerCardChanged {
     final HashTokenChangeType changeType;
   }
 
-  public static List<TkmUpdateCommand.TkmTokenCommand> buildTokenUpdateCommands(TokenManagerCardChanged event) {
-    return event.getHashTokens()
+  public List<TkmUpdateCommand.TkmTokenCommand> toTkmTokenCommand() {
+    return Optional.ofNullable(getHashTokens())
+            .orElse(Collections.emptyList())
             .stream()
             .map(it -> new TkmUpdateCommand.TkmTokenCommand(
                             it.getHashToken(),

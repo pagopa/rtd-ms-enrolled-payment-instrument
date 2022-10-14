@@ -77,7 +77,7 @@ class TokenManagerEventAdapterTest {
   }
 
   @Test
-  void whenTkmUpdateACardThenAdapterCreateUpdateCommand() {
+  void whenTkmUpdateACardThenExecuteValidUpdateCommand() {
     final var captor = ArgumentCaptor.forClass(TkmUpdateCommand.class);
     final var event = TestUtils.prepareRandomTokenManagerEvent(CardChangeType.UPDATE).build();
     kafkaTemplate.send(topic, event);
@@ -87,7 +87,24 @@ class TokenManagerEventAdapterTest {
 
       assertEquals(captor.getValue().getPar(), event.getPar());
       assertEquals(captor.getValue().getHashPan(), event.getHashPan());
-      assertThat(captor.getValue().getTokens()).hasSameElementsAs(TokenManagerCardChanged.buildTokenUpdateCommands(event));
+      assertThat(captor.getValue().getTokens()).hasSameElementsAs(event.toTkmTokenCommand());
+    });
+  }
+
+  @Test
+  void whenTkmUpdateACardWithNullTokensThenExecuteValidUpdateCommand() {
+    final var captor = ArgumentCaptor.forClass(TkmUpdateCommand.class);
+    final var event = TestUtils.prepareRandomTokenManagerEvent(CardChangeType.UPDATE)
+            .hashTokens(null)
+            .build();
+    kafkaTemplate.send(topic, event);
+
+    await().atMost(Duration.ofSeconds(DEFAULT_AT_MOST_TIMEOUT)).untilAsserted(() -> {
+      Mockito.verify(service).handle(captor.capture());
+
+      assertEquals(captor.getValue().getPar(), event.getPar());
+      assertEquals(captor.getValue().getHashPan(), event.getHashPan());
+      assertThat(captor.getValue().getTokens()).hasSameElementsAs(event.toTkmTokenCommand());
     });
   }
 
@@ -103,8 +120,6 @@ class TokenManagerEventAdapterTest {
       Mockito.verify(service, Mockito.times(0)).handle(Mockito.any(TkmUpdateCommand.class));
     });
   }
-
-
 
   @ParameterizedTest
   @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
