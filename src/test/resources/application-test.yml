@@ -10,30 +10,27 @@ spring:
     activate:
       on-profile: test
 
-  kafka:
-    template.default-topic: ${test.kafka.topic}
-    bootstrap-servers:
-      - ${spring.embedded.kafka.brokers}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
   cloud:
     function:
-      definition: enrolledPaymentInstrumentConsumer;tkmTokenUpdateConsumer
+      definition: functionRouter;tkmWalletEventConsumer
     stream:
+      function:
+        routing:
+          enabled: true
       bindings:
-        enrolledPaymentInstrumentConsumer-in-0:
+        functionRouter-in-0:
           destination: ${test.kafka.topic}
           group: rtd-enrolled-payment-instrument-consumer-group
+          content-type: application/json
           binder: kafka-binder
+          consumer:
+            max-attempts: 1
 
-        tkmTokenUpdateConsumer-in-0:
+        tkmWalletEventConsumer-in-0:
           destination: ${test.kafka.topic-tkm}
           group: rtd-pim-consumer-group
           content-type: application/json
           binder: kafka-binder
-
       binders:
         kafka-binder:
           type: kafka
@@ -45,13 +42,12 @@ spring:
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                producerProperties:
+                  key.serializer: org.apache.kafka.common.serialization.StringSerializer
+                  value.serializer: org.apache.kafka.common.serialization.StringSerializer
 
 ---
 spring:
   config:
     activate:
       on-profile: mongo-integration-test
-  mongodb.embedded:
-    storage:
-      repl-set-name: "rs0"
-      oplogSize: 10
