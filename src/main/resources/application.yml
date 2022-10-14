@@ -69,10 +69,9 @@ spring:
               consumerProperties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-              producerProperties:
-                key.serializer: org.apache.kafka.common.serialization.StringSerializer
-                value.serializer: org.apache.kafka.common.serialization.StringSerializer
-
+#              producerProperties:
+#                key.serializer: org.apache.kafka.common.serialization.StringSerializer
+#                value.serializer: org.apache.kafka.common.serialization.StringSerializer
         kafka-tkm-binder:
           type: kafka
           environment.spring.cloud.stream.kafka:
