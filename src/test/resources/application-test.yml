@@ -14,9 +14,7 @@ spring:
     function:
       definition: functionRouter;tkmWalletEventConsumer
     stream:
-      function:
-        routing:
-          enabled: true
+      function.routing.enabled: true
       bindings:
         functionRouter-in-0:
           destination: ${test.kafka.topic}
