@@ -71,7 +71,7 @@ spring:
                 value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
               producerProperties:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
-                value.serializer: org.springframework.kafka.support.serializer.JsonSerializer
+                value.serializer: org.apache.kafka.common.serialization.StringSerializer
 
         kafka-tkm-binder:
           type: kafka
@@ -95,4 +95,4 @@ spring:
                 sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_RTD_REVOKED}
               producerProperties:
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
-                value.serializer: org.springframework.kafka.support.serializer.JsonSerializer
+                value.serializer: org.apache.kafka.common.serialization.StringSerializer
