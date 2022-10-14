@@ -12,15 +12,21 @@ spring:
 
   cloud:
     function:
-      definition: enrolledPaymentInstrumentConsumer;tkmTokenUpdateConsumer
+      definition: functionRouter;tkmWalletEventConsumer
     stream:
+      function:
+        routing:
+          enabled: true
       bindings:
-        enrolledPaymentInstrumentConsumer-in-0:
+        functionRouter-in-0:
           destination: ${test.kafka.topic}
           group: rtd-enrolled-payment-instrument-consumer-group
+          content-type: application/json
           binder: kafka-binder
+          consumer:
+            max-attempts: 1
 
-        tkmTokenUpdateConsumer-in-0:
+        tkmWalletEventConsumer-in-0:
           destination: ${test.kafka.topic-tkm}
           group: rtd-pim-consumer-group
           content-type: application/json

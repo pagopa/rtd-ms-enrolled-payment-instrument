@@ -2,6 +2,7 @@ logging:
   level:
     root: INFO
 
+
 spring:
   config:
     activate:
@@ -14,10 +15,13 @@ spring:
 
   cloud:
     function:
-      definition: enrolledPaymentInstrumentConsumer;tkmTokenUpdateConsumer
+      definition: functionRouter;tkmWalletEventConsumer
     stream:
+      function:
+        routing:
+          enabled: true
       bindings:
-        enrolledPaymentInstrumentConsumer-in-0:
+        functionRouter-in-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           group: rtd-enrolled-payment-instrument-consumer-group
           content-type: application/json
@@ -25,7 +29,7 @@ spring:
           consumer:
             max-attempts: 1
 
-        tkmTokenUpdateConsumer-in-0:
+        tkmWalletEventConsumer-in-0:
           destination: ${KAFKA_TOPIC_TKM_BROKER:tkm-write-update-token}
           group: rtd-pim-consumer-group
           content-type: application/json
@@ -33,7 +37,7 @@ spring:
           consumer:
             max-attempts: 1
 
-        enrolledPaymentInstrumentProducer-out-0:
+        rtdEnrolledPimProducer-out-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
           content-type: application/json
           binder: kafka-enrolled-binder

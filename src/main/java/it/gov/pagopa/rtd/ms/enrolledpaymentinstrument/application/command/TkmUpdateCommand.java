@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.List;
@@ -17,6 +18,8 @@ public class TkmUpdateCommand {
 
   private final String par;
 
+  @NotNull
+  @Valid
   private final List<TkmTokenCommand> tokens;
 
   @Data
@@ -27,6 +30,7 @@ public class TkmUpdateCommand {
     @NotBlank
     final String hashPan;
 
+    @NotNull
     final Action action;
 
     public enum Action {

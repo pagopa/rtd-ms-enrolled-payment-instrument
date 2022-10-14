@@ -26,6 +26,7 @@ class PaymentInstrumentTest {
     );
 
     assertTrue(paymentInstrument.isNotEnrolled());
+    assertFalse(paymentInstrument.isReady());
   }
 
   @Test
@@ -37,6 +38,7 @@ class PaymentInstrumentTest {
             ""
     );
     assertTrue(paymentInstrument.isReady());
+    assertFalse(paymentInstrument.isNotEnrolled());
   }
 
   @Test
@@ -61,6 +63,7 @@ class PaymentInstrumentTest {
     );
     paymentInstrument.disableApp(SourceApp.FA);
     assertFalse(paymentInstrument.shouldBeDeleted());
+    assertTrue(paymentInstrument.isReady());
   }
 
   @Test
@@ -74,10 +77,11 @@ class PaymentInstrumentTest {
     paymentInstrument.disableApp(SourceApp.FA);
     paymentInstrument.disableApp(SourceApp.ID_PAY);
     assertTrue(paymentInstrument.shouldBeDeleted());
+    assertFalse(paymentInstrument.isReady());
   }
 
   @Test
-  void whenRevokeAReadyInstrumentThenShouldBeRevoked() {
+  void whenRevokeAReadyInstrumentThenMustNotBeReady() {
     final var paymentInstrument = EnrolledPaymentInstrument.create(
             TestUtils.generateRandomHashPan(),
             Set.of(SourceApp.FA, SourceApp.ID_PAY),
@@ -86,6 +90,7 @@ class PaymentInstrumentTest {
     );
     paymentInstrument.revokeInstrument();
     assertTrue(paymentInstrument.isRevoked());
+    assertFalse(paymentInstrument.isReady());
   }
 
 
@@ -100,7 +105,8 @@ class PaymentInstrumentTest {
     paymentInstrument.revokeInstrument();
     paymentInstrument.disableApp(SourceApp.ID_PAY);
     paymentInstrument.disableApp(SourceApp.FA);
-    assertTrue(paymentInstrument.isRevoked());
+    assertFalse(paymentInstrument.isRevoked());
+    assertTrue(paymentInstrument.shouldBeDeleted());
   }
 
   @Test
@@ -111,6 +117,7 @@ class PaymentInstrumentTest {
     paymentInstrument.revokeInstrument();
     paymentInstrument.enableApp(SourceApp.ID_PAY);
     assertTrue(paymentInstrument.isRevoked());
+    assertFalse(paymentInstrument.isReady());
   }
 
   @ParameterizedTest

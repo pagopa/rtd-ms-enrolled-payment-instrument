@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoCo
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
+import javax.validation.ConstraintViolationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +55,7 @@ public class TkmPaymentInstrumentServiceTest {
   @DisplayName("Tests for update command")
   class UpdateCommandCases {
     @Test
-    void whenHandleTkmUpdateCommandThenPaymentInstrumentIsNotEnrolled() {
+    void whenHandleFirstTkmUpdateCommandThenPaymentInstrumentIsNotEnrolled() {
       final var updateCommand = new TkmUpdateCommand(
               TestUtils.generateRandomHashPan().getValue(),
               null,
@@ -120,6 +121,25 @@ public class TkmPaymentInstrumentServiceTest {
       Mockito.verify(repository).save(paymentInstrumentArgumentCaptor.capture());
       assertEquals("par", paymentInstrumentArgumentCaptor.getValue().getPar());
     }
+
+    @Test
+    void whenUpdateCommandMissMandatoryFieldsThenThrowAnException() {
+      final var invalidUpdateCommands = List.of(
+              new TkmUpdateCommand(null, "", List.of()),
+              new TkmUpdateCommand(TestUtils.generateRandomHashPan().getValue(), "", List.of(
+                      new TkmUpdateCommand.TkmTokenCommand(null, null)
+              ))
+      );
+
+      assertTrue(invalidUpdateCommands.stream().noneMatch(command -> {
+        try {
+          service.handle(command);
+          return true;
+        } catch (ConstraintViolationException | IllegalArgumentException t) {
+          return false;
+        }
+      }));
+    }
   }
 
 
@@ -182,6 +202,25 @@ public class TkmPaymentInstrumentServiceTest {
 
       Mockito.verify(repository, Mockito.times(0)).save(Mockito.any());
       Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+    }
+
+    @Test
+    void whenRevokeCommandMissMandatoryFieldsThenThrowAnException() {
+      final var invalidUpdateCommands = List.of(
+              new TkmRevokeCommand(null, "123", ""),
+              new TkmRevokeCommand("", "", ""),
+              new TkmRevokeCommand("123", null, ""),
+              new TkmRevokeCommand(null, null, "")
+      );
+
+      assertTrue(invalidUpdateCommands.stream().noneMatch(command -> {
+        try {
+          service.handle(command);
+          return true;
+        } catch (ConstraintViolationException | IllegalArgumentException t) {
+          return false;
+        }
+      }));
     }
   }
 }
