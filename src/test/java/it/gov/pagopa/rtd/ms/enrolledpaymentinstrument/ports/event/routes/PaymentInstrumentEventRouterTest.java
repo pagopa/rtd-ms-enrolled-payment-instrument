@@ -17,8 +17,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
+import java.util.UnknownFormatConversionException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest()
 @EnableAutoConfiguration(exclude = EmbeddedMongoAutoConfiguration.class)
@@ -71,5 +72,21 @@ public class PaymentInstrumentEventRouterTest {
             MessageBuilder.withPayload(objectMapper.writeValueAsBytes(event)).build()
     );
     assertEquals(TKM_CONSUMER_DESTINATION, destination.getFunctionDefinition());
+  }
+
+  @Test
+  void whenReceiveNonJsonPayloadThenThrowException() {
+    assertThrowsExactly(
+            UnknownFormatConversionException.class,
+            () -> eventRouter.routingResult(MessageBuilder.withPayload("123").build())
+    );
+  }
+
+  @Test
+  void whenReceiveNonStringPayloadThenThrowException() {
+    assertThrowsExactly(
+            UnknownFormatConversionException.class,
+            () -> eventRouter.routingResult(MessageBuilder.withPayload(new Object()).build())
+    );
   }
 }

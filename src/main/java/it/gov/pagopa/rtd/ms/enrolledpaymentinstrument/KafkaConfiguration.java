@@ -31,6 +31,7 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Set;
+import java.util.UnknownFormatConversionException;
 import java.util.function.Consumer;
 
 @Configuration
@@ -83,7 +84,8 @@ public class KafkaConfiguration {
   Set<Class<? extends Exception>> kafkaFatalExceptions() {
     return Set.of(
             IllegalArgumentException.class,
-            ConstraintViolationException.class
+            ConstraintViolationException.class,
+            UnknownFormatConversionException.class
     );
   }
 

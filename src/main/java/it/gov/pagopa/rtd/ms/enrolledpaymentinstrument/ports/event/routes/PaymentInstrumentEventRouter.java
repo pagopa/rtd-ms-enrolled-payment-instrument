@@ -1,16 +1,13 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.function.context.MessageRoutingCallback;
 import org.springframework.messaging.Message;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -40,23 +37,29 @@ public class PaymentInstrumentEventRouter implements MessageRoutingCallback {
     this.objectMapper = objectMapper;
   }
 
-  @SneakyThrows
   @Override
   public FunctionRoutingResult routingResult(Message<?> message) {
     try {
+      final var rawPayload = message.getPayload();
       final var typeRef = new TypeReference<HashMap<String, Object>>() {};
-      final var payload = objectMapper.readValue(
-              message.getPayload() instanceof String ? message.getPayload().toString() : new String((byte[]) message.getPayload()),
-              typeRef
-      );
-      if (TKM_FILTER.test(payload)) {
-        return new FunctionRoutingResult(tkmUpdateConsumerName);
+      Optional<Map<String, Object>> payload;
+
+      if (rawPayload instanceof String) {
+        payload = Optional.ofNullable(objectMapper.readValue(rawPayload.toString(), typeRef));
+      } else if (rawPayload instanceof byte[]) {
+        payload = Optional.ofNullable(objectMapper.readValue(new String((byte[]) rawPayload), typeRef));
       } else {
-        return new FunctionRoutingResult(enrolledInstrumentConsumerName);
+        payload = Optional.empty();
       }
-    } catch (MismatchedInputException mismatchedInputException) {
-      log.error("Mismatch input", mismatchedInputException);
-      return new FunctionRoutingResult("");
+
+      return payload
+              .map(it -> TKM_FILTER.test(it) ? tkmUpdateConsumerName : enrolledInstrumentConsumerName)
+              .map(FunctionRoutingResult::new)
+              .orElseThrow(() -> new UnknownFormatConversionException("Unknown format " + rawPayload.getClass()));
+
+    } catch (JsonProcessingException | UnknownFormatConversionException exception) {
+      log.warn("Unknown event or fail during parse as json", exception);
+      throw new UnknownFormatConversionException(exception.getMessage());
     }
   }
 }
