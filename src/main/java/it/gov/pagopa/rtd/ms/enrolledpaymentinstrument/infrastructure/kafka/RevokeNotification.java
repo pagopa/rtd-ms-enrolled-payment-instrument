@@ -4,18 +4,20 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 
 @Data
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class RevokeNotification {
 
-  private final String fiscalCode;
+  private String fiscalCode;
 
   @JsonAlias("hpan")
-  private final String hashPan;
+  private String hashPan;
 
-  private final Date deactivationDate;
+  private Date deactivationDate;
 }

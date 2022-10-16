@@ -4,6 +4,7 @@ logging:
 
 test.kafka.topic: "embedded-test-topic"
 test.kafka.topic-tkm: "embedded-test-topic-tkm"
+test.kafka.topic-revoke: "revoke-topic"
 
 spring:
   config:
@@ -29,6 +30,12 @@ spring:
           group: rtd-pim-consumer-group
           content-type: application/json
           binder: kafka-binder
+
+        rtdRevokedPi-out-0:
+          destination: ${test.kafka.topic-revoke}
+          content-type: application/json
+          binder: kafka-binder
+
       binders:
         kafka-binder:
           type: kafka
@@ -40,9 +47,6 @@ spring:
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-                producerProperties:
-                  key.serializer: org.apache.kafka.common.serialization.StringSerializer
-                  value.serializer: org.apache.kafka.common.serialization.StringSerializer
 
 ---
 spring:
