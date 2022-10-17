@@ -26,7 +26,7 @@ public interface KafkaRestController {
   void sendTkmUpdateEvent(@RequestBody TokenManagerWalletChanged event);
 
   @PutMapping(value = "/tkm-update")
-  @ResponseStatus
+  @ResponseStatus(HttpStatus.OK)
   void sendTkmCardChangedEvent(@RequestBody TokenManagerCardChanged event);
 
 }
