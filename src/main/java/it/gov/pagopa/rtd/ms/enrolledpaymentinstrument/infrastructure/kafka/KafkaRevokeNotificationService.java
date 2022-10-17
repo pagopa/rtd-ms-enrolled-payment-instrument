@@ -9,17 +9,20 @@ import java.util.Date;
 
 public class KafkaRevokeNotificationService implements InstrumentRevokeNotificationService {
 
-  private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
-
+  private final String producerBinding;
   private final StreamBridge streamBridge;
 
-  public KafkaRevokeNotificationService(StreamBridge streamBridge) {
+  public KafkaRevokeNotificationService(
+          String producerBinding,
+          StreamBridge streamBridge
+  ) {
     this.streamBridge = streamBridge;
+    this.producerBinding = producerBinding;
   }
 
   @Override
   public boolean notifyRevoke(String taxCode, HashPan hashPan) {
-    return streamBridge.send(PRODUCER_BINDING,
+    return streamBridge.send(producerBinding,
             MessageBuilder
                     .withPayload(new RevokeNotification(taxCode, hashPan.getValue(), new Date()))
                     .build()

@@ -61,7 +61,7 @@ class KafkaRevokeNotificationServiceTest {
     final var consumerProperties = KafkaTestUtils.consumerProps("group", "true", broker);
     consumer = new DefaultKafkaConsumerFactory<String, String>(consumerProperties).createConsumer();
     consumer.subscribe(List.of(topic));
-    revokeNotificationService = new KafkaRevokeNotificationService(bridge);
+    revokeNotificationService = new KafkaRevokeNotificationService("rtdRevokedPi-out-0", bridge);
     mapper =  new ObjectMapper();
   }
 

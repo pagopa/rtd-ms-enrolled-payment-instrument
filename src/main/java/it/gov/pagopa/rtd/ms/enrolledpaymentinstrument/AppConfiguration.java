@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 @EnableMongoRepositories(basePackages = "it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories")
 public class AppConfiguration {
 
+  private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
+
   @Bean
   public EnrolledPaymentInstrumentRepository enrolledPaymentInstrumentRepository(
           EnrolledPaymentInstrumentDao dao
@@ -23,7 +25,7 @@ public class AppConfiguration {
 
   @Bean
   public InstrumentRevokeNotificationService revokeService(StreamBridge bridge) {
-    return new KafkaRevokeNotificationService(bridge);
+    return new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge);
   }
 
 }
