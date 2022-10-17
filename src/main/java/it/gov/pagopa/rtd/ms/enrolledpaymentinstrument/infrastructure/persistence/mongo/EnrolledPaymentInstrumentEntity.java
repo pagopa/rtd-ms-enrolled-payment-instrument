@@ -13,6 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
@@ -34,8 +35,18 @@ public class EnrolledPaymentInstrumentEntity {
   private String hashPan;
 
   @Indexed
+  @Field("hashPanChildren")
+  private List<String> hashPanChildren;
+
+  @Indexed
   @Field(name = "enabledApps")
   private List<String> apps;
+
+  @Field(name = "par")
+  private String par;
+
+  @Field(name = "state")
+  private String state;
 
   @Field(name = "issuer")
   private String issuer;
@@ -60,4 +71,7 @@ public class EnrolledPaymentInstrumentEntity {
 
   @Field(name = "updateUser")
   private String updateUser;
+
+  @Version
+  private int version;
 }

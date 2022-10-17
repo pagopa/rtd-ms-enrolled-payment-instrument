@@ -28,16 +28,15 @@ public class EnrolledPaymentInstrumentService {
     final var sourceApp = SourceApp.valueOf(command.getSourceApp().toUpperCase());
 
     final var paymentInstrument = repository.findByHashPan(hashPan.getValue())
-            .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp, command.getIssuer(),
-                    command.getNetwork()));
+            .orElse(EnrolledPaymentInstrument.createUnEnrolledInstrument(hashPan, command.getIssuer(), command.getNetwork()));
 
     if (command.getOperation() == Operation.CREATE) {
       paymentInstrument.enableApp(sourceApp);
-    } else if (command.getOperation() == Operation.DELETE){
+    } else if (command.getOperation() == Operation.DELETE) {
       paymentInstrument.disableApp(sourceApp);
     }
 
-    if (paymentInstrument.isShouldBeDeleted()) {
+    if (paymentInstrument.shouldBeDeleted()) {
       repository.delete(paymentInstrument);
     } else {
       repository.save(paymentInstrument);
