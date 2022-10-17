@@ -11,11 +11,10 @@ import java.util.stream.Collectors;
 
 public class TokenManagerWalletEventSplitter implements Function<TokenManagerWalletChanged, List<TokenManagerCardChanged>> {
 
-
-
   @Override
   public List<TokenManagerCardChanged> apply(TokenManagerWalletChanged tokenManagerWalletChanged) {
-    return tokenManagerWalletChanged.getCards()
+    return Optional.ofNullable(tokenManagerWalletChanged.getCards())
+            .orElse(Collections.emptyList())
             .stream()
             .map(it -> TokenManagerCardChanged.builder()
                     .hashPan(it.getHpan())
