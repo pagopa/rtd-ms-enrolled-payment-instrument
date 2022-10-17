@@ -1,14 +1,13 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.function.context.MessageRoutingCallback;
 import org.springframework.messaging.Message;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -16,7 +15,8 @@ import java.util.function.Predicate;
  * and for tkm updates, this router allow to re-route the message to proper consumer by keeping SRP
  * in every consumer.
  */
-public class PaymentInstrumentEventRouter implements MessageRoutingCallback  {
+@Slf4j
+public class PaymentInstrumentEventRouter implements MessageRoutingCallback {
 
   private final String tkmUpdateConsumerName;
   private final String enrolledInstrumentConsumerName;
@@ -34,21 +34,32 @@ public class PaymentInstrumentEventRouter implements MessageRoutingCallback  {
     Objects.requireNonNull(enrolledInstrumentConsumerName);
     this.tkmUpdateConsumerName = tkmUpdateConsumerName;
     this.enrolledInstrumentConsumerName = enrolledInstrumentConsumerName;
-    this.objectMapper =  objectMapper;
+    this.objectMapper = objectMapper;
   }
 
-  @SneakyThrows
   @Override
   public FunctionRoutingResult routingResult(Message<?> message) {
-    final var typeRef = new TypeReference<HashMap<String,Object>>() {};
-    final var payload = objectMapper.readValue(
-                    message.getPayload() instanceof String ? message.getPayload().toString() : new String((byte[]) message.getPayload()),
-                    typeRef
-            );
-    if (TKM_FILTER.test(payload)) {
-      return new FunctionRoutingResult(tkmUpdateConsumerName);
-    } else {
-      return new FunctionRoutingResult(enrolledInstrumentConsumerName);
+    try {
+      final var rawPayload = message.getPayload();
+      final var typeRef = new TypeReference<HashMap<String, Object>>() {};
+      Optional<Map<String, Object>> payload;
+
+      if (rawPayload instanceof String) {
+        payload = Optional.ofNullable(objectMapper.readValue(rawPayload.toString(), typeRef));
+      } else if (rawPayload instanceof byte[]) {
+        payload = Optional.ofNullable(objectMapper.readValue(new String((byte[]) rawPayload), typeRef));
+      } else {
+        payload = Optional.empty();
+      }
+
+      return payload
+              .map(it -> TKM_FILTER.test(it) ? tkmUpdateConsumerName : enrolledInstrumentConsumerName)
+              .map(FunctionRoutingResult::new)
+              .orElseThrow(() -> new UnknownFormatConversionException("Unknown format " + rawPayload.getClass()));
+
+    } catch (JsonProcessingException | UnknownFormatConversionException exception) {
+      log.warn("Unknown event or fail during parse as json", exception);
+      throw new UnknownFormatConversionException(exception.getMessage());
     }
   }
 }
