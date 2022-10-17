@@ -21,6 +21,7 @@ public final class TokenManagerWalletChanged {
   public static class CardItem {
     private final String hpan;
     private final String par;
+    private final CardChangeType action;
     private final List<HashTokenItem> htokens;
   }
 

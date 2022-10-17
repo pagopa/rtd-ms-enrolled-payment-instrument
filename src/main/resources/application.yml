@@ -15,7 +15,7 @@ spring:
 
   cloud:
     function:
-      definition: functionRouter;tkmWalletEventConsumer
+      definition: functionRouter
     stream:
       function:
         routing:
@@ -28,6 +28,8 @@ spring:
           binder: kafka-enrolled-binder
           consumer:
             max-attempts: 1
+            ackEachRecord: true
+            ackMode: 'RECORD'
 
         tkmWalletEventConsumer-in-0:
           destination: ${KAFKA_TOPIC_TKM_BROKER:tkm-write-update-token}
@@ -36,6 +38,8 @@ spring:
           binder: kafka-tkm-binder
           consumer:
             max-attempts: 1
+            ackEachRecord: true
+            ackMode: 'RECORD'
 
         rtdEnrolledPimProducer-out-0:
           destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
@@ -44,17 +48,18 @@ spring:
           producer:
             partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
             partitionCount: ${KAFKA_PARTITION_COUNT:1}
+            sync: true
 
         rtdRevokedPi-out-0:
           destination: ${KAFKA_TOPIC_REVOKE:rtd-revoke-pi}
           content-type: application/json
           binder: kafka-revoke-binder
 
-      kafka:
-        binder:
-          configuration:
-            security.protocol: SASL_SSL
-            sasl.mechanism: PLAIN
+#      kafka:
+#        binder:
+#          configuration:
+#            security.protocol: SASL_SSL
+#            sasl.mechanism: PLAIN
 
       binders:
         kafka-enrolled-binder:
