@@ -68,7 +68,6 @@ class TokenManagerWalletEventSplitterIntegrationTest {
 
   @BeforeEach
   void setup(@Autowired EmbeddedKafkaBroker broker) {
-    Mockito.reset(cardEventPublisher, splitter);
     kafkaTemplate = new KafkaTemplate<>(
             new DefaultKafkaProducerFactory<>(KafkaTestUtils.producerProps(broker), new StringSerializer(), new JsonSerializer<>())
     );
@@ -77,6 +76,7 @@ class TokenManagerWalletEventSplitterIntegrationTest {
   @AfterEach
   void teardown() {
     kafkaTemplate.destroy();
+    Mockito.reset(cardEventPublisher, splitter);
   }
 
   @ParameterizedTest

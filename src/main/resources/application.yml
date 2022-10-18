@@ -24,9 +24,9 @@ integration-flow:
     value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
     allow.auto.create.topics: false
     max.poll.records: 1
-    sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_TKM_PIM}
-    sasl.mechanism: PLAIN
-    security.protocol: SASL_SSL
+#    sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_TKM_PIM}
+#    sasl.mechanism: PLAIN
+#    security.protocol: SASL_SSL
 
 spring:
   config:
@@ -78,11 +78,11 @@ spring:
             ackEachRecord: true
             ackMode: 'RECORD'
 
-      kafka:
-        binder:
-          configuration:
-            security.protocol: SASL_SSL
-            sasl.mechanism: PLAIN
+#      kafka:
+#        binder:
+#          configuration:
+#            security.protocol: SASL_SSL
+#            sasl.mechanism: PLAIN
 
       binders:
         kafka-enrolled-binder:
