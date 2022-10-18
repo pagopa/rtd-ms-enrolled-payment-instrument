@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

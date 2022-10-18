@@ -1,6 +1,6 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.IntegrationFlowKafkaProperties;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.properties.IntegrationFlowKafkaProperties;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.splitter.TokenManagerCardEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.splitter.TokenManagerWalletEventSplitter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
