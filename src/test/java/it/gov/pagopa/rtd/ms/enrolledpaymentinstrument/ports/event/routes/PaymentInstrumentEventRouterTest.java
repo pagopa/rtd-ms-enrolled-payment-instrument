@@ -99,8 +99,5 @@ public class PaymentInstrumentEventRouterTest {
   }
 
   @Import(ApplicationTestConfiguration.class)
-  public static class Config {
-    @MockBean
-    KafkaMessageDrivenChannelAdapter<String, TokenManagerWalletChanged> input;
-  }
+  public static class Config { }
 }
