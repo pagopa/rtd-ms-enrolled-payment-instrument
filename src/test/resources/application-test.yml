@@ -36,6 +36,15 @@ spring:
           consumer:
             max-attempts: 1
 
+        cardChangedProducer-out-0:
+          destination: ${test.kafka.topic-tkm}
+          content-type: application/json
+          binder: kafka-binder
+          producer:
+            partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
+            partitionCount: ${KAFKA_PARTITION_COUNT:1}
+            sync: true
+
         rtdRevokedPi-out-0:
           destination: ${test.kafka.topic-revoke}
           content-type: application/json
