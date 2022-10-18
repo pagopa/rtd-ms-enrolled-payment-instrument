@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.handler.GenericHandler;
 import org.springframework.integration.handler.LoggingHandler;
 import org.springframework.integration.handler.advice.RequestHandlerRetryAdvice;
 import org.springframework.integration.handler.advice.RetryStateGenerator;
@@ -38,23 +39,24 @@ public class SplitterConfiguration {
   private static final Long FIXED_BACKOFF_INTERVAL = 3000L;
 
   @Bean
-  public IntegrationFlow splitterFlow(
-          KafkaMessageDrivenChannelAdapter<String, TokenManagerWalletChanged> input,
-          StreamBridge bridge,
-          RequestHandlerRetryAdvice retryAdvice
-  ) {
-    return IntegrationFlows.from(input)
-            .log(LoggingHandler.Level.INFO, m -> "Received message to split: " + m.getHeaders())
-            .split(TokenManagerWalletChanged.class, splitter(), e -> e.advice(retryAdvice))
-            .log(LoggingHandler.Level.INFO, m -> "Split message " + m.getPayload())
-            .handle(
-                    TokenManagerCardChanged.class,
-                    TokenManagerCardEventPublisher.asHandler(TARGET_OUT_BINDING, bridge),
-                    e -> e.advice(retryAdvice)
-            )
-            .get();
+  GenericHandler<TokenManagerCardChanged> cardEventPublisher(StreamBridge bridge) {
+    return TokenManagerCardEventPublisher.asHandler(TARGET_OUT_BINDING, bridge);
   }
 
+  @Bean
+  public IntegrationFlow splitterFlow(
+          KafkaMessageDrivenChannelAdapter<String, TokenManagerWalletChanged> input,
+          Function<TokenManagerWalletChanged, List<TokenManagerCardChanged>> splitter,
+          RequestHandlerRetryAdvice retryAdvice,
+          GenericHandler<TokenManagerCardChanged> cardEventPublisher
+  ) {
+    return IntegrationFlows.from(input)
+            .log(LoggingHandler.Level.INFO, m -> "Received message to split: " + m.getPayload())
+            .split(TokenManagerWalletChanged.class, splitter)
+            .log(LoggingHandler.Level.INFO, m -> "Split message " + m.getPayload())
+            .handle(TokenManagerCardChanged.class, cardEventPublisher, e -> e.advice(retryAdvice))
+            .get();
+  }
 
   @Bean
   KafkaMessageDrivenChannelAdapter<String, TokenManagerWalletChanged> input(
