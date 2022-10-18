@@ -45,7 +45,7 @@ public class KafkaRestControllerImpl implements
     log.info("Sending tkm event {}", event);
     final var sent = streamBridge.send(
             TKM_BULK_CARD_BINDING,
-            MessageBuilder.withPayload(event).setHeader("partitionKey", 0).build()
+            MessageBuilder.withPayload(event).setHeader("partitionKey", "0").build()
     );
     log.info("Tkm event sent {}", sent);
   }
