@@ -1,9 +1,10 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.persistence;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegrationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
@@ -34,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("mongo-integration-test")
 @TestPropertySource(properties = {
         "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@Import(TkmPaymentInstrumentServiceIntegrationTest.Configuration.class)
+@Import({ MongodbIntegrationTestConfiguration.class, TkmPaymentInstrumentServiceIntegrationTest.Configuration.class })
 @AutoConfigureDataMongo
 public class TkmPaymentInstrumentServiceIntegrationTest {
 

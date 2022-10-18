@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.KafkaConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;

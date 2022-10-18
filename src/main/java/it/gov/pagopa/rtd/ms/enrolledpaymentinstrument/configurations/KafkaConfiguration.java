@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.MongoException;
@@ -38,6 +38,8 @@ import java.util.function.Consumer;
 @Slf4j
 public class KafkaConfiguration {
 
+  private static final Long FIXED_BACKOFF_INTERVAL = 3000L;
+
   @Bean
   MessageRoutingCallback kafkaRouter(@Autowired ObjectMapper objectMapper) {
     return new PaymentInstrumentEventRouter(
@@ -61,35 +63,6 @@ public class KafkaConfiguration {
   }
 
   @Bean
-  Consumer<TokenManagerWalletChanged> tkmWalletEventConsumer() {
-    return message -> log.info("TKM event: {}", message);
-  }
-
-  @Bean("retryableExceptions")
-  Set<Class<? extends Exception>> kafkaRetryableExceptions() {
-    return Set.of(
-            SocketTimeoutException.class,
-            ConnectException.class,
-            UnknownHostException.class,
-            IOException.class,
-            MongoException.class,
-            RecoverableDataAccessException.class,
-            TransientDataAccessException.class,
-            DuplicateKeyException.class,
-            OptimisticLockingFailureException.class
-    );
-  }
-
-  @Bean("fatalExceptions")
-  Set<Class<? extends Exception>> kafkaFatalExceptions() {
-    return Set.of(
-            IllegalArgumentException.class,
-            ConstraintViolationException.class,
-            UnknownFormatConversionException.class
-    );
-  }
-
-  @Bean
   ListenerContainerCustomizer<AbstractMessageListenerContainer<?, ?>> listenerCustomization(
           DefaultErrorHandler errorHandler
   ) {
@@ -109,10 +82,8 @@ public class KafkaConfiguration {
     // like db connection error or write error. While allow to set
     // not retryable exceptions like validation error which cannot be recovered with a retry.
     final var errorHandler = new DefaultErrorHandler(
-            new FixedBackOff(3000L, FixedBackOff.UNLIMITED_ATTEMPTS)
+            new FixedBackOff(FIXED_BACKOFF_INTERVAL, FixedBackOff.UNLIMITED_ATTEMPTS)
     );
-    //errorHandler.setAckAfterHandle(false);
-    //errorHandler.setCommitRecovered(false);
     retryableExceptions.forEach(errorHandler::addRetryableExceptions);
     fatalExceptions.forEach(errorHandler::addNotRetryableExceptions);
     return errorHandler;

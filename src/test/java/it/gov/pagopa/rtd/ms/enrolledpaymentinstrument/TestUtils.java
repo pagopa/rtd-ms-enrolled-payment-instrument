@@ -20,6 +20,10 @@ public final class TestUtils {
     return HashPan.create(randomString(64));
   }
 
+  public static String generateRandomHashPanAsString() {
+    return generateRandomHashPan().getValue();
+  }
+
   public static String randomString(int length) {
     return IntStream.range(0, length)
             .mapToObj(i -> "" + ALPHANUMERIC.charAt(random.nextInt(ALPHANUMERIC.length())))

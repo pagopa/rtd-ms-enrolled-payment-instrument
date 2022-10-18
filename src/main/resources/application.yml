@@ -3,6 +3,31 @@ logging:
     root: INFO
 
 
+## Topics and consumer groups
+topics:
+  enrolled-events:
+    topic: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
+    group: rtd-enrolled-payment-instrument-consumer-group
+  tkm-write-update:
+    topic: ${KAFKA_TOPIC_TKM_BROKER:tkm-write-update-token}
+    group: rtd-pim-consumer-group
+  revoke-pi:
+    topic: ${KAFKA_TOPIC_REVOKE:rtd-revoke-pi}
+
+# custom integration flow properties
+integration-flow:
+  tkmBulkConsumer:
+    topic: ${topics.tkm-write-update.topic}
+    bootstrap.servers: ${KAFKA_BROKER_TKM:localhost:29095}
+    group.id: ${topics.tkm-write-update.group}
+    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    allow.auto.create.topics: false
+    max.poll.records: 1
+#    sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_TKM_PIM}
+#    sasl.mechanism: PLAIN
+#    security.protocol: SASL_SSL
+
 spring:
   config:
     activate:
@@ -15,46 +40,49 @@ spring:
 
   cloud:
     function:
-      definition: functionRouter;tkmWalletEventConsumer
+      definition: functionRouter
     stream:
-      function:
-        routing:
-          enabled: true
+      function.routing.enabled: true
       bindings:
         functionRouter-in-0:
-          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
-          group: rtd-enrolled-payment-instrument-consumer-group
+          destination: ${topics.enrolled-events.topic}
+          group: ${topics.enrolled-events.group}
           content-type: application/json
           binder: kafka-enrolled-binder
           consumer:
             max-attempts: 1
-
-        tkmWalletEventConsumer-in-0:
-          destination: ${KAFKA_TOPIC_TKM_BROKER:tkm-write-update-token}
-          group: rtd-pim-consumer-group
-          content-type: application/json
-          binder: kafka-tkm-binder
-          consumer:
-            max-attempts: 1
+            ackEachRecord: true
+            ackMode: 'RECORD'
 
         rtdEnrolledPimProducer-out-0:
-          destination: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
+          destination: ${topics.enrolled-events.topic}
           content-type: application/json
           binder: kafka-enrolled-binder
           producer:
             partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
             partitionCount: ${KAFKA_PARTITION_COUNT:1}
+            sync: true
 
         rtdRevokedPi-out-0:
-          destination: ${KAFKA_TOPIC_REVOKE:rtd-revoke-pi}
+          destination: ${topics.revoke-pi.topic}
           content-type: application/json
           binder: kafka-revoke-binder
 
-      kafka:
-        binder:
-          configuration:
-            security.protocol: SASL_SSL
-            sasl.mechanism: PLAIN
+        tkmWalletEventConsumer-in-0:
+          destination: ${topics.tkm-write-update.topic}
+          group: ${topics.tkm-write-update.group}
+          content-type: application/json
+          binder: kafka-tkm-binder
+          consumer:
+            max-attempts: 1
+            ackEachRecord: true
+            ackMode: 'RECORD'
+
+#      kafka:
+#        binder:
+#          configuration:
+#            security.protocol: SASL_SSL
+#            sasl.mechanism: PLAIN
 
       binders:
         kafka-enrolled-binder:

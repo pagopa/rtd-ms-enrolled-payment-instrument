@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.KafkaConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;

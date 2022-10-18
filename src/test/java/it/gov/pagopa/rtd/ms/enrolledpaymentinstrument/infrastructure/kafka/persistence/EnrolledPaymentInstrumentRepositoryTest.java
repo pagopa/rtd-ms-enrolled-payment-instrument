@@ -1,7 +1,8 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.persistence;
 
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegrationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
@@ -11,13 +12,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.AutoConfigureBefore;
-import org.springframework.boot.autoconfigure.mongo.MongoProperties;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort.Direction;
@@ -27,18 +24,18 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest()
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("mongo-integration-test")
 @TestPropertySource(properties = {
         "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
 @AutoConfigureDataMongo
+@Import(MongodbIntegrationTestConfiguration.class)
 class EnrolledPaymentInstrumentRepositoryTest {
 
   private static final HashPan TEST_HASH_PAN = TestUtils.generateRandomHashPan();

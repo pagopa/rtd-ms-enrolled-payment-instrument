@@ -31,9 +31,11 @@ public class TokenManagerCardChanged {
   private CardChangeType changeType;
 
   @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
   public static class HashTokenEvent {
-    final String hashToken;
-    final HashTokenChangeType changeType;
+    private String hashToken;
+    private HashTokenChangeType changeType;
   }
 
   public List<TkmUpdateCommand.TkmTokenCommand> toTkmTokenCommand() {

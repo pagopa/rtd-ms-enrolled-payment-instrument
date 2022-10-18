@@ -4,7 +4,18 @@ logging:
 
 test.kafka.topic: "embedded-test-topic"
 test.kafka.topic-tkm: "embedded-test-topic-tkm"
+test.kafka.topic-wallet-tkm: "embedded-test-topic-wallet-tkm"
 test.kafka.topic-revoke: "revoke-topic"
+
+integration-flow:
+  tkmBulkConsumer:
+    topic: ${test.kafka.topic-wallet-tkm}
+    bootstrap.servers: ${spring.embedded.kafka.brokers}
+    group.id: "group"
+    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    allow.auto.create.topics: false
+    max.poll.records: 1
 
 spring:
   config:
@@ -13,7 +24,7 @@ spring:
 
   cloud:
     function:
-      definition: functionRouter;tkmWalletEventConsumer
+      definition: functionRouter
     stream:
       function.routing.enabled: true
       bindings:
@@ -25,11 +36,14 @@ spring:
           consumer:
             max-attempts: 1
 
-        tkmWalletEventConsumer-in-0:
+        cardChangedProducer-out-0:
           destination: ${test.kafka.topic-tkm}
-          group: rtd-pim-consumer-group
           content-type: application/json
           binder: kafka-binder
+          producer:
+            partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
+            partitionCount: ${KAFKA_PARTITION_COUNT:1}
+            sync: true
 
         rtdRevokedPi-out-0:
           destination: ${test.kafka.topic-revoke}
