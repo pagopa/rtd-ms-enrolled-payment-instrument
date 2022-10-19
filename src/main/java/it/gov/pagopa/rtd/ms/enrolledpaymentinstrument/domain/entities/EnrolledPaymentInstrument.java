@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -84,7 +85,9 @@ public class EnrolledPaymentInstrument {
    * @param par A valid par (not null and not blank)
    */
   public void associatePar(String par) {
-    this.par = par;
+    this.par = Optional.ofNullable(this.par)
+            .map(it -> Optional.ofNullable(par).orElse(this.par))
+            .orElse(par);
   }
 
   /**

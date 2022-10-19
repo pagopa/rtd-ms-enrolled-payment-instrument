@@ -23,10 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
 import javax.validation.ConstraintViolationException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -119,7 +116,22 @@ public class TkmPaymentInstrumentServiceTest {
 
       service.handle(updateCommand);
       Mockito.verify(repository).save(paymentInstrumentArgumentCaptor.capture());
-      assertEquals("par", paymentInstrumentArgumentCaptor.getValue().getPar());
+      assertThat(paymentInstrumentArgumentCaptor.getValue())
+              .matches(it -> Objects.equals("par", it.getPar()));
+    }
+
+    @Test
+    void whenParIsAlreadySetThenCantChangeToNull() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), null, List.of());
+      final var mockInstrument = EnrolledPaymentInstrument.create(hashPan, Set.of(), "", "");
+      mockInstrument.associatePar("par");
+
+      Mockito.doReturn(Optional.of(mockInstrument)).when(repository).findByHashPan(hashPan.getValue());
+      service.handle(updateCommand);
+      Mockito.verify(repository).save(paymentInstrumentArgumentCaptor.capture());
+      assertThat(paymentInstrumentArgumentCaptor.getValue())
+              .matches(it -> Objects.equals(it.getPar(), "par"));
     }
 
     @Test
@@ -131,14 +143,14 @@ public class TkmPaymentInstrumentServiceTest {
               ))
       );
 
-      assertTrue(invalidUpdateCommands.stream().noneMatch(command -> {
+      assertThat(invalidUpdateCommands).noneMatch(command -> {
         try {
           service.handle(command);
           return true;
         } catch (ConstraintViolationException | IllegalArgumentException t) {
           return false;
         }
-      }));
+      });
     }
   }
 
@@ -213,14 +225,14 @@ public class TkmPaymentInstrumentServiceTest {
               new TkmRevokeCommand(null, null, "")
       );
 
-      assertTrue(invalidUpdateCommands.stream().noneMatch(command -> {
+      assertThat(invalidUpdateCommands).noneMatch(command -> {
         try {
           service.handle(command);
           return true;
         } catch (ConstraintViolationException | IllegalArgumentException t) {
           return false;
         }
-      }));
+      });
     }
   }
 }
