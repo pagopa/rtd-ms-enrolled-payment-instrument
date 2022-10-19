@@ -3,7 +3,6 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.splitter.TokenManagerCardEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest.dto.RevokeCard;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,13 +23,18 @@ public class PaymentManagerBackwardControllerImpl implements PaymentManagerBackw
     this.cardEventPublisher = cardEventPublisher;
   }
 
+  @ExceptionHandler(InternalError.class)
+  ResponseEntity<Object> handleInternalError() {
+    return ResponseEntity.internalServerError().build();
+  }
+
   @Override
-  public void revokeCard(RevokeCard revokeCard) {
+  public void revokeCard(String hashPan, String taxCode) {
     log.info("Deleting card from PM backward API");
     final var isSent = cardEventPublisher.sendTokenManagerCardChanged(
             new TokenManagerCardChanged(
-                    revokeCard.getHashPan(),
-                    revokeCard.getTaxCode(),
+                    hashPan,
+                    taxCode,
                     null,
                     Collections.emptyList(),
                     LocalDateTime.now(),
@@ -42,10 +46,5 @@ public class PaymentManagerBackwardControllerImpl implements PaymentManagerBackw
       log.error("Failed to send delete card event");
       throw new InternalError("Failed to send revoke card event");
     }
-  }
-
-  @ExceptionHandler(InternalError.class)
-  ResponseEntity<Object> handleInternalError() {
-    return ResponseEntity.internalServerError().build();
   }
 }
