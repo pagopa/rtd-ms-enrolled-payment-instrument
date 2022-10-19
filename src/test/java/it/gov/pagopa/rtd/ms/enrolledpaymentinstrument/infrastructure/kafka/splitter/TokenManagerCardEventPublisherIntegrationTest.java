@@ -33,8 +33,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -79,7 +77,7 @@ class TokenManagerCardEventPublisherIntegrationTest {
   @Test
   void whenPublishCardChangedEventThenShouldBeProducedOnDifferentPartitions() {
     final var events = IntStream.range(0, 10)
-            .mapToObj(i -> TestUtils.prepareRandomTokenManagerEvent(CardChangeType.UPDATE).build());
+            .mapToObj(i -> TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).build());
 
     events.forEach(it -> cardEventPublisher.sendTokenManagerCardChanged(it));
 
@@ -93,7 +91,7 @@ class TokenManagerCardEventPublisherIntegrationTest {
   @Test
   void whenPublishCardChangedEventThenMustHaveSamePayload() {
     final var events = IntStream.range(0, 10)
-            .mapToObj(i -> TestUtils.prepareRandomTokenManagerEvent(CardChangeType.UPDATE).build())
+            .mapToObj(i -> TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).build())
             .collect(Collectors.toList());
 
     events.forEach(it -> cardEventPublisher.sendTokenManagerCardChanged(it));

@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,8 @@ public class TokenManagerCardChanged {
 
   private List<HashTokenEvent> hashTokens;
 
+  private LocalDateTime timestamp;
+
   @NotNull
   private CardChangeType changeType;
 
@@ -44,7 +47,7 @@ public class TokenManagerCardChanged {
             .stream()
             .map(it -> new TkmUpdateCommand.TkmTokenCommand(
                             it.getHashToken(),
-                            it.getChangeType() == HashTokenChangeType.UPDATE ?
+                            it.getChangeType() == HashTokenChangeType.INSERT_UPDATE ?
                                     TkmUpdateCommand.TkmTokenCommand.Action.UPDATE :
                                     TkmUpdateCommand.TkmTokenCommand.Action.DELETE
                     )

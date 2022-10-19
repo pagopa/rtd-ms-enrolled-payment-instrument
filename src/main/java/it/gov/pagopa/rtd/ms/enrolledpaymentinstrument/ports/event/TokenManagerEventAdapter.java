@@ -22,7 +22,7 @@ public class TokenManagerEventAdapter implements Consumer<TokenManagerCardChange
 
   @Override
   public void accept(TokenManagerCardChanged event) {
-    if (event.getChangeType() == CardChangeType.UPDATE) {
+    if (event.getChangeType() == CardChangeType.INSERT_UPDATE) {
       final var tokenUpdateCommands = event.toTkmTokenCommand();
       tkmPaymentInstrumentService.handle(new TkmUpdateCommand(event.getHashPan(), event.getPar(), tokenUpdateCommands));
     } else if (event.getChangeType() == CardChangeType.REVOKE) {

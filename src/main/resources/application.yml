@@ -59,7 +59,7 @@ spring:
           content-type: application/json
           binder: kafka-enrolled-binder
           producer:
-            partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
+            partitionKeyExpression: headers.partitionKey
             partitionCount: ${KAFKA_PARTITION_COUNT:1}
             sync: true
 
