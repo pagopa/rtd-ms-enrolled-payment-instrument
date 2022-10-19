@@ -47,7 +47,7 @@ public class TokenManagerCardChanged {
             .stream()
             .map(it -> new TkmUpdateCommand.TkmTokenCommand(
                             it.getHashToken(),
-                            it.getChangeType() == HashTokenChangeType.UPDATE ?
+                            it.getChangeType() == HashTokenChangeType.INSERT_UPDATE ?
                                     TkmUpdateCommand.TkmTokenCommand.Action.UPDATE :
                                     TkmUpdateCommand.TkmTokenCommand.Action.DELETE
                     )

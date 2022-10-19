@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -51,8 +50,8 @@ class TokenManagerWalletEventSplitterTest {
   @Test
   void whenWalletContainsMultipleCardThenEachCardIsAnEvent() {
     final var hashTokens = List.of(
-            new HashTokenItem(TestUtils.generateRandomHashPanAsString(), HashTokenChangeType.UPDATE),
-            new HashTokenItem(TestUtils.generateRandomHashPanAsString(), HashTokenChangeType.UPDATE),
+            new HashTokenItem(TestUtils.generateRandomHashPanAsString(), HashTokenChangeType.INSERT_UPDATE),
+            new HashTokenItem(TestUtils.generateRandomHashPanAsString(), HashTokenChangeType.INSERT_UPDATE),
             new HashTokenItem(TestUtils.generateRandomHashPanAsString(), HashTokenChangeType.DELETE)
     );
     final var cards = IntStream.of(3).mapToObj(i ->
