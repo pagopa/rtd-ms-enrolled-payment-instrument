@@ -7,12 +7,25 @@
 	"item": [
 		{
 			"name": "Send fake enrolled payment instrument",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// GET AND CHECK HASHPAN",
+							"",
+							"_.unEnroll(pm, pm.collectionVariables.get('test_hashpan'), \"ID_PAY\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "PUT",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"hashPan\": \"2ac01c6a86e0ada464d7682888d3e01009ed57ff0bfea09575d842039e1030aa\",\n    \"app\": \"FA\",\n    \"operation\": \"CREATE\"\n}",
+					"raw": "{\n    \"hashPan\": \"{{test_hashpan}}\",\n    \"app\": \"ID_PAY\",\n    \"operation\": \"CREATE\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -32,7 +45,7 @@
 			"response": []
 		},
 		{
-			"name": "Send fake tkm event",
+			"name": "Send fake bulk tkm event",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -49,7 +62,33 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"taxCode\": \"CFCFCF\",\n    \"timestamp\": {{current_timestamp}},\n    \"cards\": []\n}",
+					"raw": "{\n    \"taxCode\": \"CFCFCF\",\n    \"timestamp\": {{current_timestamp}},\n    \"cards\": [\n        {\n            \"hpan\": \"{{test_hashpan}}\",\n            \"par\": \"12345\",\n            \"action\": \"REVOKE\",\n            \"htokens\": []\n        }\n    ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/tkm-bulk-update",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"tkm-bulk-update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send TKM Update Single Card",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"hashPan\": \"2ac01c6a86e0ada464d7682888d3e01009ed57ff0bfea09575d842039e1030aa\",\n    \"taxCode\": \"CFCFCF\",\n    \"par\": \"1234567890\",\n    \"changeType\": \"UPDATE\",\n    \"hashTokens\": [\n        {\n            \"hashToken\": \"2ac01c6a86e0ada464d7682888d3e01009ed57ff0bfea09575d842039e1030aa\",\n            \"changeType\": \"UPDATE\"\n        }\n    ]\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -63,6 +102,102 @@
 					],
 					"path": [
 						"tkm-update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Send TKM Revoke Single Card Copy",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"hashPan\": \"2ac01c6a86e0ada464d7682888d3e01009ed57ff0bfea09575d842039e1030aa\",\n    \"taxCode\": \"CFCFCF\",\n    \"par\": \"1234567890\",\n    \"changeType\": \"REVOKE\",\n    \"hashTokens\": null\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/tkm-update",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"tkm-update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Upload Hashpan to resolve",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Ocp-Apim-Subscription-Key",
+						"value": "8538b9c9f7d0429aa71387b7e5ed7eb2",
+						"type": "default"
+					},
+					{
+						"key": "Ocp-Apim-Trace",
+						"value": "true",
+						"type": "default"
+					}
+				],
+				"body": {
+					"mode": "file",
+					"file": {
+						"src": "/Users/andrea.petreti/Desktop/prova.txt"
+					}
+				},
+				"url": {
+					"raw": "https://api.dev.cstar.pagopa.it/rtd/payment-instrument-manager/v2/resolve/prova2.txt",
+					"protocol": "https",
+					"host": [
+						"api",
+						"dev",
+						"cstar",
+						"pagopa",
+						"it"
+					],
+					"path": [
+						"rtd",
+						"payment-instrument-manager",
+						"v2",
+						"resolve",
+						"prova2.txt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Revoke Card from PM Backward API",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"taxCode\": \"cfcf\",\n    \"hashPan\": {{test_hashpan}}\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/pm-backward/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"pm-backward",
+						""
 					]
 				}
 			},
@@ -84,7 +219,23 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					""
+					"Object.prototype.unEnroll = function(pm, hashPan, app) {",
+					"    return pm.sendRequest({",
+					"        url: `${pm.environment.get('base_url')}/enroll`,",
+					"        method: 'PUT',",
+					"        header: {",
+					"            'Content-Type': 'application/json'",
+					"        },",
+					"        body: {",
+					"            mode: 'raw',",
+					"            raw: JSON.stringify({",
+					"                hashPan: hashPan,",
+					"                app: app,",
+					"                operation: \"DELETE\"",
+					"            })",
+					"        }",
+					"    });",
+					"}"
 				]
 			}
 		}
@@ -93,6 +244,11 @@
 		{
 			"key": "base_url",
 			"value": "http://localhost:8080",
+			"type": "default"
+		},
+		{
+			"key": "test_hashpan",
+			"value": "test02D9WLIzUuEcibbXUHO7Yn7uBuZhymKSciTYV6JNtoPg8sIUSUIFMhI68EXw",
 			"type": "default"
 		}
 	]
