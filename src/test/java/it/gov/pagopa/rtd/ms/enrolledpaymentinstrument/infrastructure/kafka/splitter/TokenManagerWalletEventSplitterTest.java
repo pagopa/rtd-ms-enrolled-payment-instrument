@@ -8,6 +8,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManag
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -34,12 +35,12 @@ class TokenManagerWalletEventSplitterTest {
             new TokenManagerWalletChanged.CardItem(
                     TestUtils.generateRandomHashPan().getValue(),
                     "par",
-                    CardChangeType.UPDATE,
+                    CardChangeType.INSERT_UPDATE,
                     Collections.emptyList()
             )
     ).collect(Collectors.toList());
 
-    final var walletEvent = new TokenManagerWalletChanged("taxCode", new Date(), cards);
+    final var walletEvent = new TokenManagerWalletChanged("taxCode", LocalDateTime.now(), cards);
     final var cardEvents = splitter.apply(walletEvent);
 
     assertThat(cardEvents)
@@ -58,12 +59,12 @@ class TokenManagerWalletEventSplitterTest {
             new TokenManagerWalletChanged.CardItem(
                     TestUtils.generateRandomHashPanAsString(),
                     "par",
-                    CardChangeType.UPDATE,
+                    CardChangeType.INSERT_UPDATE,
                     hashTokens
             )
     ).collect(Collectors.toList());
 
-    final var walletEvent = new TokenManagerWalletChanged("taxCode", new Date(), cards);
+    final var walletEvent = new TokenManagerWalletChanged("taxCode", LocalDateTime.now(), cards);
     final var cardEvents = splitter.apply(walletEvent);
 
     // assert over hash tokens
@@ -85,7 +86,7 @@ class TokenManagerWalletEventSplitterTest {
   @Test
   void whenWalletCardsHaveNullTokensThenCardEventHaveNoTokens() {
     final var events = splitter.apply(
-            new TokenManagerWalletChanged("taxCode", new Date(),
+            new TokenManagerWalletChanged("taxCode", LocalDateTime.now(),
                     List.of(
                             new TokenManagerWalletChanged.CardItem(
                                     "hpan",
@@ -103,7 +104,7 @@ class TokenManagerWalletEventSplitterTest {
   @Test
   void whenWalletHasNullCardThenSplitIntoEmptyList() {
     final var cardEvents = splitter.apply(
-            new TokenManagerWalletChanged("taxCode", new Date(), null)
+            new TokenManagerWalletChanged("taxCode", LocalDateTime.now(), null)
     );
     assertThat(cardEvents).isEmpty();
   }

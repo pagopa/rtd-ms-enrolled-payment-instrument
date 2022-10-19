@@ -22,6 +22,7 @@ public class TokenManagerWalletEventSplitter implements Function<TokenManagerWal
                     .changeType(it.getAction())
                     .taxCode(tokenManagerWalletChanged.getTaxCode())
                     .hashTokens(buildHashTokenEvents(it))
+                    .timestamp(tokenManagerWalletChanged.getTimestamp())
                     .build()
             )
             .collect(Collectors.toList());
