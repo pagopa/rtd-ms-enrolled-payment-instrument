@@ -81,4 +81,15 @@ class PaymentManagerBackwardControllerImplTest {
                     .content(mapper.writeValueAsString(revokeCard))
     ).andExpectAll(status().isBadRequest());
   }
+
+  @Test
+  void whenFailToPublishEventThenReturnInternalServerError() throws Exception {
+    final var revokeCard = RevokeCard.builder().hashPan("hpan").taxCode("taxCode").build();
+    Mockito.doReturn(false).when(cardEventPublisher).sendTokenManagerCardChanged(Mockito.any());
+    mockMvc.perform(
+            MockMvcRequestBuilders.delete(BASE_URI)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(revokeCard))
+    ).andExpectAll(status().isInternalServerError());
+  }
 }

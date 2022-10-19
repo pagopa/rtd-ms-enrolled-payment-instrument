@@ -5,6 +5,8 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChange
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest.dto.RevokeCard;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,6 +36,14 @@ public class PaymentManagerBackwardControllerImpl implements PaymentManagerBackw
             )
     );
     if (isSent) log.info("Delete card event sent");
-    else log.error("Failed to send delete card event");
+    else {
+      log.error("Failed to send delete card event");
+      throw new InternalError("Failed to send revoke card event");
+    }
+  }
+
+  @ExceptionHandler(InternalError.class)
+  ResponseEntity<Object> handleInternalError() {
+    return ResponseEntity.internalServerError().build();
   }
 }
