@@ -44,7 +44,7 @@ public final class TestUtils {
     return IntStream.range(0, which)
             .mapToObj(i -> new TokenManagerCardChanged.HashTokenEvent(
                     generateRandomHashPan().getValue(),
-                    random.nextDouble() < 0.5 ? HashTokenChangeType.DELETE : HashTokenChangeType.UPDATE
+                    random.nextDouble() < 0.5 ? HashTokenChangeType.DELETE : HashTokenChangeType.INSERT_UPDATE
             ))
             .collect(Collectors.toList());
   }
