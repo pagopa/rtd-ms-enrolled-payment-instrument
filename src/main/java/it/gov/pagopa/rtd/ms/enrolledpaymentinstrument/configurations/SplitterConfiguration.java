@@ -39,8 +39,16 @@ public class SplitterConfiguration {
   private static final Long FIXED_BACKOFF_INTERVAL = 3000L;
 
   @Bean
-  GenericHandler<TokenManagerCardChanged> cardEventPublisher(StreamBridge bridge) {
-    return TokenManagerCardEventPublisher.asHandler(TARGET_OUT_BINDING, bridge);
+  TokenManagerCardEventPublisher cardEventPublisher(StreamBridge bridge) {
+    return new TokenManagerCardEventPublisher(TARGET_OUT_BINDING, bridge);
+  }
+
+  @Bean
+  GenericHandler<TokenManagerCardChanged> cardEventPublisherHandler(TokenManagerCardEventPublisher cardEventPublisher) {
+    return ((payload, headers) -> {
+      cardEventPublisher.sendTokenManagerCardChanged(payload);
+      return null;
+    });
   }
 
   @Bean

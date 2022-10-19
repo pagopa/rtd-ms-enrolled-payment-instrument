@@ -19,7 +19,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <java.version>11</java.version>
         <spring-cloud.version>2021.0.4</spring-cloud.version>
-        <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/*</sonar.exclusions>
+        <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/KafkaRest*</sonar.exclusions>
     </properties>
 
     <dependencies>
@@ -191,7 +191,7 @@
                     <excludes>
                         <exclude>**/*Configuration.java</exclude>
                         <exclude>**/*Application.java</exclude>
-                        <exclude>**/ports/rest/**/*</exclude>
+                        <exclude>**/ports/rest/**/KafkaRest*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
