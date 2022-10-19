@@ -7,12 +7,15 @@ import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.config.Storage;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.integration.kafka.inbound.KafkaMessageDrivenChannelAdapter;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -23,6 +26,10 @@ public class MongodbIntegrationTestConfiguration {
 
   private static final String IP = "localhost";
   private static final int PORT = 28017;
+
+  /* Useless beans */
+  @MockBean
+  KafkaMessageDrivenChannelAdapter<String, TokenManagerWalletChanged> input;
 
   @Bean
   public MongodConfig embeddedMongoConfiguration() throws IOException {

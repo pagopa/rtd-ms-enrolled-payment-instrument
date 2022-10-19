@@ -4,15 +4,22 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.ApplicationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.integration.kafka.inbound.KafkaMessageDrivenChannelAdapter;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.TestPropertySource;
 
@@ -22,8 +29,9 @@ import java.util.UnknownFormatConversionException;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest()
-@EnableAutoConfiguration(exclude = EmbeddedMongoAutoConfiguration.class)
+@EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
+@Import(PaymentInstrumentEventRouterTest.Config.class)
 public class PaymentInstrumentEventRouterTest {
 
   private static final String TKM_CONSUMER_DESTINATION = "tkmConsumer";
@@ -89,4 +97,7 @@ public class PaymentInstrumentEventRouterTest {
             () -> eventRouter.routingResult(MessageBuilder.withPayload(new Object()).build())
     );
   }
+
+  @Import(ApplicationTestConfiguration.class)
+  public static class Config { }
 }
