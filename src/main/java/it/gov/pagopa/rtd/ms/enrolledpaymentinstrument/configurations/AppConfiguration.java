@@ -2,10 +2,13 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.KafkaRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,14 +23,16 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.util.Set;
-import java.util.UnknownFormatConversionException;
+import java.util.*;
 
 @Configuration
 @EnableMongoRepositories(basePackages = "it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories")
 public class AppConfiguration {
 
   private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
+
+  @Value("${revoke-notification.bpd-url}")
+  private String baseUrlBpdDeleteCard;
 
   @Bean
   public EnrolledPaymentInstrumentRepository enrolledPaymentInstrumentRepository(
@@ -38,7 +43,11 @@ public class AppConfiguration {
 
   @Bean
   public InstrumentRevokeNotificationService revokeService(StreamBridge bridge) {
-    return new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge);
+    return new ChainRevokeNotificationService(List.of(
+            Optional.ofNullable(baseUrlBpdDeleteCard).map(BPDRevokeNotificationService::fromUrl)
+                    .orElse(BPDRevokeNotificationService.fake()),
+            new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge)
+    ));
   }
 
   /**
