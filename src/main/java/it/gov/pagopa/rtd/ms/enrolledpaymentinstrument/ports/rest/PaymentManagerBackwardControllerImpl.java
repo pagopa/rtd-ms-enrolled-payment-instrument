@@ -5,12 +5,13 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChange
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest.dto.RevokeCard;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
 import java.util.Collections;
 
 @RestController
+@RequestMapping("/pm-backward")
 @Slf4j
 public class PaymentManagerBackwardControllerImpl implements PaymentManagerBackwardController {
 
@@ -21,7 +22,7 @@ public class PaymentManagerBackwardControllerImpl implements PaymentManagerBackw
   }
 
   @Override
-  public void revokeCard(@Valid RevokeCard revokeCard) {
+  public void revokeCard(RevokeCard revokeCard) {
     log.info("Deleting card from PM backward API");
     final var isSent = cardEventPublisher.sendTokenManagerCardChanged(
             new TokenManagerCardChanged(
