@@ -11,11 +11,11 @@ public abstract class AggregateRoot {
   @Transient
   private final List<DomainEvent> domainEvents;
 
-  public AggregateRoot() {
+  protected AggregateRoot() {
     this(new ArrayList<>());
   }
 
-  AggregateRoot(List<DomainEvent> domainEvents) {
+  protected AggregateRoot(List<DomainEvent> domainEvents) {
     this.domainEvents = domainEvents;
   }
 
