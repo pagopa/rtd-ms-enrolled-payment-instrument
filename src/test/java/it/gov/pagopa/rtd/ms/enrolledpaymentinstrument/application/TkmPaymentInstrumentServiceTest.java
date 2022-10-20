@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.ApplicationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
@@ -187,6 +188,15 @@ public class TkmPaymentInstrumentServiceTest {
 
       Mockito.verify(repository, times(1)).save(any());
       Mockito.verify(virtualEnrollService, times(0)).enroll(any(), any());
+    }
+
+    @Test
+    void whenVirtualEnrollFailsThenThrowAnError() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), "par", List.of());
+      doReturn(false).when(virtualEnrollService).enroll(any(), any());
+
+      assertThrowsExactly(VirtualEnrollError.class, () -> service.handle(updateCommand));
     }
   }
 

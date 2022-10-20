@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
@@ -88,6 +89,7 @@ public class TkmPaymentInstrumentService {
       log.info("Virtual enroll done");
     } else {
       log.error("Failed during virtual enroll");
+      throw new VirtualEnrollError();
     }
   }
 //
