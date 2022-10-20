@@ -8,10 +8,13 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPa
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +34,8 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @Import(ApplicationTestConfiguration.class)
@@ -39,6 +44,9 @@ public class TkmPaymentInstrumentServiceTest {
 
   @Autowired
   private EnrolledPaymentInstrumentRepository repository;
+
+  @Autowired
+  private VirtualEnrollService virtualEnrollService;
 
   @Autowired
   private TkmPaymentInstrumentService service;
@@ -140,6 +148,46 @@ public class TkmPaymentInstrumentServiceTest {
         }
       }));
     }
+
+    @Test
+    void whenCommandUpdateParThenDoVirtualEnroll() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), "par", List.of());
+      doReturn(true).when(virtualEnrollService).enroll(hashPan, "par");
+
+      service.handle(updateCommand);
+
+      Mockito.verify(repository, times(1)).save(any());
+      Mockito.verify(virtualEnrollService, times(1)).enroll(hashPan, "par");
+    }
+
+    @Test
+    void whenCommandUpdateTheSameParThenAvoidVirtualEnroll() {
+      final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(
+              TestUtils.generateRandomHashPan(),
+              "", ""
+      );
+      paymentInstrument.associatePar("par");
+      paymentInstrument.clearDomainEvents();
+
+      final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), "par", List.of());
+      doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
+
+      service.handle(updateCommand);
+
+      Mockito.verify(repository, times(1)).save(any());
+      Mockito.verify(virtualEnrollService, times(0)).enroll(any(), any());
+    }
+
+    @Test
+    void whenCommandDoesntUpdateParThenAvoidVirtualEnroll() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), null, List.of());
+      service.handle(updateCommand);
+
+      Mockito.verify(repository, times(1)).save(any());
+      Mockito.verify(virtualEnrollService, times(0)).enroll(any(), any());
+    }
   }
 
 
@@ -188,7 +236,7 @@ public class TkmPaymentInstrumentServiceTest {
 
       service.handle(revokeCommand);
 
-      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+      Mockito.verify(revokeService, times(1)).notifyRevoke("taxCode", hashPan);
     }
 
     @Test
@@ -200,8 +248,8 @@ public class TkmPaymentInstrumentServiceTest {
 
       service.handle(revokeCommand);
 
-      Mockito.verify(repository, Mockito.times(0)).save(Mockito.any());
-      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+      Mockito.verify(repository, times(0)).save(any());
+      Mockito.verify(revokeService, times(1)).notifyRevoke("taxCode", hashPan);
     }
 
     @Test

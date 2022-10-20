@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -13,6 +14,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PaymentInstrumentTest {
@@ -120,12 +122,46 @@ class PaymentInstrumentTest {
     assertFalse(paymentInstrument.isReady());
   }
 
+  @Test
+  void whenUpdateParInfoThenInstrumentFiresParAssociatedEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(
+            TestUtils.generateRandomHashPan(),
+            "",
+            ""
+    );
+    paymentInstrument.associatePar("par");
+    assertThat(paymentInstrument.getDomainEvents()).contains(new ParAssociated(paymentInstrument.getHashPan(), "par"));
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(RandomPaymentInstrumentProvider.class)
+  void whenUpdateParWithSameParThenNoParAssociatedEventIsFired(EnrolledPaymentInstrument paymentInstrument) {
+    paymentInstrument.associatePar("par");
+    paymentInstrument.clearDomainEvents();
+    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+
+    paymentInstrument.associatePar("par");
+    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+  }
+
   @ParameterizedTest
   @ArgumentsSource(RandomPaymentInstrumentProvider.class)
   void whenUpdateParInfoThenInstrumentDoesntChangeState(EnrolledPaymentInstrument paymentInstrument) {
     final var currentState = paymentInstrument.getState();
     paymentInstrument.associatePar("par");
     assertEquals(currentState, paymentInstrument.getState());
+  }
+
+  @Test
+  void whenUpdateParToRevokeCardThenInstrumentDoesntUpdateItNeitherFireEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan(), "", "");
+    paymentInstrument.associatePar("par");
+    paymentInstrument.revokeInstrument();
+
+    paymentInstrument.associatePar("par2");
+
+    assertThat(paymentInstrument.getPar()).isEqualTo("par");
+    assertThat(paymentInstrument.getDomainEvents()).containsOnly(new ParAssociated(paymentInstrument.getHashPan(), "par"));
   }
 
   @ParameterizedTest
@@ -135,6 +171,14 @@ class PaymentInstrumentTest {
     paymentInstrument.addHashPanChild(TestUtils.generateRandomHashPan());
     assertEquals(currentState, paymentInstrument.getState());
   }
+
+  @ParameterizedTest
+  @ArgumentsSource(RandomPaymentInstrumentProvider.class)
+  void whenClearDomainEventsThenNoEventsAreAvailable(EnrolledPaymentInstrument paymentInstrument) {
+    paymentInstrument.clearDomainEvents();
+    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+  }
+
 
   static class RandomPaymentInstrumentProvider implements ArgumentsProvider {
 

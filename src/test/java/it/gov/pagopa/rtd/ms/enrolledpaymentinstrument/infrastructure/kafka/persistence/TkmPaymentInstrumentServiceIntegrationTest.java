@@ -7,6 +7,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpd
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegrationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -42,6 +43,9 @@ public class TkmPaymentInstrumentServiceIntegrationTest {
   @MockBean
   private InstrumentRevokeNotificationService notificationService;
 
+  @MockBean
+  private VirtualEnrollService virtualEnrollService;
+
   @Autowired
   private EnrolledPaymentInstrumentRepositoryImpl repository;
 
@@ -51,7 +55,7 @@ public class TkmPaymentInstrumentServiceIntegrationTest {
   void setup(@Autowired MongoTemplate mongoTemplate) {
     mongoTemplate.indexOps("enrolled_payment_instrument")
             .ensureIndex(new Index().on("hashPan", Sort.Direction.ASC).unique());
-    this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService);
+    this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService, virtualEnrollService);
   }
 
   @AfterEach

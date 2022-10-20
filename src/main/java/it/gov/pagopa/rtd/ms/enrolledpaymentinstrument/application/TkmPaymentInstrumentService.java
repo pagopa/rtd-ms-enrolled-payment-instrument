@@ -4,8 +4,10 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRev
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -22,13 +24,16 @@ public class TkmPaymentInstrumentService {
 
   private final EnrolledPaymentInstrumentRepository repository;
   private final InstrumentRevokeNotificationService revokeService;
+  private final VirtualEnrollService virtualEnrollService;
 
   public TkmPaymentInstrumentService(
           EnrolledPaymentInstrumentRepository repository,
-          InstrumentRevokeNotificationService revokeService
+          InstrumentRevokeNotificationService revokeService,
+          VirtualEnrollService virtualEnrollService
   ) {
     this.repository = repository;
     this.revokeService = revokeService;
+    this.virtualEnrollService = virtualEnrollService;
   }
 
   public void handle(@Valid TkmUpdateCommand command) {
@@ -56,6 +61,8 @@ public class TkmPaymentInstrumentService {
     paymentInstrument.associatePar(command.getPar());
 
     repository.save(paymentInstrument);
+
+    handleDomainEvents(paymentInstrument);
   }
 
   public void handle(@Valid TkmRevokeCommand command) {
@@ -73,5 +80,26 @@ public class TkmPaymentInstrumentService {
     } else {
       log.error("Failed to send revoke notification");
     }
+  }
+
+  private void handleParAssociated(ParAssociated parAssociatedEvent) {
+    log.info("Handling Par Associated Event, doing virtual enroll");
+    if (virtualEnrollService.enroll(parAssociatedEvent.getHashPan(), parAssociatedEvent.getPar())) {
+      log.info("Virtual enroll done");
+    } else {
+      log.error("Failed during virtual enroll");
+    }
+  }
+//
+//  private void handleChildTokenAssociated(ChildTokenAssociated event) {
+//
+//  }
+
+  private void handleDomainEvents(EnrolledPaymentInstrument paymentInstrument) {
+    paymentInstrument.getDomainEvents().forEach(event -> {
+      if (event instanceof ParAssociated) handleParAssociated((ParAssociated) event);
+      //if (event instanceof ChildTokenAssociated) handleChildTokenAssociated((ChildTokenAssociated) event);
+    });
+    paymentInstrument.clearDomainEvents();
   }
 }

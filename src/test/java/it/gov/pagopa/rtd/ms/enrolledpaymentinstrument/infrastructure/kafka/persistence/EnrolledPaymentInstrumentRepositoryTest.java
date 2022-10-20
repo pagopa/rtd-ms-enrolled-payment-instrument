@@ -6,6 +6,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegration
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.junit.jupiter.api.AfterEach;
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -35,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestPropertySource(properties = {
         "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
 @AutoConfigureDataMongo
-@Import(MongodbIntegrationTestConfiguration.class)
+@Import({EnrolledPaymentInstrumentRepositoryTest.Config.class, MongodbIntegrationTestConfiguration.class})
 class EnrolledPaymentInstrumentRepositoryTest {
 
   private static final HashPan TEST_HASH_PAN = TestUtils.generateRandomHashPan();
@@ -103,5 +106,11 @@ class EnrolledPaymentInstrumentRepositoryTest {
 
     repository.save(instrument1);
     assertThrowsExactly(OptimisticLockingFailureException.class, () -> repository.save(instrument2));
+  }
+
+  @TestConfiguration
+  public static class Config {
+    @MockBean
+    public VirtualEnrollService virtualEnrollService;
   }
 }
