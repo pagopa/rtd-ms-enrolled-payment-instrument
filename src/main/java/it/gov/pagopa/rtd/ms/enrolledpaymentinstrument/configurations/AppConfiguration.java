@@ -37,7 +37,7 @@ public class AppConfiguration {
 
   private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
 
-  @Value("${revoke-notification.bpd-url}")
+  @Value("${revoke-notification.bpd-url:}")
   private String baseUrlBpdDeleteCard;
 
   @Bean
