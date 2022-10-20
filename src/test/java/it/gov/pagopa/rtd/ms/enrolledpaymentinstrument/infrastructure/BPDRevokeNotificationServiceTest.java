@@ -1,48 +1,45 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.test.web.client.MockRestServiceServer;
+import org.junit.Rule;
+import org.junit.jupiter.api.*;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 @TestInstance(PER_CLASS)
-@RestClientTest
 class BPDRevokeNotificationServiceTest {
 
-  @Autowired
-  private MockRestServiceServer server;
-
-  @Autowired
-  private RestTemplateBuilder restTemplateBuilder;
+  @Rule
+  public WireMockRule wireMockRule = new WireMockRule(8089);
 
   private BPDRevokeNotificationService bpdRevokeNotificationService;
 
   @BeforeAll
   void setup() {
-    bpdRevokeNotificationService = new BPDRevokeNotificationService(restTemplateBuilder, false);
+    wireMockRule.start();
+    configureFor("localhost", wireMockRule.port());
+    bpdRevokeNotificationService = BPDRevokeNotificationService.fromUrl("http://localhost:" + wireMockRule.port());
   }
 
   @AfterEach
+  void clean() {
+    WireMock.reset();
+  }
+
+  @AfterAll
   public void teardown() {
-    server.reset();
+    wireMockRule.stop();
   }
 
   @Test
   void whenBPDReturnsSuccessThenNotificationServiceReturnsTrue() {
     final var hashPan = TestUtils.generateRandomHashPan();
-    server.expect(requestTo("/" + hashPan.getValue() + "?fiscalCode=CF"))
-            .andRespond(withSuccess());
+    stubFor(delete("/" + hashPan.getValue() + "?fiscalCode=CF")
+            .willReturn(ok()));
 
     assertThat(bpdRevokeNotificationService.notifyRevoke("CF", hashPan)).isTrue();
   }
@@ -50,18 +47,17 @@ class BPDRevokeNotificationServiceTest {
   @Test
   void whenBPDReturnsFailureThenNotificationServiceReturnsFalse() {
     final var hashPan = TestUtils.generateRandomHashPan();
-    server.expect(requestTo("/" + hashPan.getValue() + "?fiscalCode=CF"))
-            .andRespond(withBadRequest());
+    stubFor(delete("/" + hashPan.getValue() + "?fiscalCode=CF")
+            .willReturn(badRequest()));
 
     assertThat(bpdRevokeNotificationService.notifyRevoke("CF", hashPan)).isFalse();
   }
 
   @Test
   void whenBPDNotificationServiceIsFakeThenReturnsTrue() {
-    final var fakeBpdNotificationService = new BPDRevokeNotificationService(restTemplateBuilder, true);
+    final var fakeBpdNotificationService = BPDRevokeNotificationService.fake();
     final var hashPan = TestUtils.generateRandomHashPan();
-    
+
     assertThat(fakeBpdNotificationService.notifyRevoke("CF", hashPan)).isTrue();
   }
-
 }

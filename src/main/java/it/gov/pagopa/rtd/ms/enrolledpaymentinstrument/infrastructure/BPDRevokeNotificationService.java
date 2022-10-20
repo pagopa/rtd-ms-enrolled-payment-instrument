@@ -43,7 +43,7 @@ public class BPDRevokeNotificationService implements InstrumentRevokeNotificatio
               .path("{hashPan}")
               .query("fiscalCode={taxCode}")
               .build(hashPan.getValue(), taxCode);
-      return restTemplate.exchange(url, HttpMethod.DELETE, null, String.class)
+      return restTemplate.exchange(url.toString(), HttpMethod.DELETE, null, String.class)
               .getStatusCode().is2xxSuccessful();
     } catch (RestClientException exception) {
       log.error("Failed to notify BPD", exception);
