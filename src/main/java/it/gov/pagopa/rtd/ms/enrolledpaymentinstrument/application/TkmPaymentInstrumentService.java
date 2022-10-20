@@ -42,22 +42,26 @@ public class TkmPaymentInstrumentService {
     final var paymentInstrument = repository.findByHashPan(command.getHashPan())
             .orElse(EnrolledPaymentInstrument.createUnEnrolledInstrument(hashPan, "", ""));
 
-    final var tokenToUpdate = Optional.ofNullable(command.getTokens())
+    final var updateAndRemove = Optional.ofNullable(command.getTokens())
             .orElse(Collections.emptyList())
             .stream()
-            .filter(token -> token.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)
-            .collect(Collectors.toList());
+            .collect(Collectors.partitioningBy(it -> it.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.UPDATE));
 
-    final var tokenToRemove = Optional.ofNullable(command.getTokens())
-            .orElse(Collections.emptyList())
-            .stream()
-            .filter(token -> token.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.DELETE)
-            .collect(Collectors.toList());
+    log.info("Token to update {}, to delete {}", updateAndRemove.get(true).size(), updateAndRemove.get(false).size());
 
-    log.info("Token to update {}, to delete {}", tokenToUpdate.size(), tokenToRemove.size());
+    paymentInstrument.addHashPanChildren(
+            updateAndRemove.get(true)
+                    .stream()
+                    .map(it -> HashPan.create(it.getHashPan()))
+                    .collect(Collectors.toSet())
+    );
 
-    tokenToUpdate.forEach(token -> paymentInstrument.addHashPanChild(HashPan.create(token.getHashPan())));
-    tokenToRemove.forEach(token -> paymentInstrument.removeHashPanChild(HashPan.create(token.getHashPan())));
+    paymentInstrument.removeHashPanChildren(
+            updateAndRemove.get(false)
+                    .stream()
+                    .map(it -> HashPan.create(it.getHashPan()))
+                    .collect(Collectors.toSet())
+    );
 
     paymentInstrument.associatePar(command.getPar());
 

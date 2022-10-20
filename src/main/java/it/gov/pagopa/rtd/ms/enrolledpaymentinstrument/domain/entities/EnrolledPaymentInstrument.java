@@ -96,12 +96,23 @@ public class EnrolledPaymentInstrument {
     }
   }
 
+  public void addHashPanChildren(Set<HashPan> hashPans) {
+    hashPans.forEach(this::addHashPanChild);
+  }
+
+  public void removeHashPanChildren(Set<HashPan> hashPans) {
+    hashPans.forEach(this::removeHashPanChild);
+  }
+
   /**
    * Add a hashpan as a child this payment instrument (use for hash token)
    *
    * @param hashPan A valid hashpan, also an hash token is a valid hashpan
    */
   public void addHashPanChild(HashPan hashPan) {
+    if (!hashPanChildren.contains(hashPan)) {
+      registerEvent(new ChildTokenAssociated(this.hashPan, hashPan, this.par));
+    }
     this.hashPanChildren.add(hashPan);
   }
 

@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ChildTokenAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
@@ -12,6 +13,8 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -172,13 +175,36 @@ class PaymentInstrumentTest {
     assertEquals(currentState, paymentInstrument.getState());
   }
 
+  @Test
+  void whenAddChildHashPanThenTokenAssociatedEventIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(rootHashPan, "", "");
+    paymentInstrument.addHashPanChildren(childHashPans);
+
+    assertThat(paymentInstrument.getDomainEvents()).hasSameElementsAs(
+            childHashPans.stream().map(child -> new ChildTokenAssociated(rootHashPan, child, null)).collect(Collectors.toSet())
+    );
+  }
+
+  @Test
+  void whenAddExistingChildHashPanThenNoTokenAssociatedEventIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(rootHashPan, "", "");
+    paymentInstrument.addHashPanChildren(childHashPans);
+    paymentInstrument.clearDomainEvents();
+
+    paymentInstrument.addHashPanChildren(childHashPans);
+    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+  }
+
   @ParameterizedTest
   @ArgumentsSource(RandomPaymentInstrumentProvider.class)
   void whenClearDomainEventsThenNoEventsAreAvailable(EnrolledPaymentInstrument paymentInstrument) {
     paymentInstrument.clearDomainEvents();
     assertThat(paymentInstrument.getDomainEvents()).isEmpty();
   }
-
 
   static class RandomPaymentInstrumentProvider implements ArgumentsProvider {
 
