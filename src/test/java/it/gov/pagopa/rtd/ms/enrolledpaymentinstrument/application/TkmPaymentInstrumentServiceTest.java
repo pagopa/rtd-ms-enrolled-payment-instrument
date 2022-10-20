@@ -14,8 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,12 +55,15 @@ public class TkmPaymentInstrumentServiceTest {
   @BeforeEach
   void setup() {
     paymentInstrumentArgumentCaptor = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
-    Mockito.reset(repository);
+    Mockito.reset(repository, virtualEnrollService);
+
+    doReturn(true).when(virtualEnrollService).enroll(any(), any());
   }
 
   @Nested
   @DisplayName("Tests for update command")
   class UpdateCommandCases {
+
     @Test
     void whenHandleFirstTkmUpdateCommandThenPaymentInstrumentIsNotEnrolled() {
       final var updateCommand = new TkmUpdateCommand(
@@ -198,6 +199,43 @@ public class TkmPaymentInstrumentServiceTest {
 
       assertThrowsExactly(VirtualEnrollError.class, () -> service.handle(updateCommand));
     }
+
+    @Test
+    void whenUpdateHashTokenThenDoVirtualEnroll() {
+      final var captor = ArgumentCaptor.forClass(HashPan.class);
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var hashToken = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), "par",
+              List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)));
+
+      doReturn(true).when(virtualEnrollService).enroll(any(), any());
+
+      service.handle(updateCommand);
+
+      Mockito.verify(repository, times(1)).save(any());
+      Mockito.verify(virtualEnrollService, times(2)).enroll(captor.capture(), any());
+
+      assertThat(captor.getAllValues()).hasSameElementsAs(List.of(hashPan, hashToken));
+    }
+
+    @Test
+    void whenUpdateExistingHashTokenThenAvoidVirtualEnroll() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var hashToken = TestUtils.generateRandomHashPan();
+      final var mockInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(hashPan, "", "");
+      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), null,
+              List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)));
+
+      mockInstrument.addHashPanChild(hashToken);
+      mockInstrument.clearDomainEvents();
+      doReturn(Optional.of(mockInstrument)).when(repository).findByHashPan(any());
+      doReturn(true).when(virtualEnrollService).enroll(any(), any());
+
+      service.handle(updateCommand);
+
+      Mockito.verify(repository, times(1)).save(any());
+      Mockito.verify(virtualEnrollService, times(0)).enroll(any(), any());
+    }
   }
 
 
@@ -207,6 +245,11 @@ public class TkmPaymentInstrumentServiceTest {
 
     @Autowired
     private InstrumentRevokeNotificationService revokeService;
+
+    @BeforeEach
+    void clean() {
+      Mockito.reset(revokeService);
+    }
 
     @Test
     void whenHandleRevokeThenPaymentInstrumentIsRevoked() {

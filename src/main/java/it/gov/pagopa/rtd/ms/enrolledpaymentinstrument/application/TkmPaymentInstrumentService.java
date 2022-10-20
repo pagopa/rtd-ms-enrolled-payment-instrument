@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ChildTokenAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
@@ -49,6 +50,8 @@ public class TkmPaymentInstrumentService {
 
     log.info("Token to update {}, to delete {}", updateAndRemove.get(true).size(), updateAndRemove.get(false).size());
 
+    paymentInstrument.associatePar(command.getPar());
+
     paymentInstrument.addHashPanChildren(
             updateAndRemove.get(true)
                     .stream()
@@ -62,8 +65,6 @@ public class TkmPaymentInstrumentService {
                     .map(it -> HashPan.create(it.getHashPan()))
                     .collect(Collectors.toSet())
     );
-
-    paymentInstrument.associatePar(command.getPar());
 
     repository.save(paymentInstrument);
 
@@ -89,22 +90,27 @@ public class TkmPaymentInstrumentService {
 
   private void handleParAssociated(ParAssociated parAssociatedEvent) {
     log.info("Handling Par Associated Event, doing virtual enroll");
-    if (virtualEnrollService.enroll(parAssociatedEvent.getHashPan(), parAssociatedEvent.getPar())) {
+    performVirtualEnroll(parAssociatedEvent.getHashPan(), parAssociatedEvent.getPar());
+  }
+
+  private void handleChildTokenAssociated(ChildTokenAssociated event) {
+    log.info("Handling Child Token Associated Event, doing virtual enroll");
+    performVirtualEnroll(event.getChildHashPan(), event.getPar());
+  }
+
+  private void performVirtualEnroll(HashPan hashPan, String par) {
+    if (virtualEnrollService.enroll(hashPan, par)) {
       log.info("Virtual enroll done");
     } else {
       log.error("Failed during virtual enroll");
       throw new VirtualEnrollError();
     }
   }
-//
-//  private void handleChildTokenAssociated(ChildTokenAssociated event) {
-//
-//  }
 
   private void handleDomainEvents(EnrolledPaymentInstrument paymentInstrument) {
     paymentInstrument.getDomainEvents().forEach(event -> {
       if (event instanceof ParAssociated) handleParAssociated((ParAssociated) event);
-      //if (event instanceof ChildTokenAssociated) handleChildTokenAssociated((ChildTokenAssociated) event);
+      if (event instanceof ChildTokenAssociated) handleChildTokenAssociated((ChildTokenAssociated) event);
     });
     paymentInstrument.clearDomainEvents();
   }
