@@ -8,6 +8,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNo
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.KafkaRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,8 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
@@ -47,8 +50,9 @@ public class AppConfiguration {
   @Bean
   public InstrumentRevokeNotificationService revokeService(StreamBridge bridge) {
     return new ChainRevokeNotificationService(List.of(
-            Optional.ofNullable(baseUrlBpdDeleteCard).map(BPDRevokeNotificationService::fromUrl)
-                    .orElse(BPDRevokeNotificationService.fake()),
+            ObjectUtils.isEmpty(baseUrlBpdDeleteCard) ?
+                    BPDRevokeNotificationService.fake() :
+                    BPDRevokeNotificationService.fromUrl(baseUrlBpdDeleteCard),
             new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge)
     ));
   }
