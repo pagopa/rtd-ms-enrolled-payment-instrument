@@ -2,10 +2,14 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.KafkaRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,12 +18,16 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UnknownFormatConversionException;
 
@@ -28,6 +36,9 @@ import java.util.UnknownFormatConversionException;
 public class AppConfiguration {
 
   private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
+
+  @Value("${revoke-notification.bpd-url:}")
+  private String baseUrlBpdDeleteCard;
 
   @Bean
   public EnrolledPaymentInstrumentRepository enrolledPaymentInstrumentRepository(
@@ -38,7 +49,12 @@ public class AppConfiguration {
 
   @Bean
   public InstrumentRevokeNotificationService revokeService(StreamBridge bridge) {
-    return new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge);
+    return new ChainRevokeNotificationService(List.of(
+            ObjectUtils.isEmpty(baseUrlBpdDeleteCard) ?
+                    BPDRevokeNotificationService.fake() :
+                    BPDRevokeNotificationService.fromUrl(baseUrlBpdDeleteCard),
+            new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge)
+    ));
   }
 
   /**

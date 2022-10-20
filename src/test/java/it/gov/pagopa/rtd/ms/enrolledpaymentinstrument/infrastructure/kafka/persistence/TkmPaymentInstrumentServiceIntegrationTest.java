@@ -35,11 +35,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ActiveProfiles("mongo-integration-test")
 @TestPropertySource(properties = {
         "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@Import({ MongodbIntegrationTestConfiguration.class, TkmPaymentInstrumentServiceIntegrationTest.Configuration.class })
+@Import({ MongodbIntegrationTestConfiguration.class })
 @AutoConfigureDataMongo
 public class TkmPaymentInstrumentServiceIntegrationTest {
 
-  @Autowired
+  @MockBean
   private InstrumentRevokeNotificationService notificationService;
 
   @Autowired
@@ -94,11 +94,4 @@ public class TkmPaymentInstrumentServiceIntegrationTest {
 
     assertTrue(repository.findByHashPan(hashPan.getValue()).get().isRevoked());
   }
-
-
-  static class Configuration {
-    @MockBean
-    private InstrumentRevokeNotificationService service;
-  }
-
 }

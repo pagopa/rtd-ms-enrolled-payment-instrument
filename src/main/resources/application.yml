@@ -2,6 +2,9 @@ logging:
   level:
     root: INFO
 
+# bpd-url null means fake mode
+revoke-notification:
+  bpd-url: ${BASEURL_BPD_DELETE_CARD:#{null}}
 
 ## Topics and consumer groups
 topics:
