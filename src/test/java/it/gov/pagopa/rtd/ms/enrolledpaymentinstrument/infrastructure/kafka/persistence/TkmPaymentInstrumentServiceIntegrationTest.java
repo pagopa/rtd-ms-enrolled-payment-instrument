@@ -13,6 +13,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -56,6 +57,7 @@ public class TkmPaymentInstrumentServiceIntegrationTest {
     mongoTemplate.indexOps("enrolled_payment_instrument")
             .ensureIndex(new Index().on("hashPan", Sort.Direction.ASC).unique());
     this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService, virtualEnrollService);
+    Mockito.when(virtualEnrollService.enroll(Mockito.any(), Mockito.any())).thenReturn(true);
   }
 
   @AfterEach

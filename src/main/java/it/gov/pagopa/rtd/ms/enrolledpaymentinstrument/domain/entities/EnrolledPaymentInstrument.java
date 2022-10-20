@@ -1,19 +1,21 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities;
 
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.AggregateRoot;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.springframework.data.annotation.Transient;
+import lombok.Getter;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Aggregate domain object which describe an enrolled payment instrument.
  * <p>
  * It has a hashapan and a list of enabled vertical application.
  */
-@Data
+@Getter
 @AllArgsConstructor
-public class EnrolledPaymentInstrument {
+public class EnrolledPaymentInstrument extends AggregateRoot {
 
   public static EnrolledPaymentInstrument createUnEnrolledInstrument(
           HashPan hashPan,
@@ -51,9 +53,6 @@ public class EnrolledPaymentInstrument {
   private String issuer;
   private String network;
   private final int version;
-
-  @Transient
-  private final List<Object> domainEvents = new ArrayList<>();
 
   /**
    * Add source app as enabled from this instrument
@@ -139,18 +138,5 @@ public class EnrolledPaymentInstrument {
 
   public boolean shouldBeDeleted() {
     return this.state == PaymentInstrumentState.DELETE;
-  }
-
-  // Domain events should be handled by an aggregate root abstract class (DDD concept)
-  private void registerEvent(Object event) {
-    domainEvents.add(event);
-  }
-
-  public List<Object> getDomainEvents() {
-    return Collections.unmodifiableList(domainEvents);
-  }
-
-  public void clearDomainEvents() {
-    domainEvents.clear();
   }
 }

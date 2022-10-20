@@ -133,7 +133,7 @@ class PaymentInstrumentTest {
             ""
     );
     paymentInstrument.associatePar("par");
-    assertThat(paymentInstrument.getDomainEvents()).contains(new ParAssociated(paymentInstrument.getHashPan(), "par"));
+    assertThat(paymentInstrument.domainEvents()).contains(new ParAssociated(paymentInstrument.getHashPan(), "par"));
   }
 
   @ParameterizedTest
@@ -141,10 +141,10 @@ class PaymentInstrumentTest {
   void whenUpdateParWithSameParThenNoParAssociatedEventIsFired(EnrolledPaymentInstrument paymentInstrument) {
     paymentInstrument.associatePar("par");
     paymentInstrument.clearDomainEvents();
-    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
 
     paymentInstrument.associatePar("par");
-    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
 
   @ParameterizedTest
@@ -164,7 +164,7 @@ class PaymentInstrumentTest {
     paymentInstrument.associatePar("par2");
 
     assertThat(paymentInstrument.getPar()).isEqualTo("par");
-    assertThat(paymentInstrument.getDomainEvents()).containsOnly(new ParAssociated(paymentInstrument.getHashPan(), "par"));
+    assertThat(paymentInstrument.domainEvents()).containsOnly(new ParAssociated(paymentInstrument.getHashPan(), "par"));
   }
 
   @ParameterizedTest
@@ -182,7 +182,7 @@ class PaymentInstrumentTest {
     final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(rootHashPan, "", "");
     paymentInstrument.addHashPanChildren(childHashPans);
 
-    assertThat(paymentInstrument.getDomainEvents()).hasSameElementsAs(
+    assertThat(paymentInstrument.domainEvents()).hasSameElementsAs(
             childHashPans.stream().map(child -> new ChildTokenAssociated(rootHashPan, child, null)).collect(Collectors.toSet())
     );
   }
@@ -196,14 +196,14 @@ class PaymentInstrumentTest {
     paymentInstrument.clearDomainEvents();
 
     paymentInstrument.addHashPanChildren(childHashPans);
-    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
 
   @ParameterizedTest
   @ArgumentsSource(RandomPaymentInstrumentProvider.class)
   void whenClearDomainEventsThenNoEventsAreAvailable(EnrolledPaymentInstrument paymentInstrument) {
     paymentInstrument.clearDomainEvents();
-    assertThat(paymentInstrument.getDomainEvents()).isEmpty();
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
 
   static class RandomPaymentInstrumentProvider implements ArgumentsProvider {

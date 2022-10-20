@@ -108,7 +108,7 @@ public class TkmPaymentInstrumentService {
   }
 
   private void handleDomainEvents(EnrolledPaymentInstrument paymentInstrument) {
-    paymentInstrument.getDomainEvents().forEach(event -> {
+    paymentInstrument.domainEvents().forEach(event -> {
       if (event instanceof ParAssociated) handleParAssociated((ParAssociated) event);
       if (event instanceof ChildTokenAssociated) handleChildTokenAssociated((ChildTokenAssociated) event);
     });
