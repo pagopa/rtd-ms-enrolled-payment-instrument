@@ -1,13 +1,11 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.ValidatedConsumer;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.ApplicationEnrollEventAdapter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.TokenManagerEventAdapter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes.PaymentInstrumentEventRouter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,23 +13,13 @@ import org.springframework.cloud.function.context.MessageRoutingCallback;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.dao.RecoverableDataAccessException;
-import org.springframework.dao.TransientDataAccessException;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 
-import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
 import java.util.Set;
-import java.util.UnknownFormatConversionException;
 import java.util.function.Consumer;
 
 @Configuration
@@ -84,6 +72,7 @@ public class KafkaConfiguration {
     final var errorHandler = new DefaultErrorHandler(
             new FixedBackOff(FIXED_BACKOFF_INTERVAL, FixedBackOff.UNLIMITED_ATTEMPTS)
     );
+    errorHandler.defaultFalse();
     retryableExceptions.forEach(errorHandler::addRetryableExceptions);
     fatalExceptions.forEach(errorHandler::addNotRetryableExceptions);
     return errorHandler;
