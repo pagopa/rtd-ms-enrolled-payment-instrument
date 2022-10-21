@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
@@ -116,7 +117,7 @@ class TokenManagerEventAdapterTest {
             .build();
     kafkaTemplate.send(topic, event);
 
-    await().during(Duration.ofSeconds(5)).untilAsserted(() -> {
+    await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.times(0)).handle(Mockito.any(TkmUpdateCommand.class));
     });
   }
@@ -130,7 +131,7 @@ class TokenManagerEventAdapterTest {
 
     kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).build());
 
-    await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmUpdateCommand.class));
     });
   }
@@ -161,10 +162,22 @@ class TokenManagerEventAdapterTest {
 
     kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).build());
 
-    await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmRevokeCommand.class));
     });
   }
 
+  @Test
+  void whenFailToNotifyRevokeThenRetryContinuously() {
+    Mockito.doThrow(FailedToNotifyRevoke.class)
+            .when(service)
+            .handle(Mockito.any(TkmRevokeCommand.class));
+
+    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).build());
+
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+      Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmRevokeCommand.class));
+    });
+  }
 
 }
