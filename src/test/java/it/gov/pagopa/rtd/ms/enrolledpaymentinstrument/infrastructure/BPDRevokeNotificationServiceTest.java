@@ -45,10 +45,18 @@ class BPDRevokeNotificationServiceTest {
   }
 
   @Test
+  void whenRevokeNonExistingBPDCardThenReturnsTrue() {
+    final var hashPan = TestUtils.generateRandomHashPan();
+    stubFor(delete("/" + hashPan.getValue() + "?fiscalCode=CF")
+            .willReturn(notFound()));
+    assertThat(bpdRevokeNotificationService.notifyRevoke("CF", hashPan)).isTrue();
+  }
+
+  @Test
   void whenBPDReturnsFailureThenNotificationServiceReturnsFalse() {
     final var hashPan = TestUtils.generateRandomHashPan();
     stubFor(delete("/" + hashPan.getValue() + "?fiscalCode=CF")
-            .willReturn(badRequest()));
+            .willReturn(serverError()));
 
     assertThat(bpdRevokeNotificationService.notifyRevoke("CF", hashPan)).isFalse();
   }

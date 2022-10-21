@@ -3,14 +3,12 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -33,6 +31,8 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 @RunWith(SpringRunner.class)
 @ExtendWith(SpringExtension.class)
@@ -53,8 +53,14 @@ class TkmPaymentInstrumentServiceTest {
   @BeforeEach
   void setUp() {
     paymentInstrumentArgumentCaptor = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
+    doReturn(true).when(revokeService).notifyRevoke(any(), any());
+  }
+
+  @AfterEach()
+  void clean() {
     Mockito.reset(repository, revokeService);
   }
+
 
   @Nested
   @DisplayName("Tests for update command")
@@ -202,7 +208,22 @@ class TkmPaymentInstrumentServiceTest {
 
       service.handle(revokeCommand);
 
-      Mockito.verify(repository, Mockito.times(0)).save(Mockito.any());
+      Mockito.verify(repository, Mockito.times(0)).save(any());
+      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+    }
+
+    @Test
+    void whenRevokeDownstreamNotificationFailsThenThrowAnException() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
+              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(), "", ""))
+      );
+      final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
+      doReturn(false).when(revokeService).notifyRevoke(any(), any());
+
+      assertThrowsExactly(FailedToNotifyRevoke.class, () -> service.handle(revokeCommand));
+
+      Mockito.verify(repository, Mockito.times(1)).save(any());
       Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
     }
 

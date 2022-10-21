@@ -11,16 +11,18 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManag
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Profile;
 import org.springframework.integration.kafka.inbound.KafkaMessageDrivenChannelAdapter;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 
-@Configuration
+@TestConfiguration
+@Import(MongodbIntegrationTestConfiguration.ReplicaSetInitialization.class)
 @Profile("mongo-integration-test")
 public class MongodbIntegrationTestConfiguration {
 
@@ -41,7 +43,7 @@ public class MongodbIntegrationTestConfiguration {
             .build();
   }
 
-  @Configuration
+  @TestConfiguration
   @Profile("mongo-integration-test")
   @Slf4j
   static class ReplicaSetInitialization {

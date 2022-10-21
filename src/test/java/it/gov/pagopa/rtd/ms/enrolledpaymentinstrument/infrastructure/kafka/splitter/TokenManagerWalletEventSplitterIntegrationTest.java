@@ -17,6 +17,8 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -52,7 +54,7 @@ import static org.awaitility.Awaitility.await;
 )
 @TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
 @Import(value = {KafkaTestConfiguration.class, KafkaConfiguration.class, SplitterConfiguration.class})
-@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
+@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 class TokenManagerWalletEventSplitterIntegrationTest {
 
   @Value("${test.kafka.topic-wallet-tkm}")
@@ -96,7 +98,7 @@ class TokenManagerWalletEventSplitterIntegrationTest {
 
     kafkaTemplate.send(topic, walletChanged);
 
-    await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(cardEventPublisher, Mockito.atLeast(3)).handle(Mockito.any(), Mockito.any());
     });
   }
