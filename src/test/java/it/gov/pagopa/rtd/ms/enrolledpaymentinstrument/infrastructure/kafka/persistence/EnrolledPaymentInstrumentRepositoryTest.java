@@ -32,8 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest()
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("mongo-integration-test")
-@TestPropertySource(properties = {
-        "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
+@TestPropertySource("classpath:application-test.yml")
 @AutoConfigureDataMongo
 @Import(MongodbIntegrationTestConfiguration.class)
 class EnrolledPaymentInstrumentRepositoryTest {

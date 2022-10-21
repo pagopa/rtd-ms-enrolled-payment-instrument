@@ -35,11 +35,10 @@ import static org.mockito.Mockito.doReturn;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("mongo-integration-test")
-@TestPropertySource(properties = {
-        "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
+@TestPropertySource("classpath:application-test.yml")
 @Import(MongodbIntegrationTestConfiguration.class)
 @AutoConfigureDataMongo
-public class TkmPaymentInstrumentServiceIntegrationTest {
+class TkmPaymentInstrumentServiceIntegrationTest {
 
   @MockBean
   private InstrumentRevokeNotificationService notificationService;
