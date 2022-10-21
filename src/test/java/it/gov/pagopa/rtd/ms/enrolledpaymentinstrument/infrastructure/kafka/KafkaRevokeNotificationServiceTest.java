@@ -36,11 +36,7 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-@EmbeddedKafka(
-        topics = {"${test.kafka.topic-revoke}"},
-        partitions = 1,
-        bootstrapServersProperty = "spring.embedded.kafka.brokers"
-)
+@EmbeddedKafka(topics = {"${test.kafka.topic-revoke}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
 @Import({KafkaTestConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)

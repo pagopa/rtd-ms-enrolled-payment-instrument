@@ -2,10 +2,10 @@ logging:
   level:
     root: INFO
 
-test.kafka.topic: "embedded-test-topic"
-test.kafka.topic-tkm: "embedded-test-topic-tkm"
-test.kafka.topic-wallet-tkm: "embedded-test-topic-wallet-tkm"
-test.kafka.topic-revoke: "revoke-topic"
+test.kafka.topic: embedded-test-topic
+test.kafka.topic-tkm: embedded-test-topic-tkm
+test.kafka.topic-wallet-tkm: embedded-test-topic-wallet-tkm
+test.kafka.topic-revoke: revoke-topic
 
 integration-flow:
   tkmBulkConsumer:
@@ -67,3 +67,4 @@ spring:
   config:
     activate:
       on-profile: mongo-integration-test
+

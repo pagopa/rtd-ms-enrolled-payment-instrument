@@ -3,7 +3,6 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.ApplicationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
@@ -12,15 +11,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Collections;
@@ -32,13 +34,16 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
-@Import(ApplicationTestConfiguration.class)
-@EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-public class TkmPaymentInstrumentServiceTest {
+@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
+@Import({TkmPaymentInstrumentServiceTest.Config.class, ValidationAutoConfiguration.class})
+class TkmPaymentInstrumentServiceTest {
 
   @Autowired
   private EnrolledPaymentInstrumentRepository repository;
+
+  @Autowired
+  private InstrumentRevokeNotificationService revokeService;
 
   @Autowired
   private TkmPaymentInstrumentService service;
@@ -46,9 +51,9 @@ public class TkmPaymentInstrumentServiceTest {
   private ArgumentCaptor<EnrolledPaymentInstrument> paymentInstrumentArgumentCaptor;
 
   @BeforeEach
-  void setup() {
+  void setUp() {
     paymentInstrumentArgumentCaptor = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
-    Mockito.reset(repository);
+    Mockito.reset(repository, revokeService);
   }
 
   @Nested
@@ -147,9 +152,6 @@ public class TkmPaymentInstrumentServiceTest {
   @DisplayName("Tests for revoke command")
   class RevokeCommandCases {
 
-    @Autowired
-    private InstrumentRevokeNotificationService revokeService;
-
     @Test
     void whenHandleRevokeThenPaymentInstrumentIsRevoked() {
       final var hashPan = TestUtils.generateRandomHashPan();
@@ -221,6 +223,21 @@ public class TkmPaymentInstrumentServiceTest {
           return false;
         }
       }));
+    }
+  }
+
+  @TestConfiguration
+  static class Config {
+
+    @MockBean
+    EnrolledPaymentInstrumentRepository repository;
+
+    @MockBean
+    InstrumentRevokeNotificationService revokeNotificationService;
+
+    @Bean
+    TkmPaymentInstrumentService service() {
+      return new TkmPaymentInstrumentService(repository, revokeNotificationService);
     }
   }
 }
