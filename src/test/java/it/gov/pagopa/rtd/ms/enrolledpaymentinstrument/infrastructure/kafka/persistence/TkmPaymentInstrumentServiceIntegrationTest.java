@@ -1,9 +1,10 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrustructure.persistence;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.persistence;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegrationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
@@ -28,17 +29,18 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("mongo-integration-test")
-@TestPropertySource(properties = {
-        "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@Import(TkmPaymentInstrumentServiceIntegrationTest.Configuration.class)
+@TestPropertySource("classpath:application-test.yml")
+@Import(MongodbIntegrationTestConfiguration.class)
 @AutoConfigureDataMongo
-public class TkmPaymentInstrumentServiceIntegrationTest {
+class TkmPaymentInstrumentServiceIntegrationTest {
 
-  @Autowired
+  @MockBean
   private InstrumentRevokeNotificationService notificationService;
 
   @Autowired
@@ -50,6 +52,7 @@ public class TkmPaymentInstrumentServiceIntegrationTest {
   void setup(@Autowired MongoTemplate mongoTemplate) {
     mongoTemplate.indexOps("enrolled_payment_instrument")
             .ensureIndex(new Index().on("hashPan", Sort.Direction.ASC).unique());
+    doReturn(true).when(notificationService).notifyRevoke(any(), any());
     this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService);
   }
 
@@ -93,11 +96,4 @@ public class TkmPaymentInstrumentServiceIntegrationTest {
 
     assertTrue(repository.findByHashPan(hashPan.getValue()).get().isRevoked());
   }
-
-
-  static class Configuration {
-    @MockBean
-    private InstrumentRevokeNotificationService service;
-  }
-
 }

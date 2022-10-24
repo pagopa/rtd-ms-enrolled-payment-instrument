@@ -20,6 +20,10 @@ public final class TestUtils {
     return HashPan.create(randomString(64));
   }
 
+  public static String generateRandomHashPanAsString() {
+    return generateRandomHashPan().getValue();
+  }
+
   public static String randomString(int length) {
     return IntStream.range(0, length)
             .mapToObj(i -> "" + ALPHANUMERIC.charAt(random.nextInt(ALPHANUMERIC.length())))
@@ -40,7 +44,7 @@ public final class TestUtils {
     return IntStream.range(0, which)
             .mapToObj(i -> new TokenManagerCardChanged.HashTokenEvent(
                     generateRandomHashPan().getValue(),
-                    random.nextDouble() < 0.5 ? HashTokenChangeType.DELETE : HashTokenChangeType.UPDATE
+                    random.nextDouble() < 0.5 ? HashTokenChangeType.DELETE : HashTokenChangeType.INSERT_UPDATE
             ))
             .collect(Collectors.toList());
   }

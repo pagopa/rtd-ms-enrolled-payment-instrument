@@ -9,30 +9,32 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChange
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Import;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.UnknownFormatConversionException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
-@SpringBootTest()
-@EnableAutoConfiguration(exclude = EmbeddedMongoAutoConfiguration.class)
-@TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-public class PaymentInstrumentEventRouterTest {
+@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
+@Import({PaymentInstrumentEventRouterTest.Config.class, ValidationAutoConfiguration.class})
+class PaymentInstrumentEventRouterTest {
 
   private static final String TKM_CONSUMER_DESTINATION = "tkmConsumer";
   private static final String APPLICATION_CONSUMER_DESTINATION = "appConsumer";
 
   private PaymentInstrumentEventRouter eventRouter;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @BeforeEach
   void setup() {
@@ -89,4 +91,7 @@ public class PaymentInstrumentEventRouterTest {
             () -> eventRouter.routingResult(MessageBuilder.withPayload(new Object()).build())
     );
   }
+
+  @TestConfiguration
+  public static class Config { }
 }

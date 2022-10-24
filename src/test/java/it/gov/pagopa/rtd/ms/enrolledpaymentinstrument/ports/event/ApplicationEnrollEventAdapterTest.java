@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.KafkaConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
@@ -144,7 +144,7 @@ class ApplicationEnrollEventAdapterTest {
 
     kafkaTemplate.send(topic, applicationEnrollEventBuilder.build());
 
-    await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(Mockito.any());
     });
   }
@@ -159,7 +159,7 @@ class ApplicationEnrollEventAdapterTest {
 
     kafkaTemplate.send(topic, applicationEnrollEventBuilder.build());
 
-    await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(Mockito.any());
     });
 
