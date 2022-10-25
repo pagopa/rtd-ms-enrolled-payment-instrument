@@ -48,7 +48,7 @@ public class BPDRevokeNotificationService implements InstrumentRevokeNotificatio
       return restTemplate.exchange(url.toString(), HttpMethod.DELETE, null, String.class)
               .getStatusCode().is2xxSuccessful();
     } catch (HttpClientErrorException.NotFound exception) {
-      log.warn("BPD returns Not Found, probably the card doesnt exist in BPD, will ignore this");
+      log.warn("BPD has return Not Found, the payment instrument doesn't exist in BPD. You can ignore this");
       return true;
     } catch (RestClientException exception) {
       log.error("Failed to notify BPD", exception);
