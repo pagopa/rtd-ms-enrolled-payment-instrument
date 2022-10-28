@@ -29,6 +29,12 @@ spec:
                 name: mongo-credentials
             - secretRef:
                 name: application-insights
+            - secretRef:
+                name: rtd-pi-to-app-producer
+            - secretRef:
+                name: rtd-pi-from-app-consumer
+            - secretRef:
+                name: rtd-split-by-pi-consumer
             - configMapRef:
                 name: rtd-enrolledpaymentinstrument
             - configMapRef:
