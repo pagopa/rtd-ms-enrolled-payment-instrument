@@ -1,7 +1,9 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
@@ -16,7 +18,6 @@ import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfigurat
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.function.cloudevent.CloudEventMessageUtils;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
 import org.springframework.context.annotation.Import;
@@ -90,23 +91,25 @@ class KafkaVirtualEnrollServiceIntegrationTest {
   @SneakyThrows
   void whenEnrollVirtualCardWithoutHashTokenThenEnrollCardEventCloudWithoutHashTokenIsProduced() {
     final var hashPan = TestUtils.generateRandomHashPan();
+    final var type = new TypeReference<CloudEvent<VirtualEnroll>>() {};
     kafkaVirtualEnrollService.enroll(hashPan, "12345");
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = records.poll(100, TimeUnit.MILLISECONDS);
       assertThat(record)
               .isNotNull()
-              .matches(it -> CloudEventMessageUtils.getType(it).equals(VirtualEnroll.TYPE))
-              .extracting(TestUtils.parseTo(mapper, VirtualEnroll.class))
-              .matches(it -> it.getHashPan().equals(hashPan.getValue()))
-              .matches(it -> it.getPar().equals("12345"))
-              .matches(it -> Objects.isNull(it.getHashToken()));
+              .extracting(TestUtils.parseTo(mapper, type))
+              .matches(it -> it.getType().equals(VirtualEnroll.TYPE))
+              .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
+              .matches(it -> it.getData().getPar().equals("12345"))
+              .matches(it -> Objects.isNull(it.getData().getHashToken()));
     });
   }
 
   @Test
   @SneakyThrows
   void whenEnrollVirtualCardWithHashTokenThenEnrollCardEventCloudWithHashTokenIsProduced() {
+    final var type = new TypeReference<CloudEvent<VirtualEnroll>>() {};
     final var hashPan = TestUtils.generateRandomHashPan();
     final var hashToken = TestUtils.generateRandomHashPan();
     kafkaVirtualEnrollService.enroll(hashPan, hashToken, "12345");
@@ -115,17 +118,18 @@ class KafkaVirtualEnrollServiceIntegrationTest {
       final var record = records.poll(100, TimeUnit.MILLISECONDS);
       assertThat(record)
               .isNotNull()
-              .matches(it -> CloudEventMessageUtils.getType(it).equals(VirtualEnroll.TYPE))
-              .extracting(TestUtils.parseTo(mapper, VirtualEnroll.class))
-              .matches(it -> it.getHashPan().equals(hashPan.getValue()))
-              .matches(it -> it.getPar().equals("12345"))
-              .matches(it -> it.getHashToken().equals(hashToken.getValue()));
+              .extracting(TestUtils.parseTo(mapper, type))
+              .matches(it -> it.getType().equals(VirtualEnroll.TYPE))
+              .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
+              .matches(it -> it.getData().getPar().equals("12345"))
+              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()));
     });
   }
 
   @Test
   @SneakyThrows
   void whenUnEnrollVirtualCardThenRevokeTokenEventCloudIsProduced() {
+    final var type = new TypeReference<CloudEvent<VirtualRevoke>>() {};
     final var hashPan = TestUtils.generateRandomHashPan();
     final var hashToken = TestUtils.generateRandomHashPan();
     kafkaVirtualEnrollService.unEnroll(hashPan, hashToken, "12345");
@@ -134,11 +138,11 @@ class KafkaVirtualEnrollServiceIntegrationTest {
       final var record = records.poll(100, TimeUnit.MILLISECONDS);
       assertThat(record)
               .isNotNull()
-              .matches(it -> CloudEventMessageUtils.getType(it).equals(VirtualRevoke.TYPE))
-              .extracting(TestUtils.parseTo(mapper, VirtualRevoke.class))
-              .matches(it -> it.getHashPan().equals(hashPan.getValue()))
-              .matches(it -> it.getPar().equals("12345"))
-              .matches(it -> it.getHashToken().equals(hashToken.getValue()));
+              .extracting(TestUtils.parseTo(mapper, type))
+              .matches(it -> it.getType().equals(VirtualRevoke.TYPE))
+              .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
+              .matches(it -> it.getData().getPar().equals("12345"))
+              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()));
     });
   }
 }

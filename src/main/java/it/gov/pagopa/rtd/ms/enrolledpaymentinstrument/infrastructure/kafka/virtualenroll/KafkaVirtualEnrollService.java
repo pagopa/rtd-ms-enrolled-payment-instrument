@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virt
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.messaging.support.MessageBuilder;
 
 import java.util.Date;
 import java.util.Optional;
@@ -24,23 +25,20 @@ public class KafkaVirtualEnrollService implements VirtualEnrollService {
 
   @Override
   public boolean enroll(HashPan hashPan, HashPan token, String par) {
-    final var enroll = new VirtualEnroll(
-            hashPan.getValue(),
-            Optional.ofNullable(token).map(HashPan::getValue).orElse(null),
-            par,
-            new Date()
-    ).asCloudEvent();
+    final var optionalHashToken = Optional.ofNullable(token).map(HashPan::getValue).orElse(null);
+    final var enroll = new VirtualEnroll(hashPan.getValue(), optionalHashToken, par, new Date()).asCloudEvent();
     return streamBridge.send(
             producerBinding,
-            enroll
+            MessageBuilder.withPayload(enroll).build()
     );
   }
 
   @Override
   public boolean unEnroll(HashPan hashPan, HashPan token, String par) {
+    final var virtualRevokeEvent = new VirtualRevoke(hashPan.getValue(), token.getValue(), par, new Date()).asCloudEvent();
     return streamBridge.send(
             producerBinding,
-            new VirtualRevoke(hashPan.getValue(), token.getValue(), par, new Date()).asCloudEvent()
+            MessageBuilder.withPayload(virtualRevokeEvent).build()
     );
   }
 }

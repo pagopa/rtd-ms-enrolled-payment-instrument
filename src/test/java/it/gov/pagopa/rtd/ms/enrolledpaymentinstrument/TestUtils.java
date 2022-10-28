@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
@@ -67,6 +68,16 @@ public final class TestUtils {
 
 
   public static <R> Function<Message<String>, R> parseTo(ObjectMapper mapper, Class<R> clazz) {
+    return it -> {
+      try {
+        return mapper.readValue(it.getPayload(), clazz);
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException(e);
+      }
+    };
+  }
+
+  public static <R> Function<Message<String>, R> parseTo(ObjectMapper mapper, TypeReference<R> clazz) {
     return it -> {
       try {
         return mapper.readValue(it.getPayload(), clazz);
