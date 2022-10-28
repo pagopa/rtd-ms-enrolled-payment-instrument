@@ -1,13 +1,18 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.HashTokenChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
+import org.springframework.messaging.Message;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -59,5 +64,26 @@ public final class TestUtils {
                                     TkmUpdateCommand.TkmTokenCommand.Action.UPDATE
                     )
             ).collect(Collectors.toList());
+  }
+
+
+  public static <R> Function<Message<String>, R> parseTo(ObjectMapper mapper, Class<R> clazz) {
+    return it -> {
+      try {
+        return mapper.readValue(it.getPayload(), clazz);
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException(e);
+      }
+    };
+  }
+
+  public static <R> Function<Message<String>, R> parseTo(ObjectMapper mapper, TypeReference<R> clazz) {
+    return it -> {
+      try {
+        return mapper.readValue(it.getPayload(), clazz);
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 }
