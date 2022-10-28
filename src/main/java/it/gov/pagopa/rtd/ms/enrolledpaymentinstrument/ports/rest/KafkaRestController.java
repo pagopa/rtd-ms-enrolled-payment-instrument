@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.VirtualEnroll;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
@@ -28,5 +29,9 @@ public interface KafkaRestController {
   @PutMapping(value = "/tkm-update")
   @ResponseStatus(HttpStatus.OK)
   void sendTkmCardChangedEvent(@RequestBody TokenManagerCardChanged event);
+
+  @PutMapping(value = "/rtd-to-app/virtual-enroll")
+  @ResponseStatus(HttpStatus.OK)
+  void sendVirtualEnrollToApp(@RequestBody VirtualEnroll enroll);
 
 }

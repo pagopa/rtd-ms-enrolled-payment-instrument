@@ -1,5 +1,8 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.VirtualEnroll;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
@@ -20,12 +23,15 @@ public class KafkaRestControllerImpl implements
   private static final String TKM_BULK_CARD_BINDING = "tkmWalletEventConsumer-in-0";
 
   private final StreamBridge streamBridge;
+  private final VirtualEnrollService virtualEnrollService;
 
   @Autowired
   KafkaRestControllerImpl(
-          StreamBridge streamBridge
+          StreamBridge streamBridge,
+          VirtualEnrollService virtualEnrollService
   ) {
     this.streamBridge = streamBridge;
+    this.virtualEnrollService = virtualEnrollService;
   }
 
   @Override
@@ -61,4 +67,12 @@ public class KafkaRestControllerImpl implements
     );
     log.info("TokenManagerCardChanged sent {}", sent);
   }
+
+  @Override
+  public void sendVirtualEnrollToApp(VirtualEnroll enroll) {
+    log.info("Sending virtual enroll event");
+    final var sent = virtualEnrollService.enroll(HashPan.create(enroll.getHashPan()), HashPan.create(enroll.getHashToken()), enroll.getPar());
+    log.info("Virtual enroll event sent {}", sent);
+  }
+
 }
