@@ -13,6 +13,8 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 @ResponseBody
 @Slf4j
@@ -71,7 +73,11 @@ public class KafkaRestControllerImpl implements
   @Override
   public void sendVirtualEnrollToApp(VirtualEnroll enroll) {
     log.info("Sending virtual enroll event");
-    final var sent = virtualEnrollService.enroll(HashPan.create(enroll.getHashPan()), HashPan.create(enroll.getHashToken()), enroll.getPar());
+    final var sent = virtualEnrollService.enroll(
+            HashPan.create(enroll.getHashPan()),
+            Optional.ofNullable(enroll.getHashToken()).map(HashPan::create).orElse(null),
+            enroll.getPar()
+    );
     log.info("Virtual enroll event sent {}", sent);
   }
 
