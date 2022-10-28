@@ -7,8 +7,8 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevok
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.KafkaRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.KafkaVirtualEnrollService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.KafkaVirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.springframework.beans.factory.annotation.Value;

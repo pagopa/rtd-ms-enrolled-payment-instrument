@@ -1,6 +1,5 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
@@ -29,7 +28,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
+import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -37,20 +36,18 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-@EmbeddedKafka(topics = {"${test.kafka.topic-rtd-to-app}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@EmbeddedKafka(topics = {"${test.kafka.topic-revoke}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
 @Import({KafkaTestConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)
-class KafkaVirtualEnrollServiceIntegrationTest {
+class KafkaRevokeNotificationServiceTest {
 
-  private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
-
-  @Value("${test.kafka.topic-rtd-to-app}")
+  @Value("${test.kafka.topic-revoke}")
   private String topic;
 
   @Autowired
   private StreamBridge bridge;
-  private KafkaVirtualEnrollService kafkaVirtualEnrollService;
+  private KafkaRevokeNotificationService revokeNotificationService;
 
   private Consumer<String, String> consumer;
   private ObjectMapper mapper;
@@ -60,7 +57,7 @@ class KafkaVirtualEnrollServiceIntegrationTest {
     final var consumerProperties = KafkaTestUtils.consumerProps("group", "true", broker);
     consumer = new DefaultKafkaConsumerFactory<String, String>(consumerProperties).createConsumer();
     consumer.subscribe(List.of(topic));
-    kafkaVirtualEnrollService = new KafkaVirtualEnrollService(RTD_TO_APP_BINDING, bridge);
+    revokeNotificationService = new KafkaRevokeNotificationService("rtdRevokedPi-out-0", bridge);
     mapper = new ObjectMapper();
   }
 
@@ -70,19 +67,15 @@ class KafkaVirtualEnrollServiceIntegrationTest {
   }
 
   @Test
-  void whenEnrollVirtualCardThenVirtualEnrollMessageIsProduced() {
-    final var type = new TypeReference<Map<String, Object>>() {};
+  void whenNotifyRevokedCardThenRevokeNotificationProduced() {
     final var hashPan = TestUtils.generateRandomHashPan();
-    kafkaVirtualEnrollService.enroll(hashPan, "12345");
+    revokeNotificationService.notifyRevoke("taxCode", hashPan);
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var records = consumer.poll(Duration.ZERO);
       assertThat(records)
-              .isNotEmpty()
-              .map(it -> mapper.readValue(it.value(), type))
-              .allMatch(enroll -> enroll.containsValue(hashPan.getValue()))
-              .allMatch(enroll -> enroll.containsValue("12345"));
+              .map(it -> mapper.readValue(it.value(), RevokeNotification.class))
+              .allMatch(notification -> "taxCode".equals(notification.getFiscalCode()) && hashPan.getValue().equals(notification.getHashPan()));
     });
   }
-
 }

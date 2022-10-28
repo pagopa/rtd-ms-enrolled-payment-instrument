@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
