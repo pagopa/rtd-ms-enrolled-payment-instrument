@@ -4,6 +4,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRev
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ChildTokenAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
@@ -84,7 +85,7 @@ public class TkmPaymentInstrumentService {
     if (revokeService.notifyRevoke(command.getTaxCode(), hashPan)) {
       log.info("Revoke notification sent");
     } else {
-      log.error("Failed to send revoke notification");
+      throw new FailedToNotifyRevoke();
     }
   }
 

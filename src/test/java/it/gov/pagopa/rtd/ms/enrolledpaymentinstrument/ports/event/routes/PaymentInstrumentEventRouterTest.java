@@ -4,43 +4,37 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.ApplicationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Import;
-import org.springframework.integration.kafka.inbound.KafkaMessageDrivenChannelAdapter;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.UnknownFormatConversionException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
-@SpringBootTest()
-@EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-@TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
-@Import(PaymentInstrumentEventRouterTest.Config.class)
-public class PaymentInstrumentEventRouterTest {
+@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
+@Import({PaymentInstrumentEventRouterTest.Config.class, ValidationAutoConfiguration.class})
+class PaymentInstrumentEventRouterTest {
 
   private static final String TKM_CONSUMER_DESTINATION = "tkmConsumer";
   private static final String APPLICATION_CONSUMER_DESTINATION = "appConsumer";
 
   private PaymentInstrumentEventRouter eventRouter;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @BeforeEach
   void setup() {
@@ -98,6 +92,6 @@ public class PaymentInstrumentEventRouterTest {
     );
   }
 
-  @Import(ApplicationTestConfiguration.class)
+  @TestConfiguration
   public static class Config { }
 }

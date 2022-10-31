@@ -1,14 +1,16 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.mongodb.MongoException;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.KafkaRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.KafkaVirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +21,6 @@ import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import javax.validation.ConstraintViolationException;
 import java.io.IOException;
@@ -27,7 +28,6 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UnknownFormatConversionException;
 
@@ -36,6 +36,7 @@ import java.util.UnknownFormatConversionException;
 public class AppConfiguration {
 
   private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
+  private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
   @Value("${revoke-notification.bpd-url:}")
   private String baseUrlBpdDeleteCard;
@@ -57,6 +58,11 @@ public class AppConfiguration {
     ));
   }
 
+  @Bean
+  public VirtualEnrollService virtualEnrollService(StreamBridge bridge) {
+    return new KafkaVirtualEnrollService(RTD_TO_APP_BINDING, bridge);
+  }
+
   /**
    * A list of exceptions considered as "transient", so these are used as
    * retryable exceptions with kafka consumers.
@@ -72,7 +78,8 @@ public class AppConfiguration {
             RecoverableDataAccessException.class,
             TransientDataAccessException.class,
             DuplicateKeyException.class,
-            OptimisticLockingFailureException.class
+            OptimisticLockingFailureException.class,
+            FailedToNotifyRevoke.class
     );
   }
 

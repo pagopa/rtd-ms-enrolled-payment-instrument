@@ -3,26 +3,26 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.ApplicationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.validation.ConstraintViolationException;
 import java.util.Collections;
@@ -34,15 +34,19 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 
-@SpringBootTest
-@Import(ApplicationTestConfiguration.class)
-@EnableAutoConfiguration(exclude = {EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-public class TkmPaymentInstrumentServiceTest {
+@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
+@Import({TkmPaymentInstrumentServiceTest.Config.class, ValidationAutoConfiguration.class})
+class TkmPaymentInstrumentServiceTest {
 
   @Autowired
   private EnrolledPaymentInstrumentRepository repository;
+
+  @Autowired
+  private InstrumentRevokeNotificationService revokeService;
 
   @Autowired
   private VirtualEnrollService virtualEnrollService;
@@ -53,12 +57,17 @@ public class TkmPaymentInstrumentServiceTest {
   private ArgumentCaptor<EnrolledPaymentInstrument> paymentInstrumentArgumentCaptor;
 
   @BeforeEach
-  void setup() {
+  void setUp() {
     paymentInstrumentArgumentCaptor = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
-    Mockito.reset(repository, virtualEnrollService);
-
     doReturn(true).when(virtualEnrollService).enroll(any(), any());
+    doReturn(true).when(revokeService).notifyRevoke(any(), any());
   }
+
+  @AfterEach()
+  void clean() {
+    Mockito.reset(repository, revokeService, virtualEnrollService);
+  }
+
 
   @Nested
   @DisplayName("Tests for update command")
@@ -243,14 +252,6 @@ public class TkmPaymentInstrumentServiceTest {
   @DisplayName("Tests for revoke command")
   class RevokeCommandCases {
 
-    @Autowired
-    private InstrumentRevokeNotificationService revokeService;
-
-    @BeforeEach
-    void clean() {
-      Mockito.reset(revokeService);
-    }
-
     @Test
     void whenHandleRevokeThenPaymentInstrumentIsRevoked() {
       final var hashPan = TestUtils.generateRandomHashPan();
@@ -301,8 +302,23 @@ public class TkmPaymentInstrumentServiceTest {
 
       service.handle(revokeCommand);
 
-      Mockito.verify(repository, times(0)).save(any());
-      Mockito.verify(revokeService, times(1)).notifyRevoke("taxCode", hashPan);
+      Mockito.verify(repository, Mockito.times(0)).save(any());
+      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+    }
+
+    @Test
+    void whenRevokeDownstreamNotificationFailsThenThrowAnException() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
+              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(), "", ""))
+      );
+      final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
+      doReturn(false).when(revokeService).notifyRevoke(any(), any());
+
+      assertThrowsExactly(FailedToNotifyRevoke.class, () -> service.handle(revokeCommand));
+
+      Mockito.verify(repository, Mockito.times(1)).save(any());
+      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
     }
 
     @Test
@@ -322,6 +338,24 @@ public class TkmPaymentInstrumentServiceTest {
           return false;
         }
       }));
+    }
+  }
+
+  @TestConfiguration
+  static class Config {
+
+    @MockBean
+    EnrolledPaymentInstrumentRepository repository;
+
+    @MockBean
+    InstrumentRevokeNotificationService revokeService;
+
+    @MockBean
+    VirtualEnrollService virtualEnrollService;
+
+    @Bean
+    TkmPaymentInstrumentService service() {
+      return new TkmPaymentInstrumentService(repository, revokeService, virtualEnrollService);
     }
   }
 }

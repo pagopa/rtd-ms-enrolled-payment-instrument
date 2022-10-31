@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.persistence;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence;
 
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
@@ -8,6 +8,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,13 +31,13 @@ import org.springframework.test.context.TestPropertySource;
 import java.util.List;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest()
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @ActiveProfiles("mongo-integration-test")
-@TestPropertySource(properties = {
-        "spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
+@TestPropertySource("classpath:application-test.yml")
 @AutoConfigureDataMongo
 @Import({EnrolledPaymentInstrumentRepositoryTest.Config.class, MongodbIntegrationTestConfiguration.class})
 class EnrolledPaymentInstrumentRepositoryTest {
@@ -47,6 +48,9 @@ class EnrolledPaymentInstrumentRepositoryTest {
 
   @Autowired
   private EnrolledPaymentInstrumentRepositoryImpl repository;
+
+  @Autowired
+  private EnrolledPaymentInstrumentDao dao;
 
   @BeforeEach
   void setup(@Autowired MongoTemplate mongoTemplate) {
@@ -106,6 +110,17 @@ class EnrolledPaymentInstrumentRepositoryTest {
 
     repository.save(instrument1);
     assertThrowsExactly(OptimisticLockingFailureException.class, () -> repository.save(instrument2));
+  }
+
+  @Test
+  void mustSaveExportHashPans() {
+      final var childHashPan = TestUtils.generateRandomHashPan();
+      final var instrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(), null, null);
+      instrument.addHashPanChild(childHashPan);
+
+      repository.save(instrument);
+      assertThat(dao.findByHashPan(TEST_HASH_PAN.getValue()).orElseThrow().getHashPanExports())
+              .hasSameElementsAs(List.of(childHashPan, TEST_HASH_PAN));
   }
 
   @TestConfiguration

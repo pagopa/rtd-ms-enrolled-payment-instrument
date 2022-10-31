@@ -5,6 +5,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.Instrument
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpMethod;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -46,6 +47,9 @@ public class BPDRevokeNotificationService implements InstrumentRevokeNotificatio
               .build(hashPan.getValue(), taxCode);
       return restTemplate.exchange(url.toString(), HttpMethod.DELETE, null, String.class)
               .getStatusCode().is2xxSuccessful();
+    } catch (HttpClientErrorException.NotFound exception) {
+      log.warn("BPD has return Not Found, the payment instrument doesn't exist in BPD. You can ignore this");
+      return true;
     } catch (RestClientException exception) {
       log.error("Failed to notify BPD", exception);
       return false;
