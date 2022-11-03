@@ -6,6 +6,7 @@ test.kafka.topic: embedded-test-topic
 test.kafka.topic-tkm: embedded-test-topic-tkm
 test.kafka.topic-wallet-tkm: embedded-test-topic-wallet-tkm
 test.kafka.topic-revoke: revoke-topic
+test.kafka.topic-rtd-to-app: rtd-pi-to-app
 
 integration-flow:
   tkmBulkConsumer:
@@ -45,6 +46,13 @@ spring:
             partitionCount: ${KAFKA_PARTITION_COUNT:1}
             sync: true
 
+        rtdToApp-out-0:
+          destination: ${test.kafka.topic-rtd-to-app}
+          content-type: application/json
+          binder: kafka-binder
+          producer:
+            sync: true
+
         rtdRevokedPi-out-0:
           destination: ${test.kafka.topic-revoke}
           content-type: application/json
@@ -58,6 +66,7 @@ spring:
               binder:
                 auto-create-topics: false
                 brokers: ${spring.embedded.kafka.brokers}
+                requiredAcks: all
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
