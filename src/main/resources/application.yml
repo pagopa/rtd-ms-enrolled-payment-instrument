@@ -77,6 +77,8 @@ spring:
           destination: ${topics.rtd-pi-to-app.topic}
           content-type: application/json
           binder: kafka-to-app-binder
+          producer:
+            sync: true
 
         tkmWalletEventConsumer-in-0:
           destination: ${topics.tkm-write-update.topic}
@@ -101,6 +103,7 @@ spring:
             binder:
               auto-create-topics: false
               brokers: ${KAFKA_RTD_PI_TO_APP_BROKER:localhost:29095}
+              requiredAcks: all
               configuration:
                 sasl.jaas.config: ${KAFKA_RTD_PI_TO_APP_SASL_JAAS_CONFIG}
 

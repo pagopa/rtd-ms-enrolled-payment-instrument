@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,6 +28,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
+import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +42,7 @@ import static org.awaitility.Awaitility.await;
 @Import({KafkaTestConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)
-class KafkaVirtualEnrollServiceIntegrationTest {
+class KafkaEnrollAckServiceTest {
 
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
@@ -50,7 +51,7 @@ class KafkaVirtualEnrollServiceIntegrationTest {
 
   @Autowired
   private StreamBridge bridge;
-  private KafkaVirtualEnrollService kafkaVirtualEnrollService;
+  private KafkaEnrollAckService kafkaEnrollAckService;
 
   private TestKafkaConsumerSetup.TestConsumer testConsumer;
   private ObjectMapper mapper;
@@ -58,7 +59,7 @@ class KafkaVirtualEnrollServiceIntegrationTest {
   @BeforeEach
   void setUp(@Autowired EmbeddedKafkaBroker broker) {
     testConsumer = TestKafkaConsumerSetup.setup(broker, topic);
-    kafkaVirtualEnrollService = new KafkaVirtualEnrollService(RTD_TO_APP_BINDING, bridge);
+    kafkaEnrollAckService = new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING);
     mapper = new ObjectMapper();
   }
 
@@ -70,60 +71,20 @@ class KafkaVirtualEnrollServiceIntegrationTest {
 
   @Test
   @SneakyThrows
-  void whenEnrollVirtualCardWithoutHashTokenThenEnrollCardEventCloudWithoutHashTokenIsProduced() {
+  void whenSendEnrollAckThenEnrollEnrollAckEventCloudIsProduced() {
     final var hashPan = TestUtils.generateRandomHashPan();
-    final var type = new TypeReference<CloudEvent<VirtualEnroll>>() {};
-    kafkaVirtualEnrollService.enroll(hashPan, "12345");
+    final var ackTimestamp = new Date();
+    final var type = new TypeReference<CloudEvent<EnrollAck>>() {};
+    kafkaEnrollAckService.confirmEnroll(hashPan, ackTimestamp);
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
       assertThat(record)
               .isNotNull()
               .extracting(TestUtils.parseTo(mapper, type))
-              .matches(it -> it.getType().equals(VirtualEnroll.TYPE))
-              .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
-              .matches(it -> it.getData().getPar().equals("12345"))
-              .matches(it -> Objects.isNull(it.getData().getHashToken()));
-    });
-  }
-
-  @Test
-  @SneakyThrows
-  void whenEnrollVirtualCardWithHashTokenThenEnrollCardEventCloudWithHashTokenIsProduced() {
-    final var type = new TypeReference<CloudEvent<VirtualEnroll>>() {};
-    final var hashPan = TestUtils.generateRandomHashPan();
-    final var hashToken = TestUtils.generateRandomHashPan();
-    kafkaVirtualEnrollService.enroll(hashPan, hashToken, "12345");
-
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-      final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
-      assertThat(record)
-              .isNotNull()
-              .extracting(TestUtils.parseTo(mapper, type))
-              .matches(it -> it.getType().equals(VirtualEnroll.TYPE))
-              .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
-              .matches(it -> it.getData().getPar().equals("12345"))
-              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()));
-    });
-  }
-
-  @Test
-  @SneakyThrows
-  void whenUnEnrollVirtualCardThenRevokeTokenEventCloudIsProduced() {
-    final var type = new TypeReference<CloudEvent<VirtualRevoke>>() {};
-    final var hashPan = TestUtils.generateRandomHashPan();
-    final var hashToken = TestUtils.generateRandomHashPan();
-    kafkaVirtualEnrollService.unEnroll(hashPan, hashToken, "12345");
-
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-      final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
-      assertThat(record)
-              .isNotNull()
-              .extracting(TestUtils.parseTo(mapper, type))
-              .matches(it -> it.getType().equals(VirtualRevoke.TYPE))
-              .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
-              .matches(it -> it.getData().getPar().equals("12345"))
-              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()));
+              .matches(it -> it.getType().equals(EnrollAck.TYPE))
+              .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
+              .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp));
     });
   }
 }
