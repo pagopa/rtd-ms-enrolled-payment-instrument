@@ -2,6 +2,8 @@ logging:
   level:
     root: INFO
 
+server.port: 8090
+
 # bpd-url null means fake mode
 revoke-notification:
   bpd-url: ${BASEURL_BPD_DELETE_CARD:#{null}}
@@ -13,8 +15,8 @@ topics:
   rtd-pi-to-app:
     topic: ${KAFKA_RTD_PI_TO_APP:rtd-pi-to-app}
   rtd-slit-by-pi:
-    topic: ${KAFKA_RTD_SPLIT_BY_PI:rtd-split-by-pi}
-    group: ${KAFKA_RTD_SPLIT_BY_PI_CONSUMER_GROUP:rtd-split-by-pi-consumer-group}
+    topic: ${KAFKA_RTD_SPLIT_TOPIC:rtd-split-by-pi}
+    group: ${KAFKA_RTD_SPLIT_CONSUMER_GROUP:rtd-split-by-pi-consumer-group}
 
 spring:
   config:
@@ -76,10 +78,10 @@ spring:
           environment.spring.cloud.stream.kafka:
             binder:
               auto-create-topics: false
-              brokers: ${KAFKA_BROKER:localhost:29095}
+              brokers: ${KAFKA_RTD_SPLIT_BROKER:localhost:29095}
               configuration:
                 max.poll.records: 1
-                sasl.jaas.config: ${KAFKA_RTD_SPLIT_BY_PI_SASL_JAAS_CONFIG}
+                sasl.jaas.config: ${KAFKA_RTD_SPLIT_SASL_JAAS_CONFIG}
               consumerProperties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
