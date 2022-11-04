@@ -8,7 +8,6 @@ import de.flapdoodle.embed.mongo.config.Storage;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,10 +34,6 @@ public class MongodbIntegrationTestConfiguration {
 
   private static final String IP = "localhost";
   private static final int PORT = 28017;
-
-  /* Useless beans */
-  @MockBean
-  KafkaMessageDrivenChannelAdapter<String, TokenManagerWalletChanged> input;
 
   @MockBean
   EnrolledPaymentInstrumentService enrolledPaymentInstrumentService;

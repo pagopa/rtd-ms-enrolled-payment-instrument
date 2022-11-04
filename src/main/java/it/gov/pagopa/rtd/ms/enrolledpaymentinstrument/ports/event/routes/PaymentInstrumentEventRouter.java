@@ -23,7 +23,7 @@ public class PaymentInstrumentEventRouter implements MessageRoutingCallback {
   private final ObjectMapper objectMapper;
 
   private static final Predicate<Map<String, Object>> TKM_FILTER =
-          map -> map.containsKey("par") || map.containsKey("htokens");
+          map -> map.containsKey("par") || map.containsKey("htokens") || map.containsKey("taxCode");
 
   public PaymentInstrumentEventRouter(
           String tkmUpdateConsumerName,
