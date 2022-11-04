@@ -1,9 +1,12 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestKafkaConsumerSetup;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
-import org.apache.kafka.clients.consumer.Consumer;
+import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,16 +22,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Date;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -36,46 +38,53 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-@EmbeddedKafka(topics = {"${test.kafka.topic-revoke}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@EmbeddedKafka(topics = {"${test.kafka.topic-rtd-to-app}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
 @Import({KafkaTestConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)
-class KafkaRevokeNotificationServiceTest {
+class KafkaEnrollAckServiceTest {
 
-  @Value("${test.kafka.topic-revoke}")
+  private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
+
+  @Value("${test.kafka.topic-rtd-to-app}")
   private String topic;
 
   @Autowired
   private StreamBridge bridge;
-  private KafkaRevokeNotificationService revokeNotificationService;
+  private KafkaEnrollAckService kafkaEnrollAckService;
 
-  private Consumer<String, String> consumer;
+  private TestKafkaConsumerSetup.TestConsumer testConsumer;
   private ObjectMapper mapper;
 
   @BeforeEach
   void setUp(@Autowired EmbeddedKafkaBroker broker) {
-    final var consumerProperties = KafkaTestUtils.consumerProps("group", "true", broker);
-    consumer = new DefaultKafkaConsumerFactory<String, String>(consumerProperties).createConsumer();
-    consumer.subscribe(List.of(topic));
-    revokeNotificationService = new KafkaRevokeNotificationService("rtdRevokedPi-out-0", bridge);
+    testConsumer = TestKafkaConsumerSetup.setup(broker, topic);
+    kafkaEnrollAckService = new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING);
     mapper = new ObjectMapper();
   }
 
   @AfterEach
   void tearDown() {
-    consumer.close();
+    testConsumer.getContainer().stop();
+    testConsumer.getRecords().clear();
   }
 
   @Test
-  void whenNotifyRevokedCardThenRevokeNotificationProduced() {
+  @SneakyThrows
+  void whenSendEnrollAckThenEnrollEnrollAckEventCloudIsProduced() {
     final var hashPan = TestUtils.generateRandomHashPan();
-    revokeNotificationService.notifyRevoke("taxCode", hashPan);
+    final var ackTimestamp = new Date();
+    final var type = new TypeReference<CloudEvent<EnrollAck>>() {};
+    kafkaEnrollAckService.confirmEnroll(hashPan, ackTimestamp);
 
-    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-      final var records = consumer.poll(Duration.ZERO);
-      assertThat(records)
-              .map(it -> mapper.readValue(it.value(), RevokeNotification.class))
-              .allMatch(notification -> "taxCode".equals(notification.getFiscalCode()) && hashPan.getValue().equals(notification.getHashPan()));
+    await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+      final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
+      assertThat(record)
+              .isNotNull()
+              .extracting(TestUtils.parseTo(mapper, type))
+              .matches(it -> it.getType().equals(EnrollAck.TYPE))
+              .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
+              .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp));
     });
   }
 }

@@ -16,6 +16,8 @@ topics:
     group: rtd-pim-consumer-group
   revoke-pi:
     topic: ${KAFKA_TOPIC_REVOKE:rtd-revoke-pi}
+  rtd-pi-to-app:
+    topic: ${KAFKA_RTD_PI_TO_APP:rtd-pi-to-app}
 
 # custom integration flow properties
 integration-flow:
@@ -71,6 +73,13 @@ spring:
           content-type: application/json
           binder: kafka-revoke-binder
 
+        rtdToApp-out-0:
+          destination: ${topics.rtd-pi-to-app.topic}
+          content-type: application/json
+          binder: kafka-to-app-binder
+          producer:
+            sync: true
+
         tkmWalletEventConsumer-in-0:
           destination: ${topics.tkm-write-update.topic}
           group: ${topics.tkm-write-update.group}
@@ -88,6 +97,16 @@ spring:
             sasl.mechanism: PLAIN
 
       binders:
+        kafka-to-app-binder:
+          type: kafka
+          environment.spring.cloud.stream.kafka:
+            binder:
+              auto-create-topics: false
+              brokers: ${KAFKA_RTD_PI_TO_APP_BROKER:localhost:29095}
+              requiredAcks: all
+              configuration:
+                sasl.jaas.config: ${KAFKA_RTD_PI_TO_APP_SASL_JAAS_CONFIG}
+
         kafka-enrolled-binder:
           type: kafka
           environment.spring.cloud.stream.kafka:

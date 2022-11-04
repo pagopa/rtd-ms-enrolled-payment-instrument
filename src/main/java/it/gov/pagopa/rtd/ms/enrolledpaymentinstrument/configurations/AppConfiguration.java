@@ -5,8 +5,10 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedT
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.KafkaRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.KafkaVirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +36,7 @@ import java.util.UnknownFormatConversionException;
 public class AppConfiguration {
 
   private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
+  private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
   @Value("${revoke-notification.bpd-url:}")
   private String baseUrlBpdDeleteCard;
@@ -53,6 +56,11 @@ public class AppConfiguration {
                     BPDRevokeNotificationService.fromUrl(baseUrlBpdDeleteCard),
             new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge)
     ));
+  }
+
+  @Bean
+  public VirtualEnrollService virtualEnrollService(StreamBridge bridge) {
+    return new KafkaVirtualEnrollService(RTD_TO_APP_BINDING, bridge);
   }
 
   /**

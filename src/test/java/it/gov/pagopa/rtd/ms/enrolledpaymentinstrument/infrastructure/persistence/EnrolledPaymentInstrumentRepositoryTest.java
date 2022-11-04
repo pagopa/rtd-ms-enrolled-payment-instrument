@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.persistence;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence;
 
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
