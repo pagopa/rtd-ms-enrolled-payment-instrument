@@ -19,8 +19,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UnknownFormatConversionException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
@@ -42,16 +44,17 @@ class PaymentInstrumentEventRouterTest {
   }
 
   @Test
-  void whenReceiveParOrHashTokenPayloadThenRedirectToTkmConsumer() throws JsonProcessingException {
-    final var tkmEvent = TokenManagerCardChanged.builder()
-            .par("123")
-            .hashTokens(List.of())
-            .changeType(CardChangeType.REVOKE)
-            .build();
-    final var destination = eventRouter.routingResult(
-            MessageBuilder.withPayload(objectMapper.writeValueAsString(tkmEvent)).build()
+  void whenReceiveParOrHashTokenOrTaxCodePayloadThenRedirectToTkmConsumer() {
+    final var tkmEvents = List.of(
+            TokenManagerCardChanged.builder().par("123").hashTokens(List.of()).taxCode("123").changeType(CardChangeType.REVOKE).build(),
+            TokenManagerCardChanged.builder().taxCode("123").changeType(CardChangeType.REVOKE).build(),
+            TokenManagerCardChanged.builder().par("123").changeType(CardChangeType.REVOKE).build(),
+            TokenManagerCardChanged.builder().hashTokens(List.of()).changeType(CardChangeType.REVOKE).build()
     );
-    assertEquals(TKM_CONSUMER_DESTINATION, destination.getFunctionDefinition());
+
+    assertThat(tkmEvents)
+            .map(it -> eventRouter.routingResult(MessageBuilder.withPayload(objectMapper.writeValueAsString(it)).build()))
+            .allMatch(it -> Objects.equals(TKM_CONSUMER_DESTINATION, it.getFunctionDefinition()));
   }
 
   @Test
@@ -93,5 +96,6 @@ class PaymentInstrumentEventRouterTest {
   }
 
   @TestConfiguration
-  public static class Config { }
+  public static class Config {
+  }
 }
