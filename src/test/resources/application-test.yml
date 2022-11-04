@@ -2,21 +2,11 @@ logging:
   level:
     root: INFO
 
-test.kafka.topic: embedded-test-topic
+test.kafka.topic: rtd-split-by-pi
 test.kafka.topic-tkm: embedded-test-topic-tkm
 test.kafka.topic-wallet-tkm: embedded-test-topic-wallet-tkm
 test.kafka.topic-revoke: revoke-topic
 test.kafka.topic-rtd-to-app: rtd-pi-to-app
-
-integration-flow:
-  tkmBulkConsumer:
-    topic: ${test.kafka.topic-wallet-tkm}
-    bootstrap.servers: ${spring.embedded.kafka.brokers}
-    group.id: "group"
-    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    allow.auto.create.topics: false
-    max.poll.records: 1
 
 spring:
   config:
@@ -31,20 +21,11 @@ spring:
       bindings:
         functionRouter-in-0:
           destination: ${test.kafka.topic}
-          group: rtd-enrolled-payment-instrument-consumer-group
+          group: rtd-split-by-pi-consumer-group
           content-type: application/json
           binder: kafka-binder
           consumer:
             max-attempts: 1
-
-        cardChangedProducer-out-0:
-          destination: ${test.kafka.topic-tkm}
-          content-type: application/json
-          binder: kafka-binder
-          producer:
-            partitionKeyExpression: ${KAFKA_PARTITION_KEY_EXPRESSION:headers.partitionKey}
-            partitionCount: ${KAFKA_PARTITION_COUNT:1}
-            sync: true
 
         rtdToApp-out-0:
           destination: ${test.kafka.topic-rtd-to-app}
