@@ -5,7 +5,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnr
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.VirtualEnroll;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerWalletChanged;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -22,7 +21,6 @@ public class KafkaRestControllerImpl implements
         KafkaRestController {
 
   private static final String RTD_PRODUCER_BINDING = "rtdEnrolledPimProducer-out-0";
-  private static final String TKM_BULK_CARD_BINDING = "tkmWalletEventConsumer-in-0";
 
   private final StreamBridge streamBridge;
   private final VirtualEnrollService virtualEnrollService;
@@ -46,16 +44,6 @@ public class KafkaRestControllerImpl implements
                     .build()
     );
     log.info("Event sent {}", sent);
-  }
-
-  @Override
-  public void sendTkmUpdateEvent(TokenManagerWalletChanged event) {
-    log.info("Sending tkm event {}", event);
-    final var sent = streamBridge.send(
-            TKM_BULK_CARD_BINDING,
-            MessageBuilder.withPayload(event).setHeader("partitionKey", "0").build()
-    );
-    log.info("Tkm event sent {}", sent);
   }
 
   @Override
