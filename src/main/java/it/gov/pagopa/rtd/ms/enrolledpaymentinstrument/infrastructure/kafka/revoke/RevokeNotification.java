@@ -21,5 +21,5 @@ public class RevokeNotification {
   @JsonAlias("hpan")
   private String hashPan;
 
-  private Date deactivationDate;
+  private Date timestamp;
 }
