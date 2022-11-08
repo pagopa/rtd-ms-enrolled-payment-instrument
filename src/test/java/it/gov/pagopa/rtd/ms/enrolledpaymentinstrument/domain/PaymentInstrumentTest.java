@@ -54,9 +54,9 @@ class PaymentInstrumentTest {
   }
 
   @Test
-  void whenEnrollAnExistingAppThenNoFirePaymentInstrumentEnrolledEvent() {
-    final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.ID_PAY), "", "");
-    paymentInstrument.clearDomainEvents();
+  void whenEnrollOverRevokedInstrumentThenNoFirePaymentInstrumentEnrolledEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan());
+    paymentInstrument.revokeInstrument();
     paymentInstrument.enableApp(SourceApp.ID_PAY);
     assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
