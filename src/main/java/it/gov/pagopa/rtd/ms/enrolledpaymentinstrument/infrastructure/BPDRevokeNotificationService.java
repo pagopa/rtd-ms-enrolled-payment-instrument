@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -9,6 +10,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.Set;
 
 /**
  * This implementation allows to notify BPD microservice when a card is revoked (deleted from PM).
@@ -34,7 +37,7 @@ public class BPDRevokeNotificationService implements InstrumentRevokeNotificatio
   }
 
   @Override
-  public boolean notifyRevoke(String taxCode, HashPan hashPan) {
+  public boolean notifyRevoke(Set<SourceApp> apps, String taxCode, HashPan hashPan) {
     if (isFake) {
       log.info("Fake BPD revoke card notification");
       return true;

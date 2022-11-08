@@ -2,6 +2,9 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common;
 
 import lombok.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+
 @Data
 @Getter
 @NoArgsConstructor
@@ -12,9 +15,12 @@ public class CloudEvent<T> {
     return new CloudEventBuilder<>();
   }
 
+  @NonNull
+  @NotBlank
   private String type;
-  private T data;
 
+  @Valid
+  private T data;
 
   public static class CloudEventBuilder<T> {
     private String type;

@@ -35,7 +35,6 @@ import java.util.UnknownFormatConversionException;
 @EnableMongoRepositories(basePackages = "it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories")
 public class AppConfiguration {
 
-  private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
   @Value("${revoke-notification.bpd-url:}")
@@ -54,7 +53,7 @@ public class AppConfiguration {
             ObjectUtils.isEmpty(baseUrlBpdDeleteCard) ?
                     BPDRevokeNotificationService.fake() :
                     BPDRevokeNotificationService.fromUrl(baseUrlBpdDeleteCard),
-            new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge)
+            new KafkaRevokeNotificationService(RTD_TO_APP_BINDING, bridge)
     ));
   }
 
