@@ -20,7 +20,6 @@ import java.util.function.Predicate;
 @Slf4j
 public class PaymentInstrumentEventRouter implements MessageRoutingCallback {
 
-  private final TypeReference<CloudEvent<?>> cloudEventTypeReference;
   private final Map<String, String> routingMap;
   private final TypeReference<HashMap<String, Object>> rawTypeReference;
   private final ObjectMapper objectMapper;
@@ -31,8 +30,6 @@ public class PaymentInstrumentEventRouter implements MessageRoutingCallback {
   ) {
     this.routingMap = routingMap;
     this.objectMapper = objectMapper;
-    this.cloudEventTypeReference = new TypeReference<>() {
-    };
     this.rawTypeReference = new TypeReference<>() {
     };
   }
