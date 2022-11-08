@@ -1,7 +1,8 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities;
 
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.AggregateRoot;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,9 +12,13 @@ import java.util.Set;
  * <p>
  * It has a hashapan and a list of enabled vertical application.
  */
-@Data
+@Getter
 @AllArgsConstructor
-public class EnrolledPaymentInstrument {
+public class EnrolledPaymentInstrument extends AggregateRoot {
+
+  public static EnrolledPaymentInstrument createUnEnrolledInstrument(HashPan hashPan) {
+    return createUnEnrolledInstrument(hashPan, "", "");
+  }
 
   public static EnrolledPaymentInstrument createUnEnrolledInstrument(
           HashPan hashPan,
@@ -29,17 +34,19 @@ public class EnrolledPaymentInstrument {
           String issuer,
           String network
   ) {
-    return new EnrolledPaymentInstrument(
+    final var paymentInstrument = new EnrolledPaymentInstrument(
             null,
             hashPan,
             new HashSet<>(),
             null,
-            apps.isEmpty() ? PaymentInstrumentState.NOT_ENROLLED : PaymentInstrumentState.READY,
-            new HashSet<>(apps),
+            PaymentInstrumentState.NOT_ENROLLED,
+            new HashSet<>(),
             issuer,
             network,
             0
     );
+    apps.forEach(paymentInstrument::enableApp);
+    return paymentInstrument;
   }
 
   private final String id;
@@ -58,8 +65,11 @@ public class EnrolledPaymentInstrument {
    * @param sourceApp vertical domain application
    */
   public void enableApp(SourceApp sourceApp) {
-    this.enabledApps.add(sourceApp);
     this.state = state == PaymentInstrumentState.REVOKED ? this.state : PaymentInstrumentState.READY;
+    if (this.state == PaymentInstrumentState.READY && !this.enabledApps.contains(sourceApp)) {
+      this.enabledApps.add(sourceApp);
+      this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
+    }
   }
 
   /**
