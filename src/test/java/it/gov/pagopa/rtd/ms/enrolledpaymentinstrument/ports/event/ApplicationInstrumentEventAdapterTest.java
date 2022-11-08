@@ -1,11 +1,14 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentDeleted;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +38,6 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.MessageHandlingException;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -48,16 +50,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-@EmbeddedKafka(
-        topics = {"${test.kafka.topic}"},
-        partitions = 1,
-        bootstrapServersProperty = "spring.embedded.kafka.brokers"
-)
+@EmbeddedKafka(topics = {"${test.kafka.topic}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
 @Import({KafkaTestConfiguration.class, KafkaConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ExtendWith(MockitoExtension.class)
-class ApplicationEnrollEventAdapterTest {
+class ApplicationInstrumentEventAdapterTest {
 
+  private static final String DEFAULT_APPLICATION = "ID_PAY";
   private static final String BINDING_NAME = "functionRouter-in-0";
 
   @Value("${test.kafka.topic}")
@@ -69,8 +68,7 @@ class ApplicationEnrollEventAdapterTest {
   @Autowired
   EnrolledPaymentInstrumentService paymentInstrumentService;
 
-  private KafkaTemplate<String, ApplicationEnrollEvent> kafkaTemplate;
-  private ApplicationEnrollEvent.ApplicationEnrollEventBuilder applicationEnrollEventBuilder;
+  private KafkaTemplate<String, CloudEvent<?>> kafkaTemplate;
 
   @BeforeEach
   void setup(@Autowired EmbeddedKafkaBroker broker) {
@@ -78,10 +76,6 @@ class ApplicationEnrollEventAdapterTest {
     kafkaTemplate = new KafkaTemplate<>(
             new DefaultKafkaProducerFactory<>(KafkaTestUtils.producerProps(broker), new StringSerializer(), new JsonSerializer<>())
     );
-    applicationEnrollEventBuilder = ApplicationEnrollEvent.builder()
-            .hashPan(hashPanEvent)
-            .app(sourceAppEvent)
-            .operation("CREATE");
   }
 
   @AfterEach
@@ -90,34 +84,48 @@ class ApplicationEnrollEventAdapterTest {
   }
 
   @Test
-  void shouldCreateApplicationCommandBasedOnEvent() {
+  void whenReceiveInstrumentAddedThenCreateApplicationCommandBasedOnEvent() {
     final var captor = ArgumentCaptor.forClass(EnrollPaymentInstrumentCommand.class);
-    final var message = MessageBuilder.withPayload(applicationEnrollEventBuilder.build()).build();
-    final var isSent = stream.send(BINDING_NAME, message);
+    final var hashPan = TestUtils.generateRandomHashPanAsString();
+    final var event = CloudEvent.builder()
+            .withType(ApplicationInstrumentAdded.TYPE)
+            .withData(new ApplicationInstrumentAdded(hashPan, true, DEFAULT_APPLICATION))
+            .build();
+
+    final var isSent = stream.send(BINDING_NAME, event);
 
     assertTrue(isSent);
     Mockito.verify(paymentInstrumentService).handle(captor.capture());
 
-    assertEquals(hashPanEvent, captor.getValue().getHashPan());
-    assertEquals(sourceAppEvent, captor.getValue().getSourceApp());
+    assertEquals(hashPan, captor.getValue().getHashPan());
+    assertEquals(DEFAULT_APPLICATION, captor.getValue().getSourceApp());
     assertEquals(Operation.CREATE, captor.getValue().getOperation());
   }
 
   @Test
-  void shouldFailToCreateCommandWithMalformedEvent() {
-    final var message = MessageBuilder
-            .withPayload(applicationEnrollEventBuilder.operation("123").build())
+  void whenReceiveInstrumentDeletedThenCreateApplicationCommandBasedOnEvent() {
+    final var captor = ArgumentCaptor.forClass(EnrollPaymentInstrumentCommand.class);
+    final var hashPan = TestUtils.generateRandomHashPanAsString();
+    final var event = CloudEvent.builder()
+            .withType(ApplicationInstrumentDeleted.TYPE)
+            .withData(new ApplicationInstrumentDeleted(hashPan, true, DEFAULT_APPLICATION))
             .build();
 
-    final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
+    final var isSent = stream.send(BINDING_NAME, event);
 
-    assertTrue(exception.getCause() instanceof IllegalArgumentException);
+    assertTrue(isSent);
+    Mockito.verify(paymentInstrumentService).handle(captor.capture());
+
+    assertEquals(hashPan, captor.getValue().getHashPan());
+    assertEquals(DEFAULT_APPLICATION, captor.getValue().getSourceApp());
+    assertEquals(Operation.DELETE, captor.getValue().getOperation());
   }
 
   @Test
-  void mustNotHandleEventWhenMissingMandatoryEventField() {
-    final var message = MessageBuilder
-            .withPayload(applicationEnrollEventBuilder.operation("").build())
+  void whenEventMissMandatoryFieldThenThrowsException() {
+    final var message = CloudEvent.builder()
+            .withType(ApplicationInstrumentAdded.TYPE)
+            .withData(new ApplicationInstrumentAdded(null, true, DEFAULT_APPLICATION))
             .build();
 
     final var exception = assertThrows(MessageHandlingException.class, () -> stream.send(BINDING_NAME, message));
@@ -128,7 +136,7 @@ class ApplicationEnrollEventAdapterTest {
   @Test
   void whenReceivedMalformedEventThenRejectIt() {
     Mockito.doNothing().when(paymentInstrumentService).handle(Mockito.any());
-    kafkaTemplate.send(topic, ApplicationEnrollEvent.builder().build());
+    kafkaTemplate.send(topic, CloudEvent.builder().withType("").withData("").build());
 
     await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(Mockito.any());
@@ -138,11 +146,14 @@ class ApplicationEnrollEventAdapterTest {
   @ParameterizedTest
   @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
   void whenServiceFailWithWriteConflictsThenRetryContinuously(Class<? extends Exception> exception) {
+    final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
+            .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
+            .build();
     Mockito.doThrow(exception)
             .when(paymentInstrumentService)
             .handle(Mockito.any());
 
-    kafkaTemplate.send(topic, applicationEnrollEventBuilder.build());
+    kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(Mockito.any());
@@ -151,21 +162,20 @@ class ApplicationEnrollEventAdapterTest {
 
   @Test
   void whenServiceFailsWithTransientErrorThenRetryUntilSucceed() {
+    final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
+            .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
+            .build();
+
     Mockito.doThrow(OptimisticLockingFailureException.class)
             .doThrow(DuplicateKeyException.class)
             .doNothing()
             .when(paymentInstrumentService)
             .handle(Mockito.any());
 
-    kafkaTemplate.send(topic, applicationEnrollEventBuilder.build());
+    kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(Mockito.any());
     });
-
-    System.out.println(Mockito.mockingDetails(paymentInstrumentService).getInvocations());
   }
-
-  private static final String hashPanEvent = "42771c850db05733b749d7e05153d0b8c77b54949d99740343696bc483a07aba";
-  private static final String sourceAppEvent = "FA";
 }
