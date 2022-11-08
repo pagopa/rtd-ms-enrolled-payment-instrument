@@ -1,12 +1,15 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @Data
 @Getter
@@ -22,4 +25,6 @@ public class RevokeNotification {
   private String hashPan;
 
   private Date timestamp;
+
+  private Set<SourceApp> applications;
 }

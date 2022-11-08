@@ -6,6 +6,8 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import org.junit.Rule;
 import org.junit.jupiter.api.*;
 
+import java.util.Set;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -41,7 +43,7 @@ class BPDRevokeNotificationServiceTest {
     stubFor(delete("/" + hashPan.getValue() + "?fiscalCode=CF")
             .willReturn(ok()));
 
-    assertThat(bpdRevokeNotificationService.notifyRevoke("CF", hashPan)).isTrue();
+    assertThat(bpdRevokeNotificationService.notifyRevoke(Set.of(), "CF", hashPan)).isTrue();
   }
 
   @Test
@@ -49,7 +51,7 @@ class BPDRevokeNotificationServiceTest {
     final var hashPan = TestUtils.generateRandomHashPan();
     stubFor(delete("/" + hashPan.getValue() + "?fiscalCode=CF")
             .willReturn(notFound()));
-    assertThat(bpdRevokeNotificationService.notifyRevoke("CF", hashPan)).isTrue();
+    assertThat(bpdRevokeNotificationService.notifyRevoke(Set.of(), "CF", hashPan)).isTrue();
   }
 
   @Test
@@ -58,7 +60,7 @@ class BPDRevokeNotificationServiceTest {
     stubFor(delete("/" + hashPan.getValue() + "?fiscalCode=CF")
             .willReturn(serverError()));
 
-    assertThat(bpdRevokeNotificationService.notifyRevoke("CF", hashPan)).isFalse();
+    assertThat(bpdRevokeNotificationService.notifyRevoke(Set.of(),"CF", hashPan)).isFalse();
   }
 
   @Test
@@ -66,6 +68,6 @@ class BPDRevokeNotificationServiceTest {
     final var fakeBpdNotificationService = BPDRevokeNotificationService.fake();
     final var hashPan = TestUtils.generateRandomHashPan();
 
-    assertThat(fakeBpdNotificationService.notifyRevoke("CF", hashPan)).isTrue();
+    assertThat(fakeBpdNotificationService.notifyRevoke(Set.of(),"CF", hashPan)).isTrue();
   }
 }

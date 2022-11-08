@@ -52,7 +52,7 @@ class TkmPaymentInstrumentServiceIntegrationTest {
   void setup(@Autowired MongoTemplate mongoTemplate) {
     mongoTemplate.indexOps("enrolled_payment_instrument")
             .ensureIndex(new Index().on("hashPan", Sort.Direction.ASC).unique());
-    doReturn(true).when(notificationService).notifyRevoke(any(), any());
+    doReturn(true).when(notificationService).notifyRevoke(any(), any(), any());
     this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService);
   }
 
