@@ -10,8 +10,6 @@ revoke-notification:
 
 ## Topics and consumer groups
 topics:
-  revoke-pi:
-    topic: ${KAFKA_TOPIC_REVOKE:rtd-revoke-pi}
   rtd-pi-to-app:
     topic: ${KAFKA_RTD_PI_TO_APP:rtd-pi-to-app}
   rtd-slit-by-pi:
@@ -44,11 +42,6 @@ spring:
             ackEachRecord: true
             ackMode: 'RECORD'
 
-        rtdRevokedPi-out-0:
-          destination: ${topics.revoke-pi.topic}
-          content-type: application/json
-          binder: kafka-revoke-binder
-
         rtdToApp-out-0:
           destination: ${topics.rtd-pi-to-app.topic}
           content-type: application/json
@@ -69,6 +62,7 @@ spring:
             binder:
               auto-create-topics: false
               brokers: ${KAFKA_RTD_PI_TO_APP_BROKER:localhost:29095}
+              sync: true
               requiredAcks: all
               configuration:
                 sasl.jaas.config: ${KAFKA_RTD_PI_TO_APP_SASL_JAAS_CONFIG}
@@ -85,12 +79,3 @@ spring:
               consumerProperties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
-        kafka-revoke-binder:
-          type: kafka
-          environment.spring.cloud.stream.kafka:
-            binder:
-              auto-create-topics: false
-              brokers: ${KAFKA_BROKER_REVOKE:localhost:29095}
-              configuration:
-                sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_RTD_REVOKED}

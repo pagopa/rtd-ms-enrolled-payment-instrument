@@ -14,6 +14,8 @@ import java.util.Date;
 @AllArgsConstructor
 public class RevokeNotification {
 
+  public static final String TYPE = "RevokeCard";
+
   private String fiscalCode;
 
   @JsonAlias("hpan")

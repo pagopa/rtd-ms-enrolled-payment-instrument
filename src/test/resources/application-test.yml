@@ -5,7 +5,6 @@ logging:
 test.kafka.topic: rtd-split-by-pi
 test.kafka.topic-tkm: embedded-test-topic-tkm
 test.kafka.topic-wallet-tkm: embedded-test-topic-wallet-tkm
-test.kafka.topic-revoke: revoke-topic
 test.kafka.topic-rtd-to-app: rtd-pi-to-app
 
 spring:
@@ -34,11 +33,6 @@ spring:
           producer:
             sync: true
 
-        rtdRevokedPi-out-0:
-          destination: ${test.kafka.topic-revoke}
-          content-type: application/json
-          binder: kafka-binder
-
       binders:
         kafka-binder:
           type: kafka
@@ -47,6 +41,7 @@ spring:
               binder:
                 auto-create-topics: false
                 brokers: ${spring.embedded.kafka.brokers}
+                sync: true
                 requiredAcks: all
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
