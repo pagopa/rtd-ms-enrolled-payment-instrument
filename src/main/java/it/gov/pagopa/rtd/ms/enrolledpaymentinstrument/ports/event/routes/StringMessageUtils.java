@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public final class StringMessageUtils {
 
+  private StringMessageUtils() {}
+
   public static Optional<String> convertPayloadToString(Message<?> message) {
     final var rawPayload = message.getPayload();
     if (rawPayload instanceof String) {
