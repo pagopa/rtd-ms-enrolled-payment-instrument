@@ -117,10 +117,10 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
   /**
    * Add a hashpan as a child this payment instrument (use for hash token)
    *
-   * @param hashPan A valid hashpan, also an hash token is a valid hashpan
+   * @param hashPan A valid hashpan, also a hash token is a valid hashpan
    */
   public void addHashPanChild(HashPan hashPan) {
-    if (!hashPanChildren.contains(hashPan)) {
+    if (!hashPanChildren.contains(hashPan) && state == PaymentInstrumentState.READY) {
       registerEvent(new ChildTokenAssociated(this.hashPan, hashPan, this.par, getEnabledApps()));
     }
     this.hashPanChildren.add(hashPan);

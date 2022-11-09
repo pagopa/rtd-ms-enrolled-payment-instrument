@@ -187,12 +187,22 @@ class PaymentInstrumentTest {
   void whenAddChildHashPanThenTokenAssociatedEventIsFired() {
     final var rootHashPan = TestUtils.generateRandomHashPan();
     final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.create(rootHashPan, Set.of(SourceApp.ID_PAY), "", "");
+    paymentInstrument.addHashPanChildren(childHashPans);
+
+    assertThat(paymentInstrument.domainEvents()).containsAll(
+            childHashPans.stream().map(child -> new ChildTokenAssociated(rootHashPan, child, null, Set.of(SourceApp.ID_PAY))).collect(Collectors.toSet())
+    );
+  }
+
+  @Test
+  void whenAddChildHashPanToUnEnrolledInstrumentThenNoTokenAssociatedEventIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
     final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(rootHashPan, "", "");
     paymentInstrument.addHashPanChildren(childHashPans);
 
-    assertThat(paymentInstrument.domainEvents()).hasSameElementsAs(
-            childHashPans.stream().map(child -> new ChildTokenAssociated(rootHashPan, child, null, Set.of())).collect(Collectors.toSet())
-    );
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
 
   @Test
