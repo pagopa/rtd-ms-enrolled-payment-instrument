@@ -1,6 +1,9 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.AggregateRoot;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ParAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.PaymentInstrumentEnrolled;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -103,12 +106,23 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
     }
   }
 
+  public void addHashPanChildren(Set<HashPan> hashPans) {
+    hashPans.forEach(this::addHashPanChild);
+  }
+
+  public void removeHashPanChildren(Set<HashPan> hashPans) {
+    hashPans.forEach(this::removeHashPanChild);
+  }
+
   /**
    * Add a hashpan as a child this payment instrument (use for hash token)
    *
    * @param hashPan A valid hashpan, also an hash token is a valid hashpan
    */
   public void addHashPanChild(HashPan hashPan) {
+    if (!hashPanChildren.contains(hashPan)) {
+      registerEvent(new ChildTokenAssociated(this.hashPan, hashPan, this.par, getEnabledApps()));
+    }
     this.hashPanChildren.add(hashPan);
   }
 

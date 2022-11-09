@@ -1,10 +1,10 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentEnrolled;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.*;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ParAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.PaymentInstrumentEnrolled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,6 +13,8 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -179,6 +181,37 @@ class PaymentInstrumentTest {
     final var currentState = paymentInstrument.getState();
     paymentInstrument.addHashPanChild(TestUtils.generateRandomHashPan());
     assertEquals(currentState, paymentInstrument.getState());
+  }
+
+  @Test
+  void whenAddChildHashPanThenTokenAssociatedEventIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(rootHashPan, "", "");
+    paymentInstrument.addHashPanChildren(childHashPans);
+
+    assertThat(paymentInstrument.domainEvents()).hasSameElementsAs(
+            childHashPans.stream().map(child -> new ChildTokenAssociated(rootHashPan, child, null, Set.of())).collect(Collectors.toSet())
+    );
+  }
+
+  @Test
+  void whenAddExistingChildHashPanThenNoTokenAssociatedEventIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(rootHashPan, "", "");
+    paymentInstrument.addHashPanChildren(childHashPans);
+    paymentInstrument.clearDomainEvents();
+
+    paymentInstrument.addHashPanChildren(childHashPans);
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(RandomPaymentInstrumentProvider.class)
+  void whenClearDomainEventsThenNoEventsAreAvailable(EnrolledPaymentInstrument paymentInstrument) {
+    paymentInstrument.clearDomainEvents();
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
 
   static class RandomPaymentInstrumentProvider implements ArgumentsProvider {
