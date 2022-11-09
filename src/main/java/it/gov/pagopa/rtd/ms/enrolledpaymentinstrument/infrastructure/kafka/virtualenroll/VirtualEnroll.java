@@ -2,12 +2,14 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virt
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.Set;
 
 @Data
 @Getter
@@ -22,10 +24,9 @@ public class VirtualEnroll {
 
   @JsonAlias("htoken")
   private String hashToken;
-
   private String par;
-
   private Date timestamp;
+  private Set<SourceApp> applications;
 
   public CloudEvent<VirtualEnroll> asCloudEvent() {
     return CloudEvent.<VirtualEnroll>builder()

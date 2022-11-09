@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
@@ -23,13 +24,16 @@ import java.util.stream.Collectors;
 public class TkmPaymentInstrumentService {
 
   private final EnrolledPaymentInstrumentRepository repository;
+  private final DomainEventPublisher domainEventPublisher;
   private final InstrumentRevokeNotificationService revokeService;
 
   public TkmPaymentInstrumentService(
           EnrolledPaymentInstrumentRepository repository,
+          DomainEventPublisher domainEventPublisher,
           InstrumentRevokeNotificationService revokeService
   ) {
     this.repository = repository;
+    this.domainEventPublisher = domainEventPublisher;
     this.revokeService = revokeService;
   }
 
@@ -45,11 +49,12 @@ public class TkmPaymentInstrumentService {
 
     log.info("Token to update {}, to delete {}", updateAndRemove.get(true).size(), updateAndRemove.get(false).size());
 
+    paymentInstrument.associatePar(command.getPar());
+
     updateAndRemove.get(true).forEach(token -> paymentInstrument.addHashPanChild(HashPan.create(token.getHashPan())));
     updateAndRemove.get(false).forEach(token -> paymentInstrument.removeHashPanChild(HashPan.create(token.getHashPan())));
 
-    paymentInstrument.associatePar(command.getPar());
-
+    domainEventPublisher.handle(paymentInstrument);
     repository.save(paymentInstrument);
   }
 
@@ -60,6 +65,7 @@ public class TkmPaymentInstrumentService {
     if (paymentInstrumentOrEmpty.isPresent()) {
       final var paymentInstrument = paymentInstrumentOrEmpty.get();
       paymentInstrument.revokeInstrument();
+      domainEventPublisher.handle(paymentInstrument);
       repository.save(paymentInstrument);
     } else {
       log.warn("Handled revoke command on non existing card");

@@ -48,10 +48,11 @@ public class KafkaRestControllerImpl implements
   @Override
   public void sendVirtualEnrollToApp(VirtualEnroll enroll) {
     log.info("Sending virtual enroll event");
-    final var sent = virtualEnrollService.enroll(
+    final var sent = virtualEnrollService.enrollToken(
             HashPan.create(enroll.getHashPan()),
             Optional.ofNullable(enroll.getHashToken()).map(HashPan::create).orElse(null),
-            enroll.getPar()
+            enroll.getPar(),
+            enroll.getApplications()
     );
     log.info("Virtual enroll event sent {}", sent);
   }

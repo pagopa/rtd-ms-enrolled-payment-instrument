@@ -10,6 +10,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -222,6 +223,26 @@ class EnrolledPaymentInstrumentServiceTest {
     @Bean
     EnrolledPaymentInstrumentService service(@Autowired DomainEventPublisher eventPublisher) {
       return new EnrolledPaymentInstrumentService(repository, eventPublisher);
+    }
+
+    @Bean
+    VirtualEnrollService virtualEnrollService() {
+      return new VirtualEnrollService() {
+        @Override
+        public boolean enroll(HashPan hashPan, String par, Set<SourceApp> applications) {
+          return true;
+        }
+
+        @Override
+        public boolean enrollToken(HashPan hashPan, HashPan token, String par, Set<SourceApp> applications) {
+          return true;
+        }
+
+        @Override
+        public boolean unEnrollToken(HashPan hashPan, HashPan token, String par, Set<SourceApp> applications) {
+          return true;
+        }
+      };
     }
   }
 
