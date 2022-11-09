@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentEnrolled;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -13,18 +14,14 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PaymentInstrumentTest {
 
   @Test
   void whenPaymentInstrumentIsCreateWithoutAppsThenMustBeNotEnrolled() {
-    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(
-            TestUtils.generateRandomHashPan(),
-            "",
-            ""
-    );
-
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan());
     assertTrue(paymentInstrument.isNotEnrolled());
     assertFalse(paymentInstrument.isReady());
   }
@@ -43,14 +40,25 @@ class PaymentInstrumentTest {
 
   @Test
   void whenEnabledAppIsAddedThenPaymentInstrumentIsReady() {
-    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(
-            TestUtils.generateRandomHashPan(),
-            "",
-            ""
-    );
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan());
     paymentInstrument.enableApp(SourceApp.FA);
-
     assertTrue(paymentInstrument.isReady());
+  }
+
+  @Test
+  void whenEnrollNewAppThenFirePaymentInstrumentEnrolledEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan());
+    paymentInstrument.enableApp(SourceApp.ID_PAY);
+    assertThat(paymentInstrument.domainEvents())
+            .contains(new PaymentInstrumentEnrolled(paymentInstrument.getHashPan(), SourceApp.ID_PAY));
+  }
+
+  @Test
+  void whenEnrollOverRevokedInstrumentThenNoFirePaymentInstrumentEnrolledEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan());
+    paymentInstrument.revokeInstrument();
+    paymentInstrument.enableApp(SourceApp.ID_PAY);
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
 
   @Test
@@ -95,7 +103,7 @@ class PaymentInstrumentTest {
 
 
   @Test
-  void whenUnenrollAllAppsFromRevokeCardThenShouldBeDeleted() {
+  void whenUnEnrollAllAppsFromRevokeCardThenShouldBeDeleted() {
     final var paymentInstrument = EnrolledPaymentInstrument.create(
             TestUtils.generateRandomHashPan(),
             Set.of(SourceApp.FA, SourceApp.ID_PAY),

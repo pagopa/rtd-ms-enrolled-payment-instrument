@@ -6,6 +6,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestKafkaConsumerSetup;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,7 +76,7 @@ class KafkaEnrollAckServiceTest {
     final var hashPan = TestUtils.generateRandomHashPan();
     final var ackTimestamp = new Date();
     final var type = new TypeReference<CloudEvent<EnrollAck>>() {};
-    kafkaEnrollAckService.confirmEnroll(hashPan, ackTimestamp);
+    kafkaEnrollAckService.confirmEnroll(SourceApp.ID_PAY, hashPan, ackTimestamp);
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
@@ -84,7 +85,8 @@ class KafkaEnrollAckServiceTest {
               .extracting(TestUtils.parseTo(mapper, type))
               .matches(it -> it.getType().equals(EnrollAck.TYPE))
               .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
-              .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp));
+              .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp))
+              .matches(it -> Objects.equals(it.getData().getApplication(), SourceApp.ID_PAY));
     });
   }
 }
