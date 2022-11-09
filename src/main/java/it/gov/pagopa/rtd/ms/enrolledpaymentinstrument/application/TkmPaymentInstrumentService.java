@@ -18,6 +18,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand.TkmTokenCommand.Action;
+
 @Service
 @Slf4j
 @Validated
@@ -45,14 +47,20 @@ public class TkmPaymentInstrumentService {
     final var updateAndRemove = Optional.ofNullable(command.getTokens())
             .orElse(Collections.emptyList())
             .stream()
-            .collect(Collectors.partitioningBy(it -> it.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.UPDATE));
+            .collect(Collectors.groupingByConcurrent(
+                    TkmUpdateCommand.TkmTokenCommand::getAction,
+                    Collectors.mapping(value -> HashPan.create(value.getHashPan()), Collectors.toSet())
+            ));
 
-    log.info("Token to update {}, to delete {}", updateAndRemove.get(true).size(), updateAndRemove.get(false).size());
+    final var toUpdate = updateAndRemove.getOrDefault(Action.UPDATE, Collections.emptySet());
+    final var toDelete = updateAndRemove.getOrDefault(Action.DELETE, Collections.emptySet());
+
+    log.info("Token to update {}, to delete {}", toUpdate.size(), toDelete.size());
 
     paymentInstrument.associatePar(command.getPar());
 
-    updateAndRemove.get(true).forEach(token -> paymentInstrument.addHashPanChild(HashPan.create(token.getHashPan())));
-    updateAndRemove.get(false).forEach(token -> paymentInstrument.removeHashPanChild(HashPan.create(token.getHashPan())));
+    paymentInstrument.addHashPanChildren(toUpdate);
+    paymentInstrument.removeHashPanChildren(toDelete);
 
     domainEventPublisher.handle(paymentInstrument);
     repository.save(paymentInstrument);
