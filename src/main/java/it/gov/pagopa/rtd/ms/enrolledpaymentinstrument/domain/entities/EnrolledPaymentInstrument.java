@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -94,7 +95,12 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
    * @param par A valid par (not null and not blank)
    */
   public void associatePar(String par) {
-    this.par = par;
+    final boolean shouldUpdatePar = Optional.ofNullable(par)
+            .map(it -> !it.equals(this.par)).orElse(false);
+    if (shouldUpdatePar && state != PaymentInstrumentState.REVOKED) {
+      this.par = par;
+      registerEvent(new ParAssociated(hashPan, par, getEnabledApps()));
+    }
   }
 
   /**

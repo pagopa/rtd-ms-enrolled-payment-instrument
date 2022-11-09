@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.ParAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentEnrolled;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import org.junit.jupiter.api.Test;
@@ -128,12 +129,48 @@ class PaymentInstrumentTest {
     assertFalse(paymentInstrument.isReady());
   }
 
+  @Test
+  void whenUpdateParInfoThenInstrumentFiresParAssociatedEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.create(
+            TestUtils.generateRandomHashPan(),
+            Set.of(SourceApp.values()),
+            "",
+            ""
+    );
+    paymentInstrument.associatePar("par");
+    assertThat(paymentInstrument.domainEvents()).contains(new ParAssociated(paymentInstrument.getHashPan(), "par", Set.of(SourceApp.values())));
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(RandomPaymentInstrumentProvider.class)
+  void whenUpdateParWithSameParThenNoParAssociatedEventIsFired(EnrolledPaymentInstrument paymentInstrument) {
+    paymentInstrument.associatePar("par");
+    paymentInstrument.clearDomainEvents();
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
+
+    paymentInstrument.associatePar("par");
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
+  }
+
   @ParameterizedTest
   @ArgumentsSource(RandomPaymentInstrumentProvider.class)
   void whenUpdateParInfoThenInstrumentDoesntChangeState(EnrolledPaymentInstrument paymentInstrument) {
     final var currentState = paymentInstrument.getState();
     paymentInstrument.associatePar("par");
     assertEquals(currentState, paymentInstrument.getState());
+  }
+
+  @Test
+  void whenUpdateParToRevokeCardThenInstrumentDoesntUpdateItNeitherFireEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.values()), "", "");
+    paymentInstrument.clearDomainEvents();
+    paymentInstrument.associatePar("par");
+    paymentInstrument.revokeInstrument();
+
+    paymentInstrument.associatePar("par2");
+
+    assertThat(paymentInstrument.getPar()).isEqualTo("par");
+    assertThat(paymentInstrument.domainEvents()).containsOnly(new ParAssociated(paymentInstrument.getHashPan(), "par", Set.of(SourceApp.values())));
   }
 
   @ParameterizedTest
