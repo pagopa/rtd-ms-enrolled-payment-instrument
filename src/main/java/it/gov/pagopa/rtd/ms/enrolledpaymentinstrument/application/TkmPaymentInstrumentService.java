@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import javax.validation.Valid;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,6 +63,7 @@ public class TkmPaymentInstrumentService {
   public void handle(@Valid TkmRevokeCommand command) {
     final var hashPan = HashPan.create(command.getHashPan());
     final var paymentInstrumentOrEmpty = repository.findByHashPan(command.getHashPan());
+    final var applications = paymentInstrumentOrEmpty.map(EnrolledPaymentInstrument::getEnabledApps).orElse(Set.of());
     if (paymentInstrumentOrEmpty.isPresent()) {
       final var paymentInstrument = paymentInstrumentOrEmpty.get();
       paymentInstrument.revokeInstrument();
@@ -69,7 +71,7 @@ public class TkmPaymentInstrumentService {
     } else {
       log.warn("Handled revoke command on non existing card");
     }
-    if (revokeService.notifyRevoke(command.getTaxCode(), hashPan)) {
+    if (revokeService.notifyRevoke(applications, command.getTaxCode(), hashPan)) {
       log.info("Revoke notification sent");
     } else {
       throw new FailedToNotifyRevoke();

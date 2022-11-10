@@ -7,8 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.function.context.MessageRoutingCallback;
 import org.springframework.messaging.Message;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UnknownFormatConversionException;
 
 /**
  * Cause rtd-enrolled-pi kafka queue is used to publish event from specific application
@@ -18,48 +20,42 @@ import java.util.function.Predicate;
 @Slf4j
 public class PaymentInstrumentEventRouter implements MessageRoutingCallback {
 
-  private final String tkmUpdateConsumerName;
-  private final String enrolledInstrumentConsumerName;
+  private final Map<String, String> routingMap;
+  private final TypeReference<HashMap<String, Object>> rawTypeReference;
   private final ObjectMapper objectMapper;
 
-  private static final Predicate<Map<String, Object>> TKM_FILTER =
-          map -> map.containsKey("par") || map.containsKey("htokens") || map.containsKey("taxCode");
-
   public PaymentInstrumentEventRouter(
-          String tkmUpdateConsumerName,
-          String enrolledInstrumentConsumerName,
+          Map<String, String> routingMap,
           ObjectMapper objectMapper
   ) {
-    Objects.requireNonNull(tkmUpdateConsumerName);
-    Objects.requireNonNull(enrolledInstrumentConsumerName);
-    this.tkmUpdateConsumerName = tkmUpdateConsumerName;
-    this.enrolledInstrumentConsumerName = enrolledInstrumentConsumerName;
+    this.routingMap = routingMap;
     this.objectMapper = objectMapper;
+    this.rawTypeReference = new TypeReference<>() {
+    };
   }
 
   @Override
   public FunctionRoutingResult routingResult(Message<?> message) {
     try {
-      final var rawPayload = message.getPayload();
-      final var typeRef = new TypeReference<HashMap<String, Object>>() {};
-      Optional<Map<String, Object>> payload;
-
-      if (rawPayload instanceof String) {
-        payload = Optional.ofNullable(objectMapper.readValue(rawPayload.toString(), typeRef));
-      } else if (rawPayload instanceof byte[]) {
-        payload = Optional.ofNullable(objectMapper.readValue(new String((byte[]) rawPayload), typeRef));
-      } else {
-        payload = Optional.empty();
-      }
-
-      return payload
-              .map(it -> TKM_FILTER.test(it) ? tkmUpdateConsumerName : enrolledInstrumentConsumerName)
+      return StringMessageUtils.convertPayloadToString(message)
+              .flatMap(this::parseToJson)
+              .flatMap(it -> Optional.ofNullable(it.get("type").toString()))
+              .flatMap(it -> Optional.ofNullable(routingMap.get(it)))
               .map(FunctionRoutingResult::new)
-              .orElseThrow(() -> new UnknownFormatConversionException("Unknown format " + rawPayload.getClass()));
+              .orElseThrow(() -> new UnknownFormatConversionException("Unknown format " + message.getPayload().getClass()));
 
-    } catch (JsonProcessingException | UnknownFormatConversionException exception) {
+    } catch (UnknownFormatConversionException exception) {
       log.warn("Unknown event or fail during parse as json", exception);
       throw new UnknownFormatConversionException(exception.getMessage());
+    }
+  }
+
+  private Optional<Map<String, Object>> parseToJson(String payload) {
+    try {
+      return Optional.ofNullable(objectMapper.readValue(payload, rawTypeReference));
+    } catch (JsonProcessingException e) {
+      log.warn("Fail during parse as json", e);
+      return Optional.empty();
     }
   }
 }

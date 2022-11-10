@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
@@ -44,11 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
-@EmbeddedKafka(
-        topics = {"${test.kafka.topic}"},
-        partitions = 1,
-        bootstrapServersProperty = "spring.embedded.kafka.brokers"
-)
+@EmbeddedKafka(topics = {"${test.kafka.topic}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
 @TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
 @Import(value = {KafkaTestConfiguration.class, KafkaConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
@@ -59,7 +56,7 @@ class TokenManagerEventAdapterTest {
   @Value("${test.kafka.topic}")
   private String topic;
 
-  private KafkaTemplate<String, TokenManagerCardChanged> kafkaTemplate;
+  private KafkaTemplate<String, CloudEvent<TokenManagerCardChanged>> kafkaTemplate;
 
   @Autowired
   private TkmPaymentInstrumentService service;
@@ -80,40 +77,44 @@ class TokenManagerEventAdapterTest {
   @Test
   void whenTkmUpdateACardThenExecuteValidUpdateCommand() {
     final var captor = ArgumentCaptor.forClass(TkmUpdateCommand.class);
-    final var event = TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).build();
-    kafkaTemplate.send(topic, event);
-
-    await().atMost(Duration.ofSeconds(DEFAULT_AT_MOST_TIMEOUT)).untilAsserted(() -> {
-      Mockito.verify(service).handle(captor.capture());
-
-      assertEquals(captor.getValue().getPar(), event.getPar());
-      assertEquals(captor.getValue().getHashPan(), event.getHashPan());
-      assertThat(captor.getValue().getTokens()).hasSameElementsAs(event.toTkmTokenCommand());
-    });
-  }
-
-  @Test
-  void whenTkmUpdateACardWithNullTokensThenExecuteValidUpdateCommand() {
-    final var captor = ArgumentCaptor.forClass(TkmUpdateCommand.class);
-    final var event = TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE)
-            .hashTokens(null)
+    final var event = CloudEvent.<TokenManagerCardChanged>builder()
+            .withType(TokenManagerCardChanged.TYPE)
+            .withData(TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).build())
             .build();
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(DEFAULT_AT_MOST_TIMEOUT)).untilAsserted(() -> {
       Mockito.verify(service).handle(captor.capture());
 
-      assertEquals(captor.getValue().getPar(), event.getPar());
-      assertEquals(captor.getValue().getHashPan(), event.getHashPan());
-      assertThat(captor.getValue().getTokens()).hasSameElementsAs(event.toTkmTokenCommand());
+      assertEquals(captor.getValue().getPar(), event.getData().getPar());
+      assertEquals(captor.getValue().getHashPan(), event.getData().getHashPan());
+      assertThat(captor.getValue().getTokens()).hasSameElementsAs(event.getData().toTkmTokenCommand());
+    });
+  }
+
+  @Test
+  void whenTkmUpdateACardWithNullTokensThenExecuteValidUpdateCommand() {
+    final var captor = ArgumentCaptor.forClass(TkmUpdateCommand.class);
+    final var event = CloudEvent.<TokenManagerCardChanged>builder()
+            .withType(TokenManagerCardChanged.TYPE)
+            .withData(TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).hashTokens(null).build())
+            .build();
+    kafkaTemplate.send(topic, event);
+
+    await().atMost(Duration.ofSeconds(DEFAULT_AT_MOST_TIMEOUT)).untilAsserted(() -> {
+      Mockito.verify(service).handle(captor.capture());
+
+      assertEquals(captor.getValue().getPar(), event.getData().getPar());
+      assertEquals(captor.getValue().getHashPan(), event.getData().getHashPan());
+      assertThat(captor.getValue().getTokens()).hasSameElementsAs(event.getData().toTkmTokenCommand());
     });
   }
 
   @Test
   void whenTkmUpdateACardWithMissingMandatoryFieldsThenAdapterShouldNotCallService() {
-    final var event = TokenManagerCardChanged.builder()
-            .hashPan(null)
-            .changeType(null)
+    final var event = CloudEvent.<TokenManagerCardChanged>builder()
+            .withType(TokenManagerCardChanged.TYPE)
+            .withData(TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).hashPan(null).changeType(null).build())
             .build();
     kafkaTemplate.send(topic, event);
 
@@ -129,7 +130,13 @@ class TokenManagerEventAdapterTest {
             .when(service)
             .handle(Mockito.any(TkmUpdateCommand.class));
 
-    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).build());
+    kafkaTemplate.send(
+            topic,
+            CloudEvent.<TokenManagerCardChanged>builder()
+                    .withType(TokenManagerCardChanged.TYPE)
+                    .withData(TestUtils.prepareRandomTokenManagerEvent(CardChangeType.INSERT_UPDATE).build())
+                    .build()
+    );
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmUpdateCommand.class));
@@ -139,17 +146,18 @@ class TokenManagerEventAdapterTest {
   @Test
   void whenTkmRevokeACardThenAdapterCreateRevokeCommand() {
     final var captor = ArgumentCaptor.forClass(TkmRevokeCommand.class);
-    final var event = TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE)
-            .hashTokens(List.of())
+    final var event = CloudEvent.<TokenManagerCardChanged>builder()
+            .withType(TokenManagerCardChanged.TYPE)
+            .withData(TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).hashTokens(List.of()).build())
             .build();
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(DEFAULT_AT_MOST_TIMEOUT)).untilAsserted(() -> {
       Mockito.verify(service).handle(captor.capture());
 
-      assertEquals(captor.getValue().getPar(), event.getPar());
-      assertEquals(captor.getValue().getHashPan(), event.getHashPan());
-      assertEquals(captor.getValue().getTaxCode(), event.getTaxCode());
+      assertEquals(captor.getValue().getPar(), event.getData().getPar());
+      assertEquals(captor.getValue().getHashPan(), event.getData().getHashPan());
+      assertEquals(captor.getValue().getTaxCode(), event.getData().getTaxCode());
     });
   }
 
@@ -160,7 +168,13 @@ class TokenManagerEventAdapterTest {
             .when(service)
             .handle(Mockito.any(TkmRevokeCommand.class));
 
-    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).build());
+    kafkaTemplate.send(
+            topic,
+            CloudEvent.<TokenManagerCardChanged>builder()
+                    .withType(TokenManagerCardChanged.TYPE)
+                    .withData(TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).build())
+                    .build()
+    );
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmRevokeCommand.class));
@@ -173,7 +187,13 @@ class TokenManagerEventAdapterTest {
             .when(service)
             .handle(Mockito.any(TkmRevokeCommand.class));
 
-    kafkaTemplate.send(topic, TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).build());
+    kafkaTemplate.send(
+            topic,
+            CloudEvent.<TokenManagerCardChanged>builder()
+                    .withType(TokenManagerCardChanged.TYPE)
+                    .withData(TestUtils.prepareRandomTokenManagerEvent(CardChangeType.REVOKE).build())
+                    .build()
+    );
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmRevokeCommand.class));

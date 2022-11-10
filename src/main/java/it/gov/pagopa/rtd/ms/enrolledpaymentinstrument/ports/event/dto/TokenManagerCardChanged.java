@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class TokenManagerCardChanged {
 
+  public static final String TYPE = "TokenManagerCardChanged";
+
   @NotNull
   @NotBlank
   private String hashPan;
