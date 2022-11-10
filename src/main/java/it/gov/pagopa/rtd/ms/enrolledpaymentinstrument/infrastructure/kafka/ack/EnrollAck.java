@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,12 +18,10 @@ public final class EnrollAck {
 
   public static final String TYPE = "EnrollAck";
 
-  @JsonAlias("hpan")
+  @JsonProperty("hpan")
   private String hashPan;
 
-  @JsonAlias("timestamp")
   private Date timestamp;
 
-  @JsonAlias("application")
   private SourceApp application;
 }
