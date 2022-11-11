@@ -144,6 +144,13 @@ class PaymentInstrumentTest {
     assertEquals(currentState, paymentInstrument.getState());
   }
 
+  @ParameterizedTest
+  @ArgumentsSource(RandomPaymentInstrumentProvider.class)
+  void whenClearDomainEventsThenNoEventsAreAvailable(EnrolledPaymentInstrument paymentInstrument) {
+    paymentInstrument.clearDomainEvents();
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
+  }
+
   static class RandomPaymentInstrumentProvider implements ArgumentsProvider {
 
     @Override

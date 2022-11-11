@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
@@ -24,13 +25,16 @@ public class TkmPaymentInstrumentService {
 
   private final EnrolledPaymentInstrumentRepository repository;
   private final InstrumentRevokeNotificationService revokeService;
+  private final DomainEventPublisher domainEventPublisher;
 
   public TkmPaymentInstrumentService(
           EnrolledPaymentInstrumentRepository repository,
-          InstrumentRevokeNotificationService revokeService
+          InstrumentRevokeNotificationService revokeService,
+          DomainEventPublisher domainEventPublisher
   ) {
     this.repository = repository;
     this.revokeService = revokeService;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   public void handle(@Valid TkmUpdateCommand command) {
@@ -38,25 +42,25 @@ public class TkmPaymentInstrumentService {
     final var paymentInstrument = repository.findByHashPan(command.getHashPan())
             .orElse(EnrolledPaymentInstrument.createUnEnrolledInstrument(hashPan, "", ""));
 
-    final var tokenToUpdate = Optional.ofNullable(command.getTokens())
+    final var updateAndRemove = Optional.ofNullable(command.getTokens())
             .orElse(Collections.emptyList())
             .stream()
-            .filter(token -> token.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)
-            .collect(Collectors.toList());
+            .collect(Collectors.groupingByConcurrent(
+                    TkmUpdateCommand.TkmTokenCommand::getAction,
+                    Collectors.mapping(value -> HashPan.create(value.getHashPan()), Collectors.toSet())
+            ));
 
-    final var tokenToRemove = Optional.ofNullable(command.getTokens())
-            .orElse(Collections.emptyList())
-            .stream()
-            .filter(token -> token.getAction() == TkmUpdateCommand.TkmTokenCommand.Action.DELETE)
-            .collect(Collectors.toList());
+    final var toUpdate = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.UPDATE, Collections.emptySet());
+    final var toDelete = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.DELETE, Collections.emptySet());
 
-    log.info("Token to update {}, to delete {}", tokenToUpdate.size(), tokenToRemove.size());
-
-    tokenToUpdate.forEach(token -> paymentInstrument.addHashPanChild(HashPan.create(token.getHashPan())));
-    tokenToRemove.forEach(token -> paymentInstrument.removeHashPanChild(HashPan.create(token.getHashPan())));
+    log.info("Token to update {}, to delete {}", toUpdate.size(), toDelete.size());
 
     paymentInstrument.associatePar(command.getPar());
 
+    toUpdate.forEach(paymentInstrument::addHashPanChild);
+    toDelete.forEach(paymentInstrument::removeHashPanChild);
+
+    domainEventPublisher.handle(paymentInstrument);
     repository.save(paymentInstrument);
   }
 
@@ -67,6 +71,7 @@ public class TkmPaymentInstrumentService {
     if (paymentInstrumentOrEmpty.isPresent()) {
       final var paymentInstrument = paymentInstrumentOrEmpty.get();
       paymentInstrument.revokeInstrument();
+      domainEventPublisher.handle(paymentInstrument);
       repository.save(paymentInstrument);
     } else {
       log.warn("Handled revoke command on non existing card");
