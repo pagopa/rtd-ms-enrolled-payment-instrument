@@ -228,11 +228,13 @@
 						"exec": [
 							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
 							"",
+							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
+							"",
 							"// ENROLL over two applications",
 							"setTimeout(() => {",
 							"    pm.sendRequest({",
 							"        method: 'PUT',",
-							"        url: `${pm.environment.get('base_url_event_processor')}/rtd-pi-from-app`,",
+							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
 							"        header: {",
 							"            \"Content-Type\": \"application/json\"",
 							"        },",
@@ -252,7 +254,7 @@
 							"",
 							"    pm.sendRequest({",
 							"        method: 'PUT',",
-							"        url: `${pm.environment.get('base_url_event_processor')}/rtd-pi-from-app`,",
+							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
 							"        header: {",
 							"            \"Content-Type\": \"application/json\"",
 							"        },",
@@ -326,7 +328,7 @@
 				"exec": [
 					"Object.prototype.clean = (that, paymentInstrumentId) => {",
 					"    return that.sendRequest({",
-					"        url: `${pm.environment.get('base_url')}/payment-instrument/${paymentInstrumentId}`,",
+					"        url: `${pm.environment.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
 					"        method: 'DELETE'",
 					"    });",
 					"};",
@@ -334,7 +336,7 @@
 					"Object.prototype.getPaymentInstrument = (that, paymentInstrumentId, callback) => {",
 					"    // pre-put a sendercode-apikey association",
 					"    that.sendRequest({",
-					"            url: `${pm.environment.get('base_url')}/payment-instrument/${paymentInstrumentId}`,",
+					"            url: `${pm.environment.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
 					"            method: 'GET'",
 					"        },",
 					"        (error, response) => {",
@@ -392,6 +394,11 @@
 		{
 			"key": "test_hashToken",
 			"value": "oub3d483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
+			"type": "default"
+		},
+		{
+			"key": "base_url_event_processor",
+			"value": "http://{{ingress}}/pieventprocessor",
 			"type": "default"
 		}
 	]
