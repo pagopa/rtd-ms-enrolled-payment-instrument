@@ -220,7 +220,7 @@
 			"response": []
 		},
 		{
-			"name": "Keep payment instrument while at least one apps is enrolled",
+			"name": "Keep payment instrument if at least one apps is enrolled",
 			"event": [
 				{
 					"listen": "prerequest",
