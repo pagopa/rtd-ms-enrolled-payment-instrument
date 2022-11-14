@@ -4,10 +4,12 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -249,6 +251,7 @@ class TkmPaymentInstrumentServiceTest {
   }
 
   @TestConfiguration
+  @Import({DomainEventPublisher.class, EnrolledPaymentInstrumentEventListener.class})
   static class Config {
 
     @MockBean
@@ -258,8 +261,13 @@ class TkmPaymentInstrumentServiceTest {
     InstrumentRevokeNotificationService revokeNotificationService;
 
     @Bean
-    TkmPaymentInstrumentService service() {
-      return new TkmPaymentInstrumentService(repository, revokeNotificationService);
+    EnrollAckService enrollAckService() {
+      return (app, hashPan, enrollDate) -> true;
+    }
+
+    @Bean
+    TkmPaymentInstrumentService service(@Autowired DomainEventPublisher domainEventPublisher) {
+      return new TkmPaymentInstrumentService(repository, revokeNotificationService, domainEventPublisher);
     }
   }
 }

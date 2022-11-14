@@ -4,6 +4,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
@@ -209,6 +210,7 @@ class EnrolledPaymentInstrumentServiceTest {
   }
 
   @TestConfiguration
+  @Import({DomainEventPublisher.class, EnrolledPaymentInstrumentEventListener.class})
   static class Config {
 
     @MockBean
@@ -218,8 +220,8 @@ class EnrolledPaymentInstrumentServiceTest {
     private EnrollAckService enrollAckService;
 
     @Bean
-    EnrolledPaymentInstrumentService service() {
-      return new EnrolledPaymentInstrumentService(repository, enrollAckService);
+    EnrolledPaymentInstrumentService service(@Autowired DomainEventPublisher eventPublisher) {
+      return new EnrolledPaymentInstrumentService(repository, eventPublisher);
     }
   }
 
