@@ -49,11 +49,11 @@ spring:
           producer:
             sync: true
 
-#      kafka:
-#        binder:
-#          configuration:
-#            security.protocol: SASL_SSL
-#            sasl.mechanism: PLAIN
+      kafka:
+        binder:
+          configuration:
+            security.protocol: SASL_SSL
+            sasl.mechanism: PLAIN
 
       binders:
         kafka-to-app-binder:
