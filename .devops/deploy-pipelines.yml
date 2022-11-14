@@ -189,7 +189,7 @@ stages:
             displayName: 'download postman environment'
             name: postman_env
             inputs:
-              secureFile: rtd-ingress-env.json.json
+              secureFile: rtd-ingress-env.json
           - task: CmdLine@2
             displayName: Run newman
             continueOnError: true # Useful to avoid the skipping of result publishing task
