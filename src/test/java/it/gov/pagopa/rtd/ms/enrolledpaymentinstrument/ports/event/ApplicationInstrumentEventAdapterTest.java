@@ -4,6 +4,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
@@ -168,6 +169,25 @@ class ApplicationInstrumentEventAdapterTest {
 
     Mockito.doThrow(OptimisticLockingFailureException.class)
             .doThrow(DuplicateKeyException.class)
+            .doNothing()
+            .when(paymentInstrumentService)
+            .handle(Mockito.any());
+
+    kafkaTemplate.send(topic, event);
+
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(Mockito.any());
+    });
+  }
+
+  @Test
+  void whenServiceFailToAckThenRetryUntilSucceed() {
+    final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
+            .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
+            .build();
+
+    Mockito.doThrow(EnrollAckError.class)
+            .doThrow(EnrollAckError.class)
             .doNothing()
             .when(paymentInstrumentService)
             .handle(Mockito.any());

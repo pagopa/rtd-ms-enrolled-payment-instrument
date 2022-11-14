@@ -1,44 +1,35 @@
 {
 	"info": {
-		"_postman_id": "a47c4a1c-93d2-405a-92e5-af73f06a49ec",
-		"name": "enrolled payment instrument manager",
+		"_postman_id": "200f5aa2-251f-496c-8211-edce39e573a8",
+		"name": "payment instrument manager tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Send fake enrolled payment instrument",
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"hashPan\": \"2ac01c6a86e0ada464d7682888d3e01009ed57ff0bfea09575d842039e1030aa\",\n    \"app\": \"FA\",\n    \"operation\": \"CREATE\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{base_url}}/enroll",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"enroll"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Send fake tkm event",
+			"name": "Enroll Payment Instrument From Application",
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"pm.variables.set('current_timestamp', new Date().getTime());"
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'))"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Has Ready Status\", () => {",
+							"            const responseJson = response.json();",
+							"            pm.expect(responseJson.state).to.eql(\"READY\");",
+							"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan'));",
+							"        });",
+							"    });",
+							"}, 500);"
 						],
 						"type": "text/javascript"
 					}
@@ -49,7 +40,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"taxCode\": \"CFCFCF\",\n    \"timestamp\": {{current_timestamp}},\n    \"cards\": []\n}",
+					"raw": "{\n   \"application\":\"ID_PAY\",\n   \"operationType\":\"ADD_INSTRUMENT\",\n   \"hpanList\": [\n       {\n           \"hpan\": \"{{test_hpan}}\"\n       }\n   ]\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -57,12 +48,270 @@
 					}
 				},
 				"url": {
-					"raw": "{{base_url}}/tkm-update",
+					"raw": "{{base_url_event_processor}}/rtd-pi-from-app",
 					"host": [
-						"{{base_url}}"
+						"{{base_url_event_processor}}"
 					],
 					"path": [
-						"tkm-update"
+						"rtd-pi-from-app"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "UnEnroll Payment Instrument From Application",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'))"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Card not found cause deleted by no apps remaining policy\", () => {",
+							"            pm.expect(response.code).to.eql(404);",
+							"        });",
+							"    });",
+							"}, 500);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"application\":\"ID_PAY\",\n   \"operationType\":\"DELETE_INSTRUMENT\",\n   \"hpanList\": [\n       {\n           \"hpan\": \"{{test_hpan}}\"\n       }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url_event_processor}}/rtd-pi-from-app",
+					"host": [
+						"{{base_url_event_processor}}"
+					],
+					"path": [
+						"rtd-pi-from-app"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Associate PAR & Token",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Has Par and Token Associated\", () => {",
+							"            const responseJson = response.json();",
+							"            pm.expect(responseJson.state).to.eql(\"NOT_ENROLLED\");",
+							"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_par'));",
+							"            const token = responseJson.hashPanChildren.find(t => t.value == pm.collectionVariables.get('test_hashToken'));",
+							"            pm.expect(token).to.be.not.null;",
+							"        });",
+							"    });",
+							"}, 500);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19 12:17:10:1770\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"INSERT_UPDATE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[\n            {\n               \"htoken\":\"{{test_hashToken}}\",\n               \"haction\":\"INSERT_UPDATE\"\n            }\n         ]\n      }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url_event_processor}}/tkm-bulk-update",
+					"host": [
+						"{{base_url_event_processor}}"
+					],
+					"path": [
+						"tkm-bulk-update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Revoke Card",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'));"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Card not found cause revoked\", () => {",
+							"            pm.expect(response.code).to.eql(404);",
+							"        });",
+							"    });",
+							"}, 500);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19 12:17:10:1770\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"REVOKE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[]\n      }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url_event_processor}}/tkm-bulk-update",
+					"host": [
+						"{{base_url_event_processor}}"
+					],
+					"path": [
+						"tkm-bulk-update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Keep payment instrument if at least one apps is enrolled",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
+							"",
+							"// ENROLL over two applications",
+							"setTimeout(() => {",
+							"    pm.sendRequest({",
+							"        method: 'PUT',",
+							"        url: `${pm.environment.get('base_url_event_processor')}/rtd-pi-from-app`,",
+							"        header: {",
+							"            \"Content-Type\": \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: 'raw',",
+							"            raw: JSON.stringify({",
+							"                \"application\":\"ID_PAY\",",
+							"                \"operationType\":\"ADD_INSTRUMENT\",",
+							"                \"hpanList\": [",
+							"                    {",
+							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
+							"                    }",
+							"                ]",
+							"            })",
+							"        }",
+							"    });",
+							"",
+							"    pm.sendRequest({",
+							"        method: 'PUT',",
+							"        url: `${pm.environment.get('base_url_event_processor')}/rtd-pi-from-app`,",
+							"        header: {",
+							"            \"Content-Type\": \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: 'raw',",
+							"            raw: JSON.stringify({",
+							"                \"application\":\"FA\",",
+							"                \"operationType\":\"ADD_INSTRUMENT\",",
+							"                \"hpanList\": [",
+							"                    {",
+							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
+							"                    }",
+							"                ]",
+							"            })",
+							"        }",
+							"    });",
+							"}, 500);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Has Ready Status\", () => {",
+							"            const responseJson = response.json();",
+							"            pm.expect(responseJson.state).to.eql(\"READY\");",
+							"            pm.expect(responseJson.enabledApps).to.include(\"FA\");",
+							"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan'));",
+							"        });",
+							"    });",
+							"}, 500);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"application\":\"ID_PAY\",\n   \"operationType\":\"DELETE_INSTRUMENT\",\n   \"hpanList\": [\n       {\n           \"hpan\": \"{{test_hpan}}\"\n       }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url_event_processor}}/rtd-pi-from-app",
+					"host": [
+						"{{base_url_event_processor}}"
+					],
+					"path": [
+						"rtd-pi-from-app"
 					]
 				}
 			},
@@ -75,7 +324,42 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					""
+					"Object.prototype.clean = (that, paymentInstrumentId) => {",
+					"    return that.sendRequest({",
+					"        url: `${pm.environment.get('base_url')}/payment-instrument/${paymentInstrumentId}`,",
+					"        method: 'DELETE'",
+					"    });",
+					"};",
+					"",
+					"Object.prototype.getPaymentInstrument = (that, paymentInstrumentId, callback) => {",
+					"    // pre-put a sendercode-apikey association",
+					"    that.sendRequest({",
+					"            url: `${pm.environment.get('base_url')}/payment-instrument/${paymentInstrumentId}`,",
+					"            method: 'GET'",
+					"        },",
+					"        (error, response) => {",
+					"            if(!error) {",
+					"                callback(response);",
+					"            } else {",
+					"                callback(undefined, error);",
+					"            }",
+					"        }",
+					"    );",
+					"};",
+					"",
+					"Object.prototype.wait = (delay) => {",
+					"    return new Promise((resolve) => setTimeout(resolve, delay));",
+					"}",
+					"",
+					"Object.prototype.asyncContext = (functionAsync) => {",
+					"    const _dummy = setInterval(() => {}, 30000); // 30 seconds",
+					"    const a = (async () => {",
+					"        await functionAsync();",
+					"        clearInterval(_dummy);",
+					"    });",
+					"    a();",
+					"    console.log(\"Finisch\");",
+					"};"
 				]
 			}
 		},
@@ -91,8 +375,23 @@
 	],
 	"variable": [
 		{
-			"key": "base_url",
-			"value": "http://localhost:8080",
+			"key": "test_hpan",
+			"value": "ceb3d483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
+			"type": "default"
+		},
+		{
+			"key": "test_par",
+			"value": "par123",
+			"type": "default"
+		},
+		{
+			"key": "test_taxCode",
+			"value": "AAABBB12A12A123A",
+			"type": "default"
+		},
+		{
+			"key": "test_hashToken",
+			"value": "oub3d483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
 			"type": "default"
 		}
 	]

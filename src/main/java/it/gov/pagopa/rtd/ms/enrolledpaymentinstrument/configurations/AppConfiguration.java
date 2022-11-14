@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.mongodb.MongoException;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
@@ -85,7 +86,8 @@ public class AppConfiguration {
             TransientDataAccessException.class,
             DuplicateKeyException.class,
             OptimisticLockingFailureException.class,
-            FailedToNotifyRevoke.class
+            FailedToNotifyRevoke.class,
+            EnrollAckError.class
     );
   }
 

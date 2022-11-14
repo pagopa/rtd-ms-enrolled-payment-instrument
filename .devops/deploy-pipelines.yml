@@ -34,6 +34,7 @@ variables:
     kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(DEV_AGENT_POOL)
+    componentTest: true
 
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
     environment: 'UAT'
@@ -42,6 +43,7 @@ variables:
     kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(UAT_AGENT_POOL)
+    componentTest: true
 
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}:
     environment: 'PROD'
@@ -50,6 +52,7 @@ variables:
     kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(PROD_AGENT_POOL)
+    componentTest: false
 
 stages:
   - stage: Release
