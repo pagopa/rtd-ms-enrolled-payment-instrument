@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
@@ -29,7 +28,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.validation.ConstraintViolationException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -384,7 +386,7 @@ class TkmPaymentInstrumentServiceTest {
 
     @Bean
     TkmPaymentInstrumentService service(@Autowired DomainEventPublisher domainEventPublisher) {
-      return new TkmPaymentInstrumentService(repository, domainEventPublisher, revokeNotificationService);
+      return new TkmPaymentInstrumentService(repository, revokeNotificationService, domainEventPublisher);
     }
   }
 }

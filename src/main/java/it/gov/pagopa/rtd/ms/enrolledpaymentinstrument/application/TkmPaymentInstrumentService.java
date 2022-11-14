@@ -18,25 +18,23 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand.TkmTokenCommand.Action;
-
 @Service
 @Slf4j
 @Validated
 public class TkmPaymentInstrumentService {
 
   private final EnrolledPaymentInstrumentRepository repository;
-  private final DomainEventPublisher domainEventPublisher;
   private final InstrumentRevokeNotificationService revokeService;
+  private final DomainEventPublisher domainEventPublisher;
 
   public TkmPaymentInstrumentService(
           EnrolledPaymentInstrumentRepository repository,
-          DomainEventPublisher domainEventPublisher,
-          InstrumentRevokeNotificationService revokeService
+          InstrumentRevokeNotificationService revokeService,
+          DomainEventPublisher domainEventPublisher
   ) {
     this.repository = repository;
-    this.domainEventPublisher = domainEventPublisher;
     this.revokeService = revokeService;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   public void handle(@Valid TkmUpdateCommand command) {
@@ -52,8 +50,8 @@ public class TkmPaymentInstrumentService {
                     Collectors.mapping(value -> HashPan.create(value.getHashPan()), Collectors.toSet())
             ));
 
-    final var toUpdate = updateAndRemove.getOrDefault(Action.UPDATE, Collections.emptySet());
-    final var toDelete = updateAndRemove.getOrDefault(Action.DELETE, Collections.emptySet());
+    final var toUpdate = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.UPDATE, Collections.emptySet());
+    final var toDelete = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.DELETE, Collections.emptySet());
 
     log.info("Token to update {}, to delete {}", toUpdate.size(), toDelete.size());
 

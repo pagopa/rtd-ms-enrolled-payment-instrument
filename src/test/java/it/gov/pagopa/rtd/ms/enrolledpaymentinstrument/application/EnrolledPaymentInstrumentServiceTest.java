@@ -227,22 +227,11 @@ class EnrolledPaymentInstrumentServiceTest {
 
     @Bean
     VirtualEnrollService virtualEnrollService() {
-      return new VirtualEnrollService() {
-        @Override
-        public boolean enroll(HashPan hashPan, String par, Set<SourceApp> applications) {
-          return true;
-        }
-
-        @Override
-        public boolean enrollToken(HashPan hashPan, HashPan token, String par, Set<SourceApp> applications) {
-          return true;
-        }
-
-        @Override
-        public boolean unEnrollToken(HashPan hashPan, HashPan token, String par, Set<SourceApp> applications) {
-          return true;
-        }
-      };
+      final var mock = Mockito.mock(VirtualEnrollService.class);
+      doReturn(true).when(mock).enroll(any(), any(), any());
+      doReturn(true).when(mock).enrollToken(any(), any(), any(), any());
+      doReturn(true).when(mock).unEnrollToken(any(), any(), any(), any());
+      return mock;
     }
   }
 
