@@ -2,7 +2,7 @@ logging:
   level:
     root: INFO
 
-server.port: 8090
+server.port: 8080
 
 # bpd-url null means fake mode
 revoke-notification:
@@ -49,11 +49,11 @@ spring:
           producer:
             sync: true
 
-      kafka:
-        binder:
-          configuration:
-            security.protocol: SASL_SSL
-            sasl.mechanism: PLAIN
+#      kafka:
+#        binder:
+#          configuration:
+#            security.protocol: SASL_SSL
+#            sasl.mechanism: PLAIN
 
       binders:
         kafka-to-app-binder:
