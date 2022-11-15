@@ -220,7 +220,7 @@ class TkmPaymentInstrumentServiceTest {
     }
 
     @Test
-    void whenUpdateHashTokenOnNotReadyInstrumentThenDoVirtualEnroll() {
+    void whenUpdateHashTokenOnNotReadyInstrumentThenAvoidVirtualEnroll() {
       final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan());
       final var hashToken = TestUtils.generateRandomHashPan();
       final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), null,
@@ -251,6 +251,65 @@ class TkmPaymentInstrumentServiceTest {
       Mockito.verify(repository, times(1)).save(any());
       Mockito.verify(virtualEnrollService, times(0)).enroll(any(), any(), any());
     }
+
+    @Test
+    void whenDeleteHashTokenOnReadyInstrumentThenDoVirtualUnEnroll() {
+      final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.ID_PAY), "", "");
+      final var hashToken = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), null,
+              List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.DELETE)));
+
+      paymentInstrument.addHashPanChild(hashToken);
+      doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
+      doReturn(true).when(virtualEnrollService).unEnrollToken(any(), any(), any(), any());
+
+      service.handle(updateCommand);
+      Mockito.verify(virtualEnrollService, times(1)).unEnrollToken(
+              eq(paymentInstrument.getHashPan()), eq(hashToken), any(), eq(Set.of(SourceApp.ID_PAY)));
+    }
+
+    @Test
+    void whenDeleteHashTokenOnNotReadyInstrumentThenAvoidVirtualUnEnroll() {
+      final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(TestUtils.generateRandomHashPan());
+      final var hashToken = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), null,
+              List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)));
+
+      paymentInstrument.addHashPanChild(hashToken);
+      doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
+      doReturn(true).when(virtualEnrollService).unEnrollToken(any(), any(), any(), any());
+
+      service.handle(updateCommand);
+      Mockito.verify(virtualEnrollService, times(0)).unEnrollToken(any(), any(), any(), any());
+    }
+
+    @Test
+    void whenDeleteNonExistingHashTokenOnReadyInstrumentThenAvoidVirtualEnroll() {
+      final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.ID_PAY), "", "");
+      final var hashToken = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), null,
+              List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)));
+
+      doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
+      doReturn(true).when(virtualEnrollService).unEnrollToken(any(), any(), any(), any());
+
+      service.handle(updateCommand);
+      Mockito.verify(virtualEnrollService, times(0)).unEnrollToken(any(), any(), any(), any());
+    }
+
+    @Test
+    void whenVirtualUnEnrollFailsThenThrowAnError() {
+      final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.ID_PAY), "", "");
+      final var hashToken = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), "par",
+              List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.DELETE)));
+      paymentInstrument.addHashPanChild(hashToken);
+      doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
+      doReturn(false).when(virtualEnrollService).unEnrollToken(any(), any(), any(), any());
+
+      assertThrowsExactly(VirtualEnrollError.class, () -> service.handle(updateCommand));
+    }
+
 
     @Test
     void whenUpdateCommandMissMandatoryFieldsThenThrowAnException() {

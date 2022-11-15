@@ -5,6 +5,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.Virtual
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenDeleted;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ParAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.PaymentInstrumentEnrolled;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
@@ -49,6 +50,17 @@ public class EnrolledPaymentInstrumentEventListener {
   public void handleChildTokenAssociated(ChildTokenAssociated event) {
     log.info("Handling Child Token Associated Event, doing virtual enroll");
     performVirtualEnroll(event.getChildHashPan(), event.getPar(), event.getApplications());
+  }
+
+  @EventListener
+  public void handleChildTokenDeleted(ChildTokenDeleted event) {
+    log.info("Handling Child Token Deleted Event, notifying it");
+    if (virtualEnrollService.unEnrollToken(event.getHashPan(), event.getChildHashPan(), event.getPar(), event.getApplications())) {
+      log.info("Token revoke notification done");
+    } else {
+      log.error("Failed during token revoke notification");
+      throw new VirtualEnrollError();
+    }
   }
 
   private void performVirtualEnroll(HashPan hashPan, String par, Set<SourceApp> apps) {
