@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
@@ -18,9 +19,11 @@ import javax.validation.Valid;
 public class EnrolledPaymentInstrumentService {
 
   private final EnrolledPaymentInstrumentRepository repository;
+  private final DomainEventPublisher domainEventPublisher;
 
-  public EnrolledPaymentInstrumentService(EnrolledPaymentInstrumentRepository repository) {
+  public EnrolledPaymentInstrumentService(EnrolledPaymentInstrumentRepository repository, DomainEventPublisher domainEventPublisher) {
     this.repository = repository;
+    this.domainEventPublisher = domainEventPublisher;
   }
 
   public void handle(@Valid EnrollPaymentInstrumentCommand command) {
@@ -39,6 +42,7 @@ public class EnrolledPaymentInstrumentService {
     if (paymentInstrument.shouldBeDeleted()) {
       repository.delete(paymentInstrument);
     } else {
+      domainEventPublisher.handle(paymentInstrument);
       repository.save(paymentInstrument);
     }
   }

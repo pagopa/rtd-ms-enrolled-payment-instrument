@@ -1,12 +1,15 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.mongodb.MongoException;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.KafkaVirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
@@ -35,7 +38,6 @@ import java.util.UnknownFormatConversionException;
 @EnableMongoRepositories(basePackages = "it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories")
 public class AppConfiguration {
 
-  private static final String PRODUCER_BINDING = "rtdRevokedPi-out-0";
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
   @Value("${revoke-notification.bpd-url:}")
@@ -49,12 +51,17 @@ public class AppConfiguration {
   }
 
   @Bean
+  public EnrollAckService enrollAckService(StreamBridge bridge) {
+    return new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING);
+  }
+
+  @Bean
   public InstrumentRevokeNotificationService revokeService(StreamBridge bridge) {
     return new ChainRevokeNotificationService(List.of(
             ObjectUtils.isEmpty(baseUrlBpdDeleteCard) ?
                     BPDRevokeNotificationService.fake() :
                     BPDRevokeNotificationService.fromUrl(baseUrlBpdDeleteCard),
-            new KafkaRevokeNotificationService(PRODUCER_BINDING, bridge)
+            new KafkaRevokeNotificationService(RTD_TO_APP_BINDING, bridge)
     ));
   }
 
@@ -79,7 +86,8 @@ public class AppConfiguration {
             TransientDataAccessException.class,
             DuplicateKeyException.class,
             OptimisticLockingFailureException.class,
-            FailedToNotifyRevoke.class
+            FailedToNotifyRevoke.class,
+            EnrollAckError.class
     );
   }
 

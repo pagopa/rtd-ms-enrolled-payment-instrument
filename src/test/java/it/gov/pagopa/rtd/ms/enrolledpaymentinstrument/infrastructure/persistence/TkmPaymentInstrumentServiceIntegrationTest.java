@@ -4,6 +4,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegrationTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
@@ -43,6 +44,9 @@ class TkmPaymentInstrumentServiceIntegrationTest {
   @MockBean
   private InstrumentRevokeNotificationService notificationService;
 
+  @MockBean
+  private DomainEventPublisher domainEventPublisher;
+
   @Autowired
   private EnrolledPaymentInstrumentRepositoryImpl repository;
 
@@ -52,8 +56,8 @@ class TkmPaymentInstrumentServiceIntegrationTest {
   void setup(@Autowired MongoTemplate mongoTemplate) {
     mongoTemplate.indexOps("enrolled_payment_instrument")
             .ensureIndex(new Index().on("hashPan", Sort.Direction.ASC).unique());
-    doReturn(true).when(notificationService).notifyRevoke(any(), any());
-    this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService);
+    doReturn(true).when(notificationService).notifyRevoke(any(), any(), any());
+    this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService, domainEventPublisher);
   }
 
   @AfterEach

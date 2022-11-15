@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,7 @@ import java.util.function.Consumer;
 
 @Slf4j
 @Component
-public class TokenManagerEventAdapter implements Consumer<TokenManagerCardChanged> {
+public class TokenManagerEventAdapter implements Consumer<CloudEvent<TokenManagerCardChanged>> {
 
   private final TkmPaymentInstrumentService tkmPaymentInstrumentService;
 
@@ -21,7 +22,8 @@ public class TokenManagerEventAdapter implements Consumer<TokenManagerCardChange
   }
 
   @Override
-  public void accept(TokenManagerCardChanged event) {
+  public void accept(CloudEvent<TokenManagerCardChanged> cloudEvent) {
+    final var event = cloudEvent.getData();
     if (event.getChangeType() == CardChangeType.INSERT_UPDATE) {
       final var tokenUpdateCommands = event.toTkmTokenCommand();
       tkmPaymentInstrumentService.handle(new TkmUpdateCommand(event.getHashPan(), event.getPar(), tokenUpdateCommands));

@@ -3,10 +3,14 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,15 +28,14 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.validation.ConstraintViolationException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @RunWith(SpringRunner.class)
 @ExtendWith(SpringExtension.class)
@@ -45,16 +48,24 @@ class EnrolledPaymentInstrumentServiceTest {
   private EnrolledPaymentInstrumentRepository repository;
 
   @Autowired
+  private EnrollAckService enrollAckService;
+
+  @Autowired
   private EnrolledPaymentInstrumentService service;
 
   @BeforeEach
   void setup() {
-    Mockito.reset(repository);
+    doReturn(true).when(enrollAckService).confirmEnroll(any(), any(), any());
+  }
+
+  @AfterEach
+  void cleanUp() {
+    Mockito.reset(repository, enrollAckService);
   }
 
   @DisplayName("must enable payment instrument for a specific source app")
   @Test
-  void mustEnablePaymentInstrumentForSpecificApp() {
+  void whenCommandEnablePaymentInstrumentThenEnableForSpecifiedApp() {
     final var argument = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
@@ -90,6 +101,50 @@ class EnrolledPaymentInstrumentServiceTest {
     assertEquals(Collections.singleton(SourceApp.ID_PAY), argument.getValue().getEnabledApps());
   }
 
+  @Test
+  void whenCommandEnableAppThenSendAck() {
+    final var command = new EnrollPaymentInstrumentCommand(
+            TEST_HASH_PAN.getValue(),
+            SourceApp.FA.name(),
+            Operation.CREATE,
+            null,
+            null
+    );
+    service.handle(command);
+
+    verify(enrollAckService).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
+  }
+
+  @Test
+  void whenCommandEnableExistingAppThenSendAck() {
+    final var fullEnrolledInstrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(SourceApp.values()), null, null);
+    fullEnrolledInstrument.clearDomainEvents();
+    when(repository.findByHashPan(any())).thenReturn(Optional.of(fullEnrolledInstrument));
+
+    final var command = new EnrollPaymentInstrumentCommand(
+            TEST_HASH_PAN.getValue(),
+            SourceApp.FA.name(),
+            Operation.CREATE,
+            null,
+            null
+    );
+    service.handle(command);
+    verify(enrollAckService).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
+  }
+
+  @Test
+  void whenSendAckFailThenThrowsException() {
+    final var command = new EnrollPaymentInstrumentCommand(
+            TEST_HASH_PAN.getValue(),
+            SourceApp.FA.name(),
+            Operation.CREATE,
+            null,
+            null
+    );
+    doReturn(false).when(enrollAckService).confirmEnroll(any(), any(), any());
+    assertThrowsExactly(EnrollAckError.class, () -> service.handle(command));
+  }
+
   @DisplayName("must disable payment instrument for a specific source app")
   @Test
   void mustDisablePaymentInstrumentForSpecificApp() {
@@ -103,7 +158,7 @@ class EnrolledPaymentInstrumentServiceTest {
         null
     );
 
-    Mockito.when(repository.findByHashPan(Mockito.any())).thenReturn(Optional.of(fullEnrolledInstrument));
+    when(repository.findByHashPan(any())).thenReturn(Optional.of(fullEnrolledInstrument));
 
     service.handle(command);
     Mockito.verify(repository).save(argument.capture());
@@ -125,11 +180,11 @@ class EnrolledPaymentInstrumentServiceTest {
         null
     ));
 
-    Mockito.when(repository.findByHashPan(Mockito.any())).thenReturn(Optional.of(fullEnrolledInstrument));
+    when(repository.findByHashPan(any())).thenReturn(Optional.of(fullEnrolledInstrument));
 
     commands.forEach(command -> service.handle(command));
 
-    Mockito.verify(repository, Mockito.times(1)).delete(Mockito.any());
+    Mockito.verify(repository, Mockito.times(1)).delete(any());
   }
 
   @DisplayName("must throw exception when command is invalid")
@@ -155,14 +210,18 @@ class EnrolledPaymentInstrumentServiceTest {
   }
 
   @TestConfiguration
+  @Import({DomainEventPublisher.class, EnrolledPaymentInstrumentEventListener.class})
   static class Config {
 
     @MockBean
     private EnrolledPaymentInstrumentRepository repository;
 
+    @MockBean
+    private EnrollAckService enrollAckService;
+
     @Bean
-    EnrolledPaymentInstrumentService service() {
-      return new EnrolledPaymentInstrumentService(repository);
+    EnrolledPaymentInstrumentService service(@Autowired DomainEventPublisher eventPublisher) {
+      return new EnrolledPaymentInstrumentService(repository, eventPublisher);
     }
   }
 

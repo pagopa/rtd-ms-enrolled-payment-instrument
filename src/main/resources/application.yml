@@ -2,36 +2,19 @@ logging:
   level:
     root: INFO
 
+server.port: 8080
+
 # bpd-url null means fake mode
 revoke-notification:
   bpd-url: ${BASEURL_BPD_DELETE_CARD:#{null}}
 
 ## Topics and consumer groups
 topics:
-  enrolled-events:
-    topic: ${KAFKA_TOPIC_EVENTS:rtd-enrolled-events}
-    group: rtd-enrolled-payment-instrument-consumer-group
-  tkm-write-update:
-    topic: ${KAFKA_TOPIC_TKM_BROKER:tkm-write-update-token}
-    group: rtd-pim-consumer-group
-  revoke-pi:
-    topic: ${KAFKA_TOPIC_REVOKE:rtd-revoke-pi}
   rtd-pi-to-app:
     topic: ${KAFKA_RTD_PI_TO_APP:rtd-pi-to-app}
-
-# custom integration flow properties
-integration-flow:
-  tkmBulkConsumer:
-    topic: ${topics.tkm-write-update.topic}
-    bootstrap.servers: ${KAFKA_BROKER_TKM:localhost:29095}
-    group.id: ${topics.tkm-write-update.group}
-    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    allow.auto.create.topics: false
-    max.poll.records: 1
-    sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_TKM_PIM}
-    sasl.mechanism: PLAIN
-    security.protocol: SASL_SSL
+  rtd-slit-by-pi:
+    topic: ${KAFKA_RTD_SPLIT_TOPIC:rtd-split-by-pi}
+    group: ${KAFKA_RTD_SPLIT_CONSUMER_GROUP:rtd-split-by-pi-consumer-group}
 
 spring:
   config:
@@ -50,28 +33,14 @@ spring:
       function.routing.enabled: true
       bindings:
         functionRouter-in-0:
-          destination: ${topics.enrolled-events.topic}
-          group: ${topics.enrolled-events.group}
+          destination: ${topics.rtd-slit-by-pi.topic}
+          group: ${topics.rtd-slit-by-pi.group}
           content-type: application/json
-          binder: kafka-enrolled-binder
+          binder: kafka-split-by-pi-binder
           consumer:
             max-attempts: 1
             ackEachRecord: true
             ackMode: 'RECORD'
-
-        rtdEnrolledPimProducer-out-0:
-          destination: ${topics.enrolled-events.topic}
-          content-type: application/json
-          binder: kafka-enrolled-binder
-          producer:
-            partitionKeyExpression: headers.partitionKey
-            partitionCount: ${KAFKA_PARTITION_COUNT:1}
-            sync: true
-
-        rtdRevokedPi-out-0:
-          destination: ${topics.revoke-pi.topic}
-          content-type: application/json
-          binder: kafka-revoke-binder
 
         rtdToApp-out-0:
           destination: ${topics.rtd-pi-to-app.topic}
@@ -79,16 +48,6 @@ spring:
           binder: kafka-to-app-binder
           producer:
             sync: true
-
-        tkmWalletEventConsumer-in-0:
-          destination: ${topics.tkm-write-update.topic}
-          group: ${topics.tkm-write-update.group}
-          content-type: application/json
-          binder: kafka-tkm-binder
-          consumer:
-            max-attempts: 1
-            ackEachRecord: true
-            ackMode: 'RECORD'
 
       kafka:
         binder:
@@ -103,39 +62,20 @@ spring:
             binder:
               auto-create-topics: false
               brokers: ${KAFKA_RTD_PI_TO_APP_BROKER:localhost:29095}
+              sync: true
               requiredAcks: all
               configuration:
                 sasl.jaas.config: ${KAFKA_RTD_PI_TO_APP_SASL_JAAS_CONFIG}
 
-        kafka-enrolled-binder:
+        kafka-split-by-pi-binder:
           type: kafka
           environment.spring.cloud.stream.kafka:
             binder:
               auto-create-topics: false
-              brokers: ${KAFKA_BROKER:localhost:29095}
+              brokers: ${KAFKA_RTD_SPLIT_BROKER:localhost:29095}
               configuration:
                 max.poll.records: 1
-                sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_CONSUMER_ENROLLED_PI}
+                sasl.jaas.config: ${KAFKA_RTD_SPLIT_SASL_JAAS_CONFIG}
               consumerProperties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        kafka-tkm-binder:
-          type: kafka
-          environment.spring.cloud.stream.kafka:
-            binder:
-              auto-create-topics: false
-              brokers: ${KAFKA_BROKER_TKM:localhost:29095}
-              configuration:
-                max.poll.records: 1
-                sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_TKM_PIM}
-              consumerProperties:
-                key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-                value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-        kafka-revoke-binder:
-          type: kafka
-          environment.spring.cloud.stream.kafka:
-            binder:
-              auto-create-topics: false
-              brokers: ${KAFKA_BROKER_REVOKE:localhost:29095}
-              configuration:
-                sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG_RTD_REVOKED}

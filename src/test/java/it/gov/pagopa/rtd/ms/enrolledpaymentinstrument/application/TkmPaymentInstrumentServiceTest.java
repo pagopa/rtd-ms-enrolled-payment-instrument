@@ -4,9 +4,12 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +56,7 @@ class TkmPaymentInstrumentServiceTest {
   @BeforeEach
   void setUp() {
     paymentInstrumentArgumentCaptor = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
-    doReturn(true).when(revokeService).notifyRevoke(any(), any());
+    doReturn(true).when(revokeService).notifyRevoke(any(), any(), any());
   }
 
   @AfterEach()
@@ -190,13 +193,13 @@ class TkmPaymentInstrumentServiceTest {
     void whenPaymentInstrumentIsRevokedThenNotifyToDownstream() {
       final var hashPan = TestUtils.generateRandomHashPan();
       Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
-              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(), "", ""))
+              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(SourceApp.ID_PAY), "", ""))
       );
       final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
 
       service.handle(revokeCommand);
 
-      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke(Set.of(SourceApp.ID_PAY), "taxCode", hashPan);
     }
 
     @Test
@@ -209,22 +212,22 @@ class TkmPaymentInstrumentServiceTest {
       service.handle(revokeCommand);
 
       Mockito.verify(repository, Mockito.times(0)).save(any());
-      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke(Set.of(), "taxCode", hashPan);
     }
 
     @Test
     void whenRevokeDownstreamNotificationFailsThenThrowAnException() {
       final var hashPan = TestUtils.generateRandomHashPan();
       Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
-              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(), "", ""))
+              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(SourceApp.ID_PAY), "", ""))
       );
       final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
-      doReturn(false).when(revokeService).notifyRevoke(any(), any());
+      doReturn(false).when(revokeService).notifyRevoke(any(), any(), any());
 
       assertThrowsExactly(FailedToNotifyRevoke.class, () -> service.handle(revokeCommand));
 
       Mockito.verify(repository, Mockito.times(1)).save(any());
-      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke("taxCode", hashPan);
+      Mockito.verify(revokeService, Mockito.times(1)).notifyRevoke(Set.of(SourceApp.ID_PAY),"taxCode", hashPan);
     }
 
     @Test
@@ -248,6 +251,7 @@ class TkmPaymentInstrumentServiceTest {
   }
 
   @TestConfiguration
+  @Import({DomainEventPublisher.class, EnrolledPaymentInstrumentEventListener.class})
   static class Config {
 
     @MockBean
@@ -257,8 +261,13 @@ class TkmPaymentInstrumentServiceTest {
     InstrumentRevokeNotificationService revokeNotificationService;
 
     @Bean
-    TkmPaymentInstrumentService service() {
-      return new TkmPaymentInstrumentService(repository, revokeNotificationService);
+    EnrollAckService enrollAckService() {
+      return (app, hashPan, enrollDate) -> true;
+    }
+
+    @Bean
+    TkmPaymentInstrumentService service(@Autowired DomainEventPublisher domainEventPublisher) {
+      return new TkmPaymentInstrumentService(repository, revokeNotificationService, domainEventPublisher);
     }
   }
 }

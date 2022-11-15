@@ -4,9 +4,8 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationEnrollEvent;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,9 +17,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.List;
-import java.util.UnknownFormatConversionException;
+import java.util.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
@@ -29,47 +28,71 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 @Import({PaymentInstrumentEventRouterTest.Config.class, ValidationAutoConfiguration.class})
 class PaymentInstrumentEventRouterTest {
 
-  private static final String TKM_CONSUMER_DESTINATION = "tkmConsumer";
-  private static final String APPLICATION_CONSUMER_DESTINATION = "appConsumer";
+  private static final Map<String, String> routingMap = new HashMap<>();
+  private static final String TKM_CONSUMER_DESTINATION = "tokenManagerCardChanged";
+  private static final String APPLICATION_INSTRUMENT_ADDED_DESTINATION = "applicationInstrumentAddedConsumer";
+  private static final String APPLICATION_INSTRUMENT_DELETED_DESTINATION = "applicationInstrumentDeletedConsumer";
+
+  static {
+    routingMap.put(ApplicationInstrumentAdded.TYPE, APPLICATION_INSTRUMENT_ADDED_DESTINATION);
+    routingMap.put(ApplicationInstrumentDeleted.TYPE, APPLICATION_INSTRUMENT_DELETED_DESTINATION);
+    routingMap.put(TokenManagerCardChanged.TYPE, TKM_CONSUMER_DESTINATION);
+  }
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   private PaymentInstrumentEventRouter eventRouter;
 
-  private ObjectMapper objectMapper = new ObjectMapper();
-
   @BeforeEach
   void setup() {
-    this.eventRouter = new PaymentInstrumentEventRouter(TKM_CONSUMER_DESTINATION, APPLICATION_CONSUMER_DESTINATION, objectMapper);
+    this.eventRouter = new PaymentInstrumentEventRouter(routingMap, objectMapper);
   }
 
   @Test
-  void whenReceiveParOrHashTokenPayloadThenRedirectToTkmConsumer() throws JsonProcessingException {
-    final var tkmEvent = TokenManagerCardChanged.builder()
-            .par("123")
-            .hashTokens(List.of())
-            .changeType(CardChangeType.REVOKE)
-            .build();
-    final var destination = eventRouter.routingResult(
-            MessageBuilder.withPayload(objectMapper.writeValueAsString(tkmEvent)).build()
+  void whenReceiveParOrHashTokenOrTaxCodePayloadThenRedirectToTkmConsumer() {
+    final var tkmEvents = List.of(
+            TokenManagerCardChanged.builder().par("123").hashTokens(List.of()).taxCode("123").changeType(CardChangeType.REVOKE).build(),
+            TokenManagerCardChanged.builder().taxCode("123").changeType(CardChangeType.REVOKE).build(),
+            TokenManagerCardChanged.builder().par("123").changeType(CardChangeType.REVOKE).build(),
+            TokenManagerCardChanged.builder().hashTokens(List.of()).changeType(CardChangeType.REVOKE).build()
     );
-    assertEquals(TKM_CONSUMER_DESTINATION, destination.getFunctionDefinition());
+
+    assertThat(tkmEvents)
+            .map(it -> CloudEvent.builder().withType(TokenManagerCardChanged.TYPE).withData(it).build())
+            .map(it -> eventRouter.routingResult(MessageBuilder.withPayload(objectMapper.writeValueAsString(it)).build()))
+            .allMatch(it -> Objects.equals(TKM_CONSUMER_DESTINATION, it.getFunctionDefinition()));
   }
 
   @Test
-  void whenReceiveApplicationEventPayloadThenRedirectToApplicationConsumer() throws JsonProcessingException {
-    final var applicationEvent = ApplicationEnrollEvent.builder()
-            .operation("CREATE")
-            .hashPan(TestUtils.generateRandomHashPan().getValue())
-            .app("FA")
+  void whenReceiveInstrumentAddedEventPayloadThenRedirectToApplicationInstrumentAddedConsumer() throws JsonProcessingException {
+    final var applicationEvent = CloudEvent.builder()
+            .withType(ApplicationInstrumentAdded.TYPE)
+            .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPan().getValue(), false, "FA"))
             .build();
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsString(applicationEvent)).build()
     );
-    assertEquals(APPLICATION_CONSUMER_DESTINATION, destination.getFunctionDefinition());
+    assertEquals(APPLICATION_INSTRUMENT_ADDED_DESTINATION, destination.getFunctionDefinition());
   }
 
   @Test
+  void whenReceiveInstrumentDeletedEventPayloadThenRedirectToApplicationInstrumentDeletedConsumer() throws JsonProcessingException {
+    final var applicationEvent = CloudEvent.builder()
+            .withType(ApplicationInstrumentDeleted.TYPE)
+            .withData(new ApplicationInstrumentDeleted(TestUtils.generateRandomHashPan().getValue(), false, "FA"))
+            .build();
+    final var destination = eventRouter.routingResult(
+            MessageBuilder.withPayload(objectMapper.writeValueAsString(applicationEvent)).build()
+    );
+    assertEquals(APPLICATION_INSTRUMENT_DELETED_DESTINATION, destination.getFunctionDefinition());
+  }
+
+
+  @Test
   void whenReceiveBytePayloadThenSuccessfullyParseAndRedirect() throws JsonProcessingException {
-    final var event = TokenManagerCardChanged.builder().par("123").build();
+    final var event = CloudEvent.builder()
+            .withType(TokenManagerCardChanged.TYPE)
+            .withData(TokenManagerCardChanged.builder().par("123").build())
+            .build();
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsBytes(event)).build()
     );
@@ -92,6 +115,19 @@ class PaymentInstrumentEventRouterTest {
     );
   }
 
+  @Test
+  void whenReceiveUnknownEventThenThrowException() {
+    final var unknownEvent = CloudEvent.builder()
+            .withType("unknown")
+            .withData(new Object())
+            .build();
+    assertThrowsExactly(
+            UnknownFormatConversionException.class,
+            () -> eventRouter.routingResult(MessageBuilder.withPayload(unknownEvent).build())
+    );
+  }
+
   @TestConfiguration
-  public static class Config { }
+  public static class Config {
+  }
 }

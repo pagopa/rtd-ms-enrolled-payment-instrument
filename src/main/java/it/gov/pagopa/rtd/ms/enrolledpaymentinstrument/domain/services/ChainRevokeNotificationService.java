@@ -1,8 +1,10 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class allows to define a chain of delegated revoke notification service. It's useful to notify
@@ -20,7 +22,7 @@ public class ChainRevokeNotificationService implements InstrumentRevokeNotificat
   }
 
   @Override
-  public boolean notifyRevoke(String taxCode, HashPan hashPan) {
-    return notificationServices.stream().allMatch(it -> it.notifyRevoke(taxCode, hashPan));
+  public boolean notifyRevoke(Set<SourceApp> apps, String taxCode, HashPan hashPan) {
+    return notificationServices.stream().allMatch(it -> it.notifyRevoke(apps, taxCode, hashPan));
   }
 }
