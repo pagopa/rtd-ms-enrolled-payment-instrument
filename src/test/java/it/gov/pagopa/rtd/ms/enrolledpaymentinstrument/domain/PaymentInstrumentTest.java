@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.*;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenDeleted;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ParAssociated;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.PaymentInstrumentEnrolled;
 import org.junit.jupiter.api.Test;
@@ -214,6 +215,41 @@ class PaymentInstrumentTest {
     paymentInstrument.clearDomainEvents();
 
     paymentInstrument.addHashPanChildren(childHashPans);
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
+  }
+
+  @Test
+  void whenRemoveExistingChildHashPanThenTokenDeletedIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.create(rootHashPan, Set.of(SourceApp.ID_PAY), "", "");
+    paymentInstrument.addHashPanChildren(childHashPans);
+    paymentInstrument.clearDomainEvents();
+
+    paymentInstrument.removeHashPanChildren(childHashPans);
+    assertThat(paymentInstrument.domainEvents()).containsAll(
+            childHashPans.stream().map(child -> new ChildTokenDeleted(rootHashPan, child, null, Set.of(SourceApp.ID_PAY))).collect(Collectors.toSet())
+    );
+  }
+
+  @Test
+  void whenRemoveNonExistingChildHashPanThenNoTokenDeletedIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.create(rootHashPan, Set.of(SourceApp.ID_PAY), "", "");
+    paymentInstrument.clearDomainEvents();
+
+    paymentInstrument.removeHashPanChildren(childHashPans);
+    assertThat(paymentInstrument.domainEvents()).isEmpty();
+  }
+
+  @Test
+  void whenRemoveExistingChildHashPanOnUnEnrolledInstrumentThenNoTokenDeletedIsFired() {
+    final var rootHashPan = TestUtils.generateRandomHashPan();
+    final var childHashPans = IntStream.of(2).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toSet());
+    final var paymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(rootHashPan);
+
+    paymentInstrument.removeHashPanChildren(childHashPans);
     assertThat(paymentInstrument.domainEvents()).isEmpty();
   }
 
