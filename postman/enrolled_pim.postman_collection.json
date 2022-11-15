@@ -497,17 +497,17 @@
 		},
 		{
 			"key": "test_taxCode",
-			"value": "AAABBB12A12A123A",
+			"value": "TESTBB12A12A123A",
 			"type": "default"
 		},
 		{
 			"key": "test_hashToken",
-			"value": "oub3d483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
+			"value": "testd483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
 			"type": "default"
 		},
 		{
 			"key": "base_url_event_processor",
-			"value": "http://{{ingress}}/pieventprocessor",
+			"value": "http://{{ingress}}/rtdmspieventprocessor",
 			"type": "default"
 		}
 	]
