@@ -194,9 +194,22 @@ class TkmPaymentInstrumentServiceTest {
 
     @Test
     void whenVirtualEnrollFailsThenThrowAnError() {
-      final var hashPan = TestUtils.generateRandomHashPan();
-      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), "par", List.of());
+      final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.ID_PAY), "", "");
+      final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), "par", List.of());
+      doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
       doReturn(false).when(virtualEnrollService).enroll(any(), any(), any());
+
+      assertThrowsExactly(VirtualEnrollError.class, () -> service.handle(updateCommand));
+    }
+
+    @Test
+    void whenVirtualTokenEnrollFailsThenThrowAnError() {
+      final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.ID_PAY), "", "");
+      final var updateCommand = new TkmUpdateCommand(paymentInstrument.getHashPan().getValue(), "par", List.of(
+              new TkmUpdateCommand.TkmTokenCommand(TestUtils.generateRandomHashPanAsString(), TkmUpdateCommand.TkmTokenCommand.Action.UPDATE))
+      );
+      doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
+      doReturn(false).when(virtualEnrollService).enrollToken(any(), any(), any(), any());
 
       assertThrowsExactly(VirtualEnrollError.class, () -> service.handle(updateCommand));
     }
