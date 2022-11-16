@@ -76,6 +76,13 @@ class TkmPaymentInstrumentServiceTest {
   @Nested
   @DisplayName("Tests for update command")
   class UpdateCommandCases {
+
+    @BeforeEach
+    void setup() {
+      doReturn(true).when(virtualEnrollService).enroll(any(), any(), any());
+      doReturn(true).when(virtualEnrollService).enrollToken(any(), any(), any(), any());
+    }
+
     @Test
     void whenHandleFirstTkmUpdateCommandThenPaymentInstrumentIsNotEnrolled() {
       final var updateCommand = new TkmUpdateCommand(
@@ -197,6 +204,7 @@ class TkmPaymentInstrumentServiceTest {
     @Test
     void whenUpdateHashTokenOnReadyInstrumentThenDoVirtualEnroll() {
       final var hashPanCaptor = ArgumentCaptor.forClass(HashPan.class);
+      final var hashTokenCaptor = ArgumentCaptor.forClass(HashPan.class);
       final ArgumentCaptor<Set<SourceApp>> appsCaptor = ArgumentCaptor.forClass(Set.class);
       final var paymentInstrument = EnrolledPaymentInstrument.create(
               TestUtils.generateRandomHashPan(),
@@ -208,14 +216,15 @@ class TkmPaymentInstrumentServiceTest {
               List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)));
 
       doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
-      doReturn(true).when(virtualEnrollService).enroll(any(), any(), any());
 
       service.handle(updateCommand);
 
       Mockito.verify(repository, times(1)).save(any());
-      Mockito.verify(virtualEnrollService, times(2)).enroll(hashPanCaptor.capture(), any(), appsCaptor.capture());
+      Mockito.verify(virtualEnrollService, times(1)).enroll(hashPanCaptor.capture(), any(), appsCaptor.capture());
+      Mockito.verify(virtualEnrollService, times(1)).enrollToken(hashPanCaptor.capture(), hashTokenCaptor.capture(), any(), appsCaptor.capture());
 
-      assertThat(hashPanCaptor.getAllValues()).hasSameElementsAs(List.of(paymentInstrument.getHashPan(), hashToken));
+      assertThat(hashPanCaptor.getAllValues()).hasSameElementsAs(List.of(paymentInstrument.getHashPan(), paymentInstrument.getHashPan()));
+      assertThat(hashTokenCaptor.getValue()).isEqualTo(hashToken);
       assertThat(appsCaptor.getAllValues()).allSatisfy(it -> assertThat(it).hasSameElementsAs(Set.of(SourceApp.ID_PAY)));
     }
 
@@ -227,10 +236,9 @@ class TkmPaymentInstrumentServiceTest {
               List.of(new TkmUpdateCommand.TkmTokenCommand(hashToken.getValue(), TkmUpdateCommand.TkmTokenCommand.Action.UPDATE)));
 
       doReturn(Optional.of(paymentInstrument)).when(repository).findByHashPan(any());
-      doReturn(true).when(virtualEnrollService).enroll(any(), any(), any());
 
       service.handle(updateCommand);
-      Mockito.verify(virtualEnrollService, times(0)).enroll(any(), any(), any());
+      Mockito.verify(virtualEnrollService, times(0)).enrollToken(any(), any(), any(), any());
     }
 
     @Test
@@ -244,12 +252,12 @@ class TkmPaymentInstrumentServiceTest {
       mockInstrument.addHashPanChild(hashToken);
       mockInstrument.clearDomainEvents();
       doReturn(Optional.of(mockInstrument)).when(repository).findByHashPan(any());
-      doReturn(true).when(virtualEnrollService).enroll(any(), any(), any());
+      doReturn(true).when(virtualEnrollService).enrollToken(any(), any(), any(), any());
 
       service.handle(updateCommand);
 
       Mockito.verify(repository, times(1)).save(any());
-      Mockito.verify(virtualEnrollService, times(0)).enroll(any(), any(), any());
+      Mockito.verify(virtualEnrollService, times(0)).enrollToken(any(), any(), any(), any());
     }
 
     @Test

@@ -43,13 +43,23 @@ public class EnrolledPaymentInstrumentEventListener {
   @EventListener
   public void handleParAssociated(ParAssociated event) {
     log.info("Handling Par Associated Event, doing virtual enroll");
-    performVirtualEnroll(event.getHashPan(), event.getPar(), event.getApplications());
+    if (virtualEnrollService.enroll(event.getHashPan(), event.getPar(), event.getApplications())) {
+      log.info("Virtual enroll par done");
+    } else {
+      log.error("Failed during virtual par enroll");
+      throw new VirtualEnrollError();
+    }
   }
 
   @EventListener
   public void handleChildTokenAssociated(ChildTokenAssociated event) {
     log.info("Handling Child Token Associated Event, doing virtual enroll");
-    performVirtualEnroll(event.getChildHashPan(), event.getPar(), event.getApplications());
+    if (virtualEnrollService.enrollToken(event.getHashPan(), event.getChildHashPan(), event.getPar(), event.getApplications())) {
+      log.info("Virtual enroll token done");
+    } else {
+      log.error("Failed during virtual token enroll");
+      throw new VirtualEnrollError();
+    }
   }
 
   @EventListener
@@ -59,15 +69,6 @@ public class EnrolledPaymentInstrumentEventListener {
       log.info("Token revoke notification done");
     } else {
       log.error("Failed during token revoke notification");
-      throw new VirtualEnrollError();
-    }
-  }
-
-  private void performVirtualEnroll(HashPan hashPan, String par, Set<SourceApp> apps) {
-    if (virtualEnrollService.enroll(hashPan, par, apps)) {
-      log.info("Virtual enroll done");
-    } else {
-      log.error("Failed during virtual enroll");
       throw new VirtualEnrollError();
     }
   }
