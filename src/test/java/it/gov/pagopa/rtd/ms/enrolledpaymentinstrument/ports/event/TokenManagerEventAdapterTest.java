@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
@@ -8,6 +9,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInst
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -36,6 +38,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,7 +59,7 @@ class TokenManagerEventAdapterTest {
   @Value("${test.kafka.topic}")
   private String topic;
 
-  private KafkaTemplate<String, CloudEvent<TokenManagerCardChanged>> kafkaTemplate;
+  private KafkaTemplate<String, CloudEvent<?>> kafkaTemplate;
 
   @Autowired
   private TkmPaymentInstrumentService service;
@@ -197,6 +200,27 @@ class TokenManagerEventAdapterTest {
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       Mockito.verify(service, Mockito.atLeast(3)).handle(Mockito.any(TkmRevokeCommand.class));
+    });
+  }
+
+  @Test
+  void whenServiceFailToVirtualEnrollThenRetryUntilSucceed() {
+    final var hashPan = TestUtils.generateRandomHashPanAsString();
+    final var tokenUpdate = CloudEvent.<TokenManagerCardChanged>builder()
+            .withType(TokenManagerCardChanged.TYPE)
+            .withData(new TokenManagerCardChanged(hashPan, "taxCode", "par", List.of(), LocalDateTime.now(), CardChangeType.INSERT_UPDATE))
+            .build();
+
+    Mockito.doThrow(VirtualEnrollError.class)
+            .doThrow(VirtualEnrollError.class)
+            .doNothing()
+            .when(service)
+            .handle(Mockito.any(TkmUpdateCommand.class));
+
+    kafkaTemplate.send(topic, tokenUpdate);
+
+    await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
+      Mockito.verify(service, Mockito.timeout(15000).times(3)).handle(Mockito.any(TkmUpdateCommand.class));
     });
   }
 

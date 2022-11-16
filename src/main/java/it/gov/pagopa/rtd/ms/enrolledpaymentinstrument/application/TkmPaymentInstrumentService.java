@@ -57,8 +57,8 @@ public class TkmPaymentInstrumentService {
 
     paymentInstrument.associatePar(command.getPar());
 
-    toUpdate.forEach(paymentInstrument::addHashPanChild);
-    toDelete.forEach(paymentInstrument::removeHashPanChild);
+    paymentInstrument.addHashPanChildren(toUpdate);
+    paymentInstrument.removeHashPanChildren(toDelete);
 
     domainEventPublisher.handle(paymentInstrument);
     repository.save(paymentInstrument);

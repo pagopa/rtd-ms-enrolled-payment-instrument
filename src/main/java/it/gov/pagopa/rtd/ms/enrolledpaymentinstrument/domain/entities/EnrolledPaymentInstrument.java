@@ -1,10 +1,15 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.AggregateRoot;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenDeleted;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ParAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.PaymentInstrumentEnrolled;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -94,15 +99,31 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
    * @param par A valid par (not null and not blank)
    */
   public void associatePar(String par) {
-    this.par = par;
+    final boolean shouldUpdatePar = Optional.ofNullable(par)
+            .map(it -> !it.equals(this.par)).orElse(false);
+    if (shouldUpdatePar && state != PaymentInstrumentState.REVOKED) {
+      this.par = par;
+      registerEvent(new ParAssociated(hashPan, par, getEnabledApps()));
+    }
+  }
+
+  public void addHashPanChildren(Set<HashPan> hashPans) {
+    hashPans.forEach(this::addHashPanChild);
+  }
+
+  public void removeHashPanChildren(Set<HashPan> hashPans) {
+    hashPans.forEach(this::removeHashPanChild);
   }
 
   /**
    * Add a hashpan as a child this payment instrument (use for hash token)
    *
-   * @param hashPan A valid hashpan, also an hash token is a valid hashpan
+   * @param hashPan A valid hashpan, also a hash token is a valid hashpan
    */
   public void addHashPanChild(HashPan hashPan) {
+    if (!hashPanChildren.contains(hashPan) && state == PaymentInstrumentState.READY) {
+      registerEvent(new ChildTokenAssociated(this.hashPan, hashPan, this.par, getEnabledApps()));
+    }
     this.hashPanChildren.add(hashPan);
   }
 
@@ -112,6 +133,9 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
    * @param hashPan A valid hashpan, also an hash token is a valid hashpan
    */
   public void removeHashPanChild(HashPan hashPan) {
+    if(hashPanChildren.contains(hashPan) && state == PaymentInstrumentState.READY) {
+      registerEvent(new ChildTokenDeleted(this.hashPan, hashPan, this.par, getEnabledApps()));
+    }
     this.hashPanChildren.remove(hashPan);
   }
 

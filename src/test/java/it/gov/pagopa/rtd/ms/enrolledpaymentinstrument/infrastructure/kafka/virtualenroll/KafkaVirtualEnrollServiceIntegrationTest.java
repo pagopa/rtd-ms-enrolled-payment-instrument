@@ -6,6 +6,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestKafkaConsumerSetup;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -73,7 +75,7 @@ class KafkaVirtualEnrollServiceIntegrationTest {
   void whenEnrollVirtualCardWithoutHashTokenThenEnrollCardEventCloudWithoutHashTokenIsProduced() {
     final var hashPan = TestUtils.generateRandomHashPan();
     final var type = new TypeReference<CloudEvent<VirtualEnroll>>() {};
-    kafkaVirtualEnrollService.enroll(hashPan, "12345");
+    kafkaVirtualEnrollService.enroll(hashPan, "12345", Set.of(SourceApp.ID_PAY));
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
@@ -83,7 +85,8 @@ class KafkaVirtualEnrollServiceIntegrationTest {
               .matches(it -> it.getType().equals(VirtualEnroll.TYPE))
               .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
               .matches(it -> it.getData().getPar().equals("12345"))
-              .matches(it -> Objects.isNull(it.getData().getHashToken()));
+              .matches(it -> Objects.isNull(it.getData().getHashToken()))
+              .satisfies(it -> assertThat(it.getData().getApplications()).hasSameElementsAs(Set.of(SourceApp.ID_PAY)));
     });
   }
 
@@ -93,7 +96,7 @@ class KafkaVirtualEnrollServiceIntegrationTest {
     final var type = new TypeReference<CloudEvent<VirtualEnroll>>() {};
     final var hashPan = TestUtils.generateRandomHashPan();
     final var hashToken = TestUtils.generateRandomHashPan();
-    kafkaVirtualEnrollService.enroll(hashPan, hashToken, "12345");
+    kafkaVirtualEnrollService.enrollToken(hashPan, hashToken, "12345", Set.of(SourceApp.ID_PAY));
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
@@ -103,7 +106,8 @@ class KafkaVirtualEnrollServiceIntegrationTest {
               .matches(it -> it.getType().equals(VirtualEnroll.TYPE))
               .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
               .matches(it -> it.getData().getPar().equals("12345"))
-              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()));
+              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()))
+              .satisfies(it -> assertThat(it.getData().getApplications()).hasSameElementsAs(Set.of(SourceApp.ID_PAY)));
     });
   }
 
@@ -113,7 +117,7 @@ class KafkaVirtualEnrollServiceIntegrationTest {
     final var type = new TypeReference<CloudEvent<VirtualRevoke>>() {};
     final var hashPan = TestUtils.generateRandomHashPan();
     final var hashToken = TestUtils.generateRandomHashPan();
-    kafkaVirtualEnrollService.unEnroll(hashPan, hashToken, "12345");
+    kafkaVirtualEnrollService.unEnrollToken(hashPan, hashToken, "12345", Set.of(SourceApp.ID_PAY));
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
@@ -123,7 +127,8 @@ class KafkaVirtualEnrollServiceIntegrationTest {
               .matches(it -> it.getType().equals(VirtualRevoke.TYPE))
               .matches(it -> it.getData().getHashPan().equals(hashPan.getValue()))
               .matches(it -> it.getData().getPar().equals("12345"))
-              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()));
+              .matches(it -> it.getData().getHashToken().equals(hashToken.getValue()))
+              .satisfies(it -> assertThat(it.getData().getApplications()).hasSameElementsAs(Set.of(SourceApp.ID_PAY)));
     });
   }
 }

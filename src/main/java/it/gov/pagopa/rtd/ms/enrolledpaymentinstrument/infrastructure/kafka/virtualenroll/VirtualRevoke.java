@@ -1,13 +1,15 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.Set;
 
 @Data
 @Getter
@@ -17,13 +19,14 @@ public class VirtualRevoke {
 
   public static final String TYPE = "RevokeToken";
 
-  @JsonAlias("hpan")
+  @JsonProperty("hpan")
   private String hashPan;
 
-  @JsonAlias("htoken")
+  @JsonProperty("htoken")
   private String hashToken;
   private String par;
   private Date timestamp;
+  private Set<SourceApp> applications;
 
   public CloudEvent<VirtualRevoke> asCloudEvent() {
     return CloudEvent.<VirtualRevoke>builder()

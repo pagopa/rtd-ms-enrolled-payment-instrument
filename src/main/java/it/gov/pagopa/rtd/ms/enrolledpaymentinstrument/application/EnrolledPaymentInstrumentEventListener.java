@@ -1,14 +1,22 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentEnrolled;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ChildTokenDeleted;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.ParAssociated;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events.PaymentInstrumentEnrolled;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.Date;
+import java.util.Set;
 
 @Component
 @Validated
@@ -16,9 +24,11 @@ import java.util.Date;
 public class EnrolledPaymentInstrumentEventListener {
 
   private final EnrollAckService enrollAckService;
+  private final VirtualEnrollService virtualEnrollService;
 
-  public EnrolledPaymentInstrumentEventListener(EnrollAckService enrollAckService) {
+  public EnrolledPaymentInstrumentEventListener(EnrollAckService enrollAckService, VirtualEnrollService virtualEnrollService) {
     this.enrollAckService = enrollAckService;
+    this.virtualEnrollService = virtualEnrollService;
   }
 
   @EventListener
@@ -27,6 +37,39 @@ public class EnrolledPaymentInstrumentEventListener {
       log.info("Enroll ack successfully confirmed");
     } else {
       throw new EnrollAckError("Failing during ack " + event.getHashPan().getValue() + " from " + event.getApplication());
+    }
+  }
+
+  @EventListener
+  public void handleParAssociated(ParAssociated event) {
+    log.info("Handling Par Associated Event, doing virtual enroll");
+    if (virtualEnrollService.enroll(event.getHashPan(), event.getPar(), event.getApplications())) {
+      log.info("Virtual enroll par done");
+    } else {
+      log.error("Failed during virtual par enroll");
+      throw new VirtualEnrollError();
+    }
+  }
+
+  @EventListener
+  public void handleChildTokenAssociated(ChildTokenAssociated event) {
+    log.info("Handling Child Token Associated Event, doing virtual enroll");
+    if (virtualEnrollService.enrollToken(event.getHashPan(), event.getChildHashPan(), event.getPar(), event.getApplications())) {
+      log.info("Virtual enroll token done");
+    } else {
+      log.error("Failed during virtual token enroll");
+      throw new VirtualEnrollError();
+    }
+  }
+
+  @EventListener
+  public void handleChildTokenDeleted(ChildTokenDeleted event) {
+    log.info("Handling Child Token Deleted Event, notifying it");
+    if (virtualEnrollService.unEnrollToken(event.getHashPan(), event.getChildHashPan(), event.getPar(), event.getApplications())) {
+      log.info("Token revoke notification done");
+    } else {
+      log.error("Failed during token revoke notification");
+      throw new VirtualEnrollError();
     }
   }
 }
