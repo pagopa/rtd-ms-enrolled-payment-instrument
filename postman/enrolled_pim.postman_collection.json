@@ -394,6 +394,151 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "Enrolled Instrumnet - Associate PAR & Token",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
+							"",
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
+							"",
+							"_.asyncSeries([",
+							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
+							"    (cb) => pm.sendRequest({",
+							"        method: 'PUT',",
+							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
+							"        header: {",
+							"            \"Content-Type\": \"application/json\"",
+							"        },",
+							"        body: {",
+							"            mode: 'raw',",
+							"            raw: JSON.stringify({",
+							"                \"application\":\"ID_PAY\",",
+							"                \"operationType\":\"ADD_INSTRUMENT\",",
+							"                \"hpanList\": [",
+							"                    {",
+							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
+							"                    }",
+							"                ]",
+							"            })",
+							"        }",
+							"    }, cb),",
+							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
+							"]);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Has Par and Token Associated\", () => {",
+							"            const responseJson = response.json();",
+							"            pm.expect(responseJson.state).to.eql(\"READY\");",
+							"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_par'));",
+							"            const token = responseJson.hashPanChildren.find(t => t.value == pm.collectionVariables.get('test_hashToken'));",
+							"            pm.expect(token).to.be.not.null;",
+							"        });",
+							"    });",
+							"}, _.asyncTimeout);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19 12:17:10:1770\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"INSERT_UPDATE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[\n            {\n               \"htoken\":\"{{test_hashToken}}\",\n               \"haction\":\"INSERT_UPDATE\"\n            }\n         ]\n      }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url_event_processor}}/tkm-bulk-update",
+					"host": [
+						"{{base_url_event_processor}}"
+					],
+					"path": [
+						"tkm-bulk-update"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Enrolled Instrumnet - Delete Hash Token",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"",
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
+							"",
+							"_.asyncSeries([",
+							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
+							"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), cb),",
+							"    (cb) => _.addToken(pm, pm.collectionVariables.get('test_hpan'), pm.collectionVariables.get('test_par'), pm.collectionVariables.get('test_hashToken'), cb),",
+							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
+							"]);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Has Par and Token Deleted\", () => {",
+							"            const responseJson = response.json();",
+							"            pm.expect(responseJson.state).to.eql(\"READY\");",
+							"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_par'));",
+							"            pm.expect(responseJson.hashPanChildren).to.be.empty;",
+							"        });",
+							"    });",
+							"}, _.asyncTimeout);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19 12:17:10:1770\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"INSERT_UPDATE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[\n            {\n               \"htoken\":\"{{test_hashToken}}\",\n               \"haction\":\"DELETE\"\n            }\n         ]\n      }\n   ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url_event_processor}}/tkm-bulk-update",
+					"host": [
+						"{{base_url_event_processor}}"
+					],
+					"path": [
+						"tkm-bulk-update"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
@@ -403,6 +548,7 @@
 				"type": "text/javascript",
 				"exec": [
 					"\"use sandbox2\";",
+					"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
 					"",
 					"Object.prototype.asyncTimeout = 700; // milliseconds",
 					"",
@@ -428,6 +574,58 @@
 					"        }",
 					"    );",
 					"};",
+					"",
+					"Object.prototype.enrollPaymentInstrument = (that, hashpan, callback) => {",
+					"    that.sendRequest({",
+					"        method: 'PUT',",
+					"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
+					"        header: {",
+					"            \"Content-Type\": \"application/json\"",
+					"        },",
+					"        body: {",
+					"            mode: 'raw',",
+					"            raw: JSON.stringify({",
+					"                \"application\":\"ID_PAY\",",
+					"                \"operationType\":\"ADD_INSTRUMENT\",",
+					"                \"hpanList\": [",
+					"                    {",
+					"                        \"hpan\": hashpan",
+					"                    }",
+					"                ]",
+					"            })",
+					"        }",
+					"    }, callback);",
+					"};",
+					"",
+					"Object.prototype.addToken = (that, hashPan, par, hashToken, callback) => {",
+					"    that.sendRequest({",
+					"        method: 'PUT',",
+					"        url: `${base_url_event_processor}/tkm-bulk-update`,",
+					"        header: {",
+					"            \"Content-Type\": \"application/json\"",
+					"        },",
+					"        body: {",
+					"            mode: 'raw',",
+					"            raw: JSON.stringify({",
+					"                taxCode: pm.collectionVariables.get(\"test_taxCode\"),",
+					"                timestamp:\"2022-10-19 12:17:10:1770\",",
+					"                cards:[",
+					"                    {",
+					"                        hpan: hashPan,",
+					"                        action:\"INSERT_UPDATE\",",
+					"                        par: par,",
+					"                        htokens:[",
+					"                            {",
+					"                                htoken: hashToken,",
+					"                                haction: \"INSERT_UPDATE\"",
+					"                            }",
+					"                        ]",
+					"                    }",
+					"                ]",
+					"            })",
+					"        }",
+					"    }, callback);",
+					"}",
 					"",
 					"// Usefull async utilities from https://www.postman.com/postman/workspace/postman-answers/request/3407886-06011115-e3cf-4711-926c-55a417d530f1",
 					"/**",
