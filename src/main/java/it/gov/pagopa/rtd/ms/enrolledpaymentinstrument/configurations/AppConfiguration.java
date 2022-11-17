@@ -3,7 +3,6 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
@@ -88,8 +87,7 @@ public class AppConfiguration {
             DuplicateKeyException.class,
             OptimisticLockingFailureException.class,
             FailedToNotifyRevoke.class,
-            EnrollAckError.class,
-            VirtualEnrollError.class
+            EnrollAckError.class
     );
   }
 

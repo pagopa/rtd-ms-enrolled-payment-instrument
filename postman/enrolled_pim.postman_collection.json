@@ -12,7 +12,7 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"_.clean(pm, pm.collectionVariables.get('test_hpan'));"
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'))"
 						],
 						"type": "text/javascript"
 					}
@@ -29,7 +29,7 @@
 							"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan'));",
 							"        });",
 							"    });",
-							"}, _.asyncTimeout);"
+							"}, 500);"
 						],
 						"type": "text/javascript"
 					}
@@ -66,32 +66,7 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
-							"",
-							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
-							"",
-							"_.asyncSeries([",
-							"    (cb) => pm.sendRequest({",
-							"        method: 'PUT',",
-							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-							"        header: {",
-							"            \"Content-Type\": \"application/json\"",
-							"        },",
-							"        body: {",
-							"            mode: 'raw',",
-							"            raw: JSON.stringify({",
-							"                \"application\":\"ID_PAY\",",
-							"                \"operationType\":\"ADD_INSTRUMENT\",",
-							"                \"hpanList\": [",
-							"                    {",
-							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-							"                    }",
-							"                ]",
-							"            })",
-							"        }",
-							"    }, cb),",
-							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
-							"]);"
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'))"
 						],
 						"type": "text/javascript"
 					}
@@ -106,7 +81,7 @@
 							"            pm.expect(response.code).to.eql(404);",
 							"        });",
 							"    });",
-							"}, _.asyncTimeout);"
+							"}, 500);"
 						],
 						"type": "text/javascript"
 					}
@@ -162,7 +137,7 @@
 							"            pm.expect(token).to.be.not.null;",
 							"        });",
 							"    });",
-							"}, _.asyncTimeout);"
+							"}, 500);"
 						],
 						"type": "text/javascript"
 					}
@@ -199,35 +174,7 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
-							"",
-							"_.asyncSeries([",
-							"    (_) => _.clean(pm, pm.collectionVariables.get('test_hpan')),",
-							"    (cb) => pm.sendRequest({ // enroll a card",
-							"        method: 'PUT',",
-							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-							"        header: {",
-							"            \"Content-Type\": \"application/json\"",
-							"        },",
-							"        body: {",
-							"            mode: 'raw',",
-							"            raw: JSON.stringify({",
-							"                \"application\":\"ID_PAY\",",
-							"                \"operationType\":\"ADD_INSTRUMENT\",",
-							"                \"hpanList\": [",
-							"                    {",
-							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-							"                    }",
-							"                ]",
-							"            })",
-							"        }",
-							"    }, cb)",
-							"]);",
-							"",
-							"setTimeout(() => {",
-							"    ",
-							"}, _.asyncTimeout);",
-							""
+							"_.clean(pm, pm.collectionVariables.get('test_hpan'));"
 						],
 						"type": "text/javascript"
 					}
@@ -236,36 +183,13 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
-							"",
-							"_.asyncSeries([",
-							"    // un enroll card to trigger delete after revoke",
-							"    (cb) => pm.sendRequest({",
-							"        method: 'PUT',",
-							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-							"        header: {",
-							"            \"Content-Type\": \"application/json\"",
-							"        },",
-							"        body: {",
-							"            mode: 'raw',",
-							"            raw: JSON.stringify({",
-							"                \"application\":\"ID_PAY\",",
-							"                \"operationType\":\"DELETE_INSTRUMENT\",",
-							"                \"hpanList\": [",
-							"                    {",
-							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-							"                    }",
-							"                ]",
-							"            })",
-							"        }",
-							"    }, cb),",
-							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
-							"    (cb) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => cb(null, response))",
-							"], (error, response) => {",
-							"    pm.test(\"Card not found cause revoked\", () => {",
-							"        pm.expect(response[2].code).to.eql(404);",
+							"setTimeout(() => {",
+							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Card not found cause revoked\", () => {",
+							"            pm.expect(response.code).to.eql(404);",
+							"        });",
 							"    });",
-							"});"
+							"}, 500);"
 						],
 						"type": "text/javascript"
 					}
@@ -307,9 +231,8 @@
 							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
 							"",
 							"// ENROLL over two applications",
-							"_.asyncSeries([",
-							"    (cb) => setTimeout(cb, _.asyncTimeout),",
-							"    (cb) => pm.sendRequest({",
+							"setTimeout(() => {",
+							"    pm.sendRequest({",
 							"        method: 'PUT',",
 							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
 							"        header: {",
@@ -327,8 +250,9 @@
 							"                ]",
 							"            })",
 							"        }",
-							"    }, cb),",
-							"    (cb) => pm.sendRequest({",
+							"    });",
+							"",
+							"    pm.sendRequest({",
 							"        method: 'PUT',",
 							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
 							"        header: {",
@@ -346,8 +270,8 @@
 							"                ]",
 							"            })",
 							"        }",
-							"    }, cb)",
-							"]);"
+							"    });",
+							"}, 500);"
 						],
 						"type": "text/javascript"
 					}
@@ -365,7 +289,7 @@
 							"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan'));",
 							"        });",
 							"    });",
-							"}, _.asyncTimeout);"
+							"}, 500);"
 						],
 						"type": "text/javascript"
 					}
@@ -394,151 +318,6 @@
 				}
 			},
 			"response": []
-		},
-		{
-			"name": "Enrolled Instrumnet - Associate PAR & Token",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
-							"",
-							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
-							"",
-							"_.asyncSeries([",
-							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
-							"    (cb) => pm.sendRequest({",
-							"        method: 'PUT',",
-							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-							"        header: {",
-							"            \"Content-Type\": \"application/json\"",
-							"        },",
-							"        body: {",
-							"            mode: 'raw',",
-							"            raw: JSON.stringify({",
-							"                \"application\":\"ID_PAY\",",
-							"                \"operationType\":\"ADD_INSTRUMENT\",",
-							"                \"hpanList\": [",
-							"                    {",
-							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-							"                    }",
-							"                ]",
-							"            })",
-							"        }",
-							"    }, cb),",
-							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
-							"]);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"setTimeout(() => {",
-							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
-							"        pm.test(\"Has Par and Token Associated\", () => {",
-							"            const responseJson = response.json();",
-							"            pm.expect(responseJson.state).to.eql(\"READY\");",
-							"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_par'));",
-							"            const token = responseJson.hashPanChildren.find(t => t.value == pm.collectionVariables.get('test_hashToken'));",
-							"            pm.expect(token).to.be.not.null;",
-							"        });",
-							"    });",
-							"}, _.asyncTimeout);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19 12:17:10:1770\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"INSERT_UPDATE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[\n            {\n               \"htoken\":\"{{test_hashToken}}\",\n               \"haction\":\"INSERT_UPDATE\"\n            }\n         ]\n      }\n   ]\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{base_url_event_processor}}/tkm-bulk-update",
-					"host": [
-						"{{base_url_event_processor}}"
-					],
-					"path": [
-						"tkm-bulk-update"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Enrolled Instrumnet - Delete Hash Token",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"",
-							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
-							"",
-							"_.asyncSeries([",
-							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
-							"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), cb),",
-							"    (cb) => _.addToken(pm, pm.collectionVariables.get('test_hpan'), pm.collectionVariables.get('test_par'), pm.collectionVariables.get('test_hashToken'), cb),",
-							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
-							"]);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"setTimeout(() => {",
-							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
-							"        pm.test(\"Has Par and Token Deleted\", () => {",
-							"            const responseJson = response.json();",
-							"            pm.expect(responseJson.state).to.eql(\"READY\");",
-							"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_par'));",
-							"            pm.expect(responseJson.hashPanChildren).to.be.empty;",
-							"        });",
-							"    });",
-							"}, _.asyncTimeout);"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "PUT",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19 12:17:10:1770\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"INSERT_UPDATE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[\n            {\n               \"htoken\":\"{{test_hashToken}}\",\n               \"haction\":\"DELETE\"\n            }\n         ]\n      }\n   ]\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{base_url_event_processor}}/tkm-bulk-update",
-					"host": [
-						"{{base_url_event_processor}}"
-					],
-					"path": [
-						"tkm-bulk-update"
-					]
-				}
-			},
-			"response": []
 		}
 	],
 	"event": [
@@ -547,11 +326,6 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
-					"\"use sandbox2\";",
-					"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
-					"",
-					"Object.prototype.asyncTimeout = 700; // milliseconds",
-					"",
 					"Object.prototype.clean = (that, paymentInstrumentId) => {",
 					"    return that.sendRequest({",
 					"        url: `${pm.environment.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
@@ -575,100 +349,19 @@
 					"    );",
 					"};",
 					"",
-					"Object.prototype.enrollPaymentInstrument = (that, hashpan, callback) => {",
-					"    that.sendRequest({",
-					"        method: 'PUT',",
-					"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-					"        header: {",
-					"            \"Content-Type\": \"application/json\"",
-					"        },",
-					"        body: {",
-					"            mode: 'raw',",
-					"            raw: JSON.stringify({",
-					"                \"application\":\"ID_PAY\",",
-					"                \"operationType\":\"ADD_INSTRUMENT\",",
-					"                \"hpanList\": [",
-					"                    {",
-					"                        \"hpan\": hashpan",
-					"                    }",
-					"                ]",
-					"            })",
-					"        }",
-					"    }, callback);",
-					"};",
-					"",
-					"Object.prototype.addToken = (that, hashPan, par, hashToken, callback) => {",
-					"    that.sendRequest({",
-					"        method: 'PUT',",
-					"        url: `${base_url_event_processor}/tkm-bulk-update`,",
-					"        header: {",
-					"            \"Content-Type\": \"application/json\"",
-					"        },",
-					"        body: {",
-					"            mode: 'raw',",
-					"            raw: JSON.stringify({",
-					"                taxCode: pm.collectionVariables.get(\"test_taxCode\"),",
-					"                timestamp:\"2022-10-19 12:17:10:1770\",",
-					"                cards:[",
-					"                    {",
-					"                        hpan: hashPan,",
-					"                        action:\"INSERT_UPDATE\",",
-					"                        par: par,",
-					"                        htokens:[",
-					"                            {",
-					"                                htoken: hashToken,",
-					"                                haction: \"INSERT_UPDATE\"",
-					"                            }",
-					"                        ]",
-					"                    }",
-					"                ]",
-					"            })",
-					"        }",
-					"    }, callback);",
+					"Object.prototype.wait = (delay) => {",
+					"    return new Promise((resolve) => setTimeout(resolve, delay));",
 					"}",
 					"",
-					"// Usefull async utilities from https://www.postman.com/postman/workspace/postman-answers/request/3407886-06011115-e3cf-4711-926c-55a417d530f1",
-					"/**",
-					" * @private",
-					" * @description Internal function to run tasks in series",
-					" * ",
-					" * @param {Array<Function>} tasks",
-					" * @param {Function} cb",
-					" * @param {Number} currOperation",
-					" * @param {Array<Any>} results",
-					" */",
-					"function _series (tasks, cb, currOperation = 0, results = []) {",
-					"    // Bail-out condition",
-					"    if (currOperation === tasks.length) {",
-					"        return cb(null, results);",
-					"    }",
-					"",
-					"    if (typeof tasks[currOperation] !== 'function') {",
-					"        return cb(new Error('asyncSeries: Please provide a function'));",
-					"    }",
-					"",
-					"    tasks[currOperation]((err, res) => {",
-					"        if (err) {",
-					"            return cb(err);",
-					"        }",
-					"",
-					"        results.push(res);",
-					"",
-					"        // Recursively call the next task in series till we're done executing all the operations",
-					"        return _series(tasks, cb, currOperation + 1, results);",
+					"Object.prototype.asyncContext = (functionAsync) => {",
+					"    const _dummy = setInterval(() => {}, 30000); // 30 seconds",
+					"    const a = (async () => {",
+					"        await functionAsync();",
+					"        clearInterval(_dummy);",
 					"    });",
-					"}",
-					"",
-					"/**",
-					" * @description asyncSeries to execute requests in a series format",
-					" * ",
-					" * @param {Array<Function>} tasks",
-					" * @param {Function} cb",
-					" */",
-					"Object.prototype.asyncSeries = function(tasks, cb = () => {}) {",
-					"    return _series(tasks, cb);",
-					"}",
-					""
+					"    a();",
+					"    console.log(\"Finisch\");",
+					"};"
 				]
 			}
 		},
@@ -685,7 +378,7 @@
 	"variable": [
 		{
 			"key": "test_hpan",
-			"value": "testa483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
+			"value": "ceb3d483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
 			"type": "default"
 		},
 		{
@@ -695,17 +388,17 @@
 		},
 		{
 			"key": "test_taxCode",
-			"value": "TESTBB12A12A123A",
+			"value": "AAABBB12A12A123A",
 			"type": "default"
 		},
 		{
 			"key": "test_hashToken",
-			"value": "testd483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
+			"value": "oub3d483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c67",
 			"type": "default"
 		},
 		{
 			"key": "base_url_event_processor",
-			"value": "http://{{ingress}}/rtdmspieventprocessor",
+			"value": "http://{{ingress}}/pieventprocessor",
 			"type": "default"
 		}
 	]

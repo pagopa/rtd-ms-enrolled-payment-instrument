@@ -1,8 +1,6 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.events;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEvent;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import lombok.Data;
 import lombok.Getter;
 
