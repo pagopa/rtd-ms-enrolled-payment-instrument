@@ -69,7 +69,7 @@ class TkmPaymentInstrumentServiceTest {
   @DisplayName("Tests for update command")
   class UpdateCommandCases {
     @Test
-    void whenHandleFirstTkmUpdateCommandThenPaymentInstrumentIsNotEnrolled() {
+    void whenTkmUpdateANonExistingPaymentInstrumentThenIsCreatedAsNotEnrolled() {
       final var updateCommand = new TkmUpdateCommand(
               TestUtils.generateRandomHashPan().getValue(),
               null,
@@ -84,7 +84,7 @@ class TkmPaymentInstrumentServiceTest {
     }
 
     @Test
-    void whenHandleUpdateWithNewTokensThenPaymentInstrumentShouldAddIt() {
+    void whenTkmUpdateWithNewTokensThenPaymentInstrumentShouldAddIt() {
       final var tokenCommands = TestUtils.generateRandomUpdateTokenCommand(10);
       final var tokenToBeInsert = tokenCommands
               .stream()
@@ -105,7 +105,7 @@ class TkmPaymentInstrumentServiceTest {
     }
 
     @Test
-    void whenHandleUpdateWithDeletedTokensThenPaymentInstrumentShouldDeleteIt() {
+    void whenTkmDeleteTokensThenPaymentInstrumentShouldDeleteIt() {
       final var hashPan = TestUtils.generateRandomHashPan().getValue();
       final var tokenCommands = TestUtils.generateRandomUpdateTokenCommand(10);
       final var tokenToBeDeleted = tokenCommands.stream()
@@ -128,7 +128,7 @@ class TkmPaymentInstrumentServiceTest {
     }
 
     @Test
-    void whenHandleUpdateWithParThenPaymentInstrumentUpdateIt() {
+    void whenTkmUpdateParThenPaymentInstrumentUpdateIt() {
       final var updateCommand = new TkmUpdateCommand(TestUtils.generateRandomHashPan().getValue(), "par", List.of());
 
       service.handle(updateCommand);
@@ -162,7 +162,7 @@ class TkmPaymentInstrumentServiceTest {
   class RevokeCommandCases {
 
     @Test
-    void whenHandleRevokeThenPaymentInstrumentIsRevoked() {
+    void whenTkmRevokeThenPaymentInstrumentIsRevoked() {
       final var hashPan = TestUtils.generateRandomHashPan();
       Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
               Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(), "", ""))
@@ -175,7 +175,7 @@ class TkmPaymentInstrumentServiceTest {
     }
 
     @Test
-    void whenHandleRevokeOnAlreadyRevokedInstrumentThenDoNothing() { // idempotency
+    void whenTkmRevokeOnAlreadyRevokedInstrumentThenDoNothing() { // idempotency
       final var hashPan = TestUtils.generateRandomHashPan();
       final var mockedInstrument = EnrolledPaymentInstrument.create(hashPan, Set.of(), "", "");
       final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
@@ -203,7 +203,7 @@ class TkmPaymentInstrumentServiceTest {
     }
 
     @Test
-    void whenHandleRevokeOnNonExistingCardThenOnlyNotifyToDownstream() {
+    void whenTkmRevokeOnNonExistingCardThenOnlyNotifyToDownstream() {
       final var hashPan = TestUtils.generateRandomHashPan();
       final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
 
