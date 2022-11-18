@@ -8,7 +8,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollA
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentDeleted;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -68,10 +67,7 @@ class ApplicationInstrumentEventAdapterTest {
   private StreamBridge stream;
 
   @Autowired
-  private EnrolledPaymentInstrumentService paymentInstrumentService;
-
-  @Autowired
-  private EnrolledPaymentInstrumentRepository repository;
+  EnrolledPaymentInstrumentService paymentInstrumentService;
 
   private KafkaTemplate<String, CloudEvent<?>> kafkaTemplate;
 

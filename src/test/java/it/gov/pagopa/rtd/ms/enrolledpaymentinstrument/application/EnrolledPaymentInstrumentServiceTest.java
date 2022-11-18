@@ -10,7 +10,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -223,15 +222,6 @@ class EnrolledPaymentInstrumentServiceTest {
     @Bean
     EnrolledPaymentInstrumentService service(@Autowired DomainEventPublisher eventPublisher) {
       return new EnrolledPaymentInstrumentService(repository, eventPublisher);
-    }
-
-    @Bean
-    VirtualEnrollService virtualEnrollService() {
-      final var mock = Mockito.mock(VirtualEnrollService.class);
-      doReturn(true).when(mock).enroll(any(), any(), any());
-      doReturn(true).when(mock).enrollToken(any(), any(), any(), any());
-      doReturn(true).when(mock).unEnrollToken(any(), any(), any(), any());
-      return mock;
     }
   }
 

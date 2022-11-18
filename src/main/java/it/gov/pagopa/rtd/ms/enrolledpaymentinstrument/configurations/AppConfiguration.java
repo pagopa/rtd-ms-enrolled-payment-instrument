@@ -3,16 +3,13 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.VirtualEnrollError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.KafkaVirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.springframework.beans.factory.annotation.Value;
@@ -66,11 +63,6 @@ public class AppConfiguration {
     ));
   }
 
-  @Bean
-  public VirtualEnrollService virtualEnrollService(StreamBridge bridge) {
-    return new KafkaVirtualEnrollService(RTD_TO_APP_BINDING, bridge);
-  }
-
   /**
    * A list of exceptions considered as "transient", so these are used as
    * retryable exceptions with kafka consumers.
@@ -88,8 +80,7 @@ public class AppConfiguration {
             DuplicateKeyException.class,
             OptimisticLockingFailureException.class,
             FailedToNotifyRevoke.class,
-            EnrollAckError.class,
-            VirtualEnrollError.class
+            EnrollAckError.class
     );
   }
 
