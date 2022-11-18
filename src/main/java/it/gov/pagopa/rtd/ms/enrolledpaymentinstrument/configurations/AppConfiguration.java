@@ -7,11 +7,9 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.Enroll
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.VirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.virtualenroll.KafkaVirtualEnrollService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.springframework.beans.factory.annotation.Value;
@@ -63,11 +61,6 @@ public class AppConfiguration {
                     BPDRevokeNotificationService.fromUrl(baseUrlBpdDeleteCard),
             new KafkaRevokeNotificationService(RTD_TO_APP_BINDING, bridge)
     ));
-  }
-
-  @Bean
-  public VirtualEnrollService virtualEnrollService(StreamBridge bridge) {
-    return new KafkaVirtualEnrollService(RTD_TO_APP_BINDING, bridge);
   }
 
   /**
