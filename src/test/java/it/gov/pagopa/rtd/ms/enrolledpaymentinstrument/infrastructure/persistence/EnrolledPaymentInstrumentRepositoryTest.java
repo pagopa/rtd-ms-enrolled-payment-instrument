@@ -2,28 +2,27 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistenc
 
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegrationTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongoDbTest;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.RepositoryConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.Set;
@@ -31,12 +30,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest()
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@ActiveProfiles("mongo-integration-test")
-@TestPropertySource("classpath:application-test.yml")
-@AutoConfigureDataMongo
-@Import(MongodbIntegrationTestConfiguration.class)
+@RunWith(SpringRunner.class)
+@MongoDbTest
+@Import(RepositoryConfiguration.class)
 class EnrolledPaymentInstrumentRepositoryTest {
 
   private static final HashPan TEST_HASH_PAN = TestUtils.generateRandomHashPan();
@@ -44,15 +40,15 @@ class EnrolledPaymentInstrumentRepositoryTest {
   private static final String TEST_PAR = "par";
 
   @Autowired
-  private EnrolledPaymentInstrumentRepositoryImpl repository;
-
-  @Autowired
   private EnrolledPaymentInstrumentDao dao;
+  private EnrolledPaymentInstrumentRepository repository;
 
   @BeforeEach
   void setup(@Autowired MongoTemplate mongoTemplate) {
     mongoTemplate.indexOps("enrolled_payment_instrument")
             .ensureIndex(new Index().on("hashPan", Direction.ASC).unique());
+
+    repository = new EnrolledPaymentInstrumentRepositoryImpl(dao);
   }
 
   @AfterEach

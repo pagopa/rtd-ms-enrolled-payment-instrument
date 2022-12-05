@@ -46,7 +46,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @ActiveProfiles("test")
 @EmbeddedKafka(topics = {"${test.kafka.topic}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
-@TestPropertySource(properties = {"spring.config.location=classpath:application-test.yml"}, inheritProperties = false)
 @Import(value = {KafkaTestConfiguration.class, KafkaConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
 class TokenManagerEventAdapterTest {

@@ -33,20 +33,12 @@ import java.util.Set;
 import java.util.UnknownFormatConversionException;
 
 @Configuration
-@EnableMongoRepositories(basePackages = "it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories")
 public class AppConfiguration {
 
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
   @Value("${revoke-notification.bpd-url:}")
   private String baseUrlBpdDeleteCard;
-
-  @Bean
-  public EnrolledPaymentInstrumentRepository enrolledPaymentInstrumentRepository(
-          EnrolledPaymentInstrumentDao dao
-  ) {
-    return new EnrolledPaymentInstrumentRepositoryImpl(dao);
-  }
 
   @Bean
   public EnrollAckService enrollAckService(StreamBridge bridge) {

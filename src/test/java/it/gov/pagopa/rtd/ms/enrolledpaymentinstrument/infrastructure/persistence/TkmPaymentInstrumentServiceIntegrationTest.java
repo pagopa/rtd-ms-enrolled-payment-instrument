@@ -5,7 +5,8 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.TkmPaymentInst
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmRevokeCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpdateCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongodbIntegrationTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongoDbTest;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.RepositoryConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
@@ -13,17 +14,14 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,12 +31,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
-@SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-@ActiveProfiles("mongo-integration-test")
-@TestPropertySource("classpath:application-test.yml")
-@Import(MongodbIntegrationTestConfiguration.class)
-@AutoConfigureDataMongo
+@RunWith(SpringRunner.class)
+@MongoDbTest
+@Import(RepositoryConfiguration.class)
 class TkmPaymentInstrumentServiceIntegrationTest {
 
   @MockBean
@@ -58,6 +53,7 @@ class TkmPaymentInstrumentServiceIntegrationTest {
             .ensureIndex(new Index().on("hashPan", Sort.Direction.ASC).unique());
     doReturn(true).when(notificationService).notifyRevoke(any(), any(), any());
     this.paymentInstrumentService = new TkmPaymentInstrumentService(repository, notificationService, domainEventPublisher);
+
   }
 
   @AfterEach

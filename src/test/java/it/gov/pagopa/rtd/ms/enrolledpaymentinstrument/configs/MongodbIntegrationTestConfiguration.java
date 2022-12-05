@@ -7,18 +7,14 @@ import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.config.Storage;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Profile;
-import org.springframework.integration.kafka.inbound.KafkaMessageDrivenChannelAdapter;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
@@ -26,17 +22,13 @@ import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 
-@Configuration
+@TestConfiguration
 @AutoConfigureBefore(EmbeddedMongoAutoConfiguration.class)
 @Import(MongodbIntegrationTestConfiguration.ReplicaSetInitialization.class)
-@Profile("mongo-integration-test")
 public class MongodbIntegrationTestConfiguration {
 
   private static final String IP = "localhost";
   private static final int PORT = 28017;
-
-  @MockBean
-  EnrolledPaymentInstrumentService enrolledPaymentInstrumentService;
 
   @Bean
   public MongodConfig embeddedMongoConfiguration() throws IOException {
@@ -48,8 +40,7 @@ public class MongodbIntegrationTestConfiguration {
             .build();
   }
 
-  @Configuration
-  @Profile("mongo-integration-test")
+  @TestConfiguration
   @Slf4j
   static class ReplicaSetInitialization {
 
