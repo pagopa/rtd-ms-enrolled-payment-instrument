@@ -11,25 +11,23 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -37,12 +35,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@ActiveProfiles("test")
-@EmbeddedKafka(topics = {"${test.kafka.topic-rtd-to-app}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@ActiveProfiles("kafka-test")
+@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@ImportAutoConfiguration(ValidationAutoConfiguration.class)
 @Import({KafkaTestConfiguration.class})
-@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-@ExtendWith(MockitoExtension.class)
+@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
 class KafkaEnrollAckServiceTest {
 
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
@@ -59,15 +56,17 @@ class KafkaEnrollAckServiceTest {
 
   @BeforeEach
   void setUp(@Autowired EmbeddedKafkaBroker broker) {
+    broker.addTopicsWithResults(topic);
     testConsumer = TestKafkaConsumerSetup.setup(broker, topic);
     kafkaEnrollAckService = new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING);
     mapper = new ObjectMapper();
   }
 
   @AfterEach
-  void tearDown() {
+  void tearDown(@Autowired EmbeddedKafkaBroker broker) {
     testConsumer.getContainer().stop();
     testConsumer.getRecords().clear();
+    broker.doWithAdmin(admin -> admin.deleteTopics(List.of(topic)));
   }
 
   @Test
