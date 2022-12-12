@@ -1,15 +1,19 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
+import io.vavr.control.Try;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.PaymentInstrumentError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.InstrumentTokenInfo;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -51,11 +56,17 @@ class EnrolledPaymentInstrumentServiceTest {
   private EnrollAckService enrollAckService;
 
   @Autowired
+  private InstrumentTokenFinder instrumentTokenFinder;
+
+  @Autowired
   private EnrolledPaymentInstrumentService service;
 
   @BeforeEach
   void setup() {
     doReturn(true).when(enrollAckService).confirmEnroll(any(), any(), any());
+    doReturn(Try.success(new InstrumentTokenInfo(TestUtils.generateRandomHashPan(), "", List.of())))
+            .when(instrumentTokenFinder)
+            .findInstrumentInfo(any());
   }
 
   @AfterEach
@@ -209,6 +220,46 @@ class EnrolledPaymentInstrumentServiceTest {
     }));
   }
 
+  @Test
+  void mustRetrieveTokenParInfoWhenEnroll() {
+    final var captor = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
+    final var hashPan = TestUtils.generateRandomHashPan();
+    final var hashTokens = IntStream.range(0, 4).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toList());
+    final var stubTokenInfo = new InstrumentTokenInfo(hashPan, "123", hashTokens);
+    final var enrollCommand = new EnrollPaymentInstrumentCommand(
+            TestUtils.generateRandomHashPanAsString(),
+            SourceApp.ID_PAY.toString(),
+            Operation.CREATE,
+            "",
+            ""
+    );
+    when(instrumentTokenFinder.findInstrumentInfo(any())).thenReturn(Try.success(stubTokenInfo));
+
+    service.handle(enrollCommand);
+
+    verify(repository, times(1)).save(captor.capture());
+
+    assertThat(captor.getValue())
+            .matches(it -> it.getPar().equals("123"))
+            .satisfies(it -> assertThat(it.getHashPanChildren()).hasSameElementsAs(hashTokens));
+  }
+
+  @Test
+  void mustThrowAnExceptionWhenTokenParHydrateFails() {
+    final var enrollCommand = new EnrollPaymentInstrumentCommand(
+            TestUtils.generateRandomHashPanAsString(),
+            SourceApp.ID_PAY.toString(),
+            Operation.CREATE,
+            "",
+            ""
+    );
+    when(instrumentTokenFinder.findInstrumentInfo(any())).thenReturn(Try.failure(new RuntimeException("Fail")));
+
+    assertThrows(PaymentInstrumentError.class, () -> service.handle(enrollCommand));
+  }
+
+
+
   @TestConfiguration
   @Import({DomainEventPublisher.class, EnrolledPaymentInstrumentEventListener.class})
   static class Config {
@@ -219,9 +270,12 @@ class EnrolledPaymentInstrumentServiceTest {
     @MockBean
     private EnrollAckService enrollAckService;
 
+    @MockBean
+    private InstrumentTokenFinder instrumentTokenFinder;
+
     @Bean
     EnrolledPaymentInstrumentService service(@Autowired DomainEventPublisher eventPublisher) {
-      return new EnrolledPaymentInstrumentService(repository, eventPublisher);
+      return new EnrolledPaymentInstrumentService(repository, instrumentTokenFinder, eventPublisher);
     }
   }
 

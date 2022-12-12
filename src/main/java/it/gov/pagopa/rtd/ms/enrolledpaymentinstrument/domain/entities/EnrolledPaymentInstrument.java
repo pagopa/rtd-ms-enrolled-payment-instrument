@@ -1,6 +1,9 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities;
 
+import io.vavr.control.Either;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.AggregateRoot;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.PaymentInstrumentError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -129,5 +132,20 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
 
   public boolean shouldBeDeleted() {
     return this.state == PaymentInstrumentState.DELETE;
+  }
+
+  public Either<PaymentInstrumentError, Void> hydrateTokenAndParInfo(InstrumentTokenFinder tokenFinder) {
+    final var requireHydrate = domainEvents().stream().anyMatch(PaymentInstrumentEnrolled.class::isInstance) && !enabledApps.isEmpty();
+    if (requireHydrate) {
+      return tokenFinder.findInstrumentInfo(hashPan)
+              .andThen(info -> {
+                info.getPar().ifPresent(this::associatePar);
+                info.getHashTokens().forEach(this::addHashPanChild);
+              }).toEither()
+              .mapLeft(it -> new PaymentInstrumentError("Failed to get token and par info"))
+              .map(it -> null);
+    } else {
+      return Either.right(null);
+    }
   }
 }
