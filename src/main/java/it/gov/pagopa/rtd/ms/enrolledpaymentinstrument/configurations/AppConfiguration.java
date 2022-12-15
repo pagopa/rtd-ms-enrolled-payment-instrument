@@ -40,7 +40,7 @@ public class AppConfiguration {
   @Value("${revoke-notification.bpd-url:}")
   private String baseUrlBpdDeleteCard;
 
-  @Value("${instrument-token-finder.url}")
+  @Value("${instrument-token-finder.url:#{null}}")
   private String baseUrlTokenFinder;
 
   @Value("${instrument-token-finder.api-key:}")

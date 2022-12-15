@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
 
 @RunWith(SpringRunner.class)
 @ExtendWith(SpringExtension.class)
@@ -69,22 +70,19 @@ class TkmPaymentInstrumentServiceTest {
   @DisplayName("Tests for update command")
   class UpdateCommandCases {
     @Test
-    void whenTkmUpdateANonExistingPaymentInstrumentThenIsCreatedAsNotEnrolled() {
+    void whenTkmUpdateANonExistingPaymentInstrumentThenNothingIsCreated() {
       final var updateCommand = new TkmUpdateCommand(
               TestUtils.generateRandomHashPan().getValue(),
               null,
               Collections.emptyList()
       );
       service.handle(updateCommand);
-      Mockito.verify(repository).save(paymentInstrumentArgumentCaptor.capture());
-
-      assertEquals(updateCommand.getHashPan(), paymentInstrumentArgumentCaptor.getValue().getHashPan().getValue());
-      assertNull(paymentInstrumentArgumentCaptor.getValue().getPar());
-      assertTrue(paymentInstrumentArgumentCaptor.getValue().isNotEnrolled());
+      Mockito.verify(repository, times(0)).save(any());
     }
 
     @Test
     void whenTkmUpdateWithNewTokensThenPaymentInstrumentShouldAddIt() {
+      final var hashPan = TestUtils.generateRandomHashPan();
       final var tokenCommands = TestUtils.generateRandomUpdateTokenCommand(10);
       final var tokenToBeInsert = tokenCommands
               .stream()
@@ -92,15 +90,18 @@ class TkmPaymentInstrumentServiceTest {
               .map(it -> HashPan.create(it.getHashPan()))
               .collect(Collectors.toSet());
       final var updateCommand = new TkmUpdateCommand(
-              TestUtils.generateRandomHashPan().getValue(),
+              hashPan.getValue(),
               null,
               tokenCommands
+      );
+      Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
+              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(SourceApp.ID_PAY), "", ""))
       );
       service.handle(updateCommand);
       Mockito.verify(repository).save(paymentInstrumentArgumentCaptor.capture());
 
       final var savedInstrument = paymentInstrumentArgumentCaptor.getValue();
-      assertTrue(savedInstrument.isNotEnrolled());
+      assertTrue(savedInstrument.isReady());
       assertThat(tokenToBeInsert).hasSameElementsAs(savedInstrument.getHashPanChildren());
     }
 
@@ -129,7 +130,11 @@ class TkmPaymentInstrumentServiceTest {
 
     @Test
     void whenTkmUpdateParThenPaymentInstrumentUpdateIt() {
-      final var updateCommand = new TkmUpdateCommand(TestUtils.generateRandomHashPan().getValue(), "par", List.of());
+      final var hashPan = TestUtils.generateRandomHashPan();
+      final var updateCommand = new TkmUpdateCommand(hashPan.getValue(), "par", List.of());
+      Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
+              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(SourceApp.ID_PAY), "", ""))
+      );
 
       service.handle(updateCommand);
       Mockito.verify(repository).save(paymentInstrumentArgumentCaptor.capture());
