@@ -35,7 +35,7 @@ public class EnrolledPaymentInstrumentService {
     final var sourceApp = SourceApp.valueOf(command.getSourceApp().toUpperCase());
 
     final var paymentInstrument = repository.findByHashPan(hashPan.getValue())
-            .orElse(EnrolledPaymentInstrument.createUnEnrolledInstrument(hashPan, command.getIssuer(), command.getNetwork()));
+            .orElse(EnrolledPaymentInstrument.create(hashPan, sourceApp, command.getIssuer(), command.getNetwork()));
 
     if (command.getOperation() == Operation.CREATE) {
       paymentInstrument.enableApp(sourceApp);
@@ -51,4 +51,5 @@ public class EnrolledPaymentInstrumentService {
       repository.save(paymentInstrument);
     }
   }
+
 }

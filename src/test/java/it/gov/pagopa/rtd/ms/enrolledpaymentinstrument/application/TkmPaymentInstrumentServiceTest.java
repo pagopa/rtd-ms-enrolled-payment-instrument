@@ -114,7 +114,7 @@ class TkmPaymentInstrumentServiceTest {
               .map(it -> HashPan.create(it.getHashPan()))
               .collect(Collectors.toSet());
 
-      final var fakePaymentInstrument = EnrolledPaymentInstrument.createUnEnrolledInstrument(HashPan.create(hashPan), "", "");
+      final var fakePaymentInstrument = EnrolledPaymentInstrument.create(HashPan.create(hashPan), SourceApp.ID_PAY);
       tokenToBeDeleted.forEach(fakePaymentInstrument::addHashPanChild);
       Mockito.when(repository.findByHashPan(hashPan)).thenReturn(Optional.of(fakePaymentInstrument));
 
@@ -124,7 +124,7 @@ class TkmPaymentInstrumentServiceTest {
       Mockito.verify(repository).save(paymentInstrumentArgumentCaptor.capture());
 
       final var savedInstrument = paymentInstrumentArgumentCaptor.getValue();
-      assertTrue(savedInstrument.isNotEnrolled());
+      assertTrue(savedInstrument.isReady());
       assertThat(savedInstrument.getHashPanChildren()).doesNotContainAnyElementsOf(tokenToBeDeleted);
     }
 
@@ -170,7 +170,7 @@ class TkmPaymentInstrumentServiceTest {
     void whenTkmRevokeThenPaymentInstrumentIsRevoked() {
       final var hashPan = TestUtils.generateRandomHashPan();
       Mockito.when(repository.findByHashPan(hashPan.getValue())).thenReturn(
-              Optional.of(EnrolledPaymentInstrument.create(hashPan, Set.of(), "", ""))
+              Optional.of(EnrolledPaymentInstrument.create(hashPan, SourceApp.ID_PAY))
       );
       final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
 
@@ -182,7 +182,7 @@ class TkmPaymentInstrumentServiceTest {
     @Test
     void whenTkmRevokeOnAlreadyRevokedInstrumentThenDoNothing() { // idempotency
       final var hashPan = TestUtils.generateRandomHashPan();
-      final var mockedInstrument = EnrolledPaymentInstrument.create(hashPan, Set.of(), "", "");
+      final var mockedInstrument = EnrolledPaymentInstrument.create(hashPan, SourceApp.ID_PAY);
       final var revokeCommand = new TkmRevokeCommand("taxCode", hashPan.getValue(), "par");
 
       mockedInstrument.revokeInstrument();

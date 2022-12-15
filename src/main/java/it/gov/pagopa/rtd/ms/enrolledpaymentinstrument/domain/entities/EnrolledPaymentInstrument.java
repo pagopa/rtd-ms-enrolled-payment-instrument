@@ -19,16 +19,27 @@ import java.util.Set;
 @AllArgsConstructor
 public class EnrolledPaymentInstrument extends AggregateRoot {
 
-  public static EnrolledPaymentInstrument createUnEnrolledInstrument(HashPan hashPan) {
-    return createUnEnrolledInstrument(hashPan, "", "");
+  public static EnrolledPaymentInstrument create(
+          HashPan hashPan,
+          SourceApp app
+  ) {
+    return create(hashPan, Set.of(app), "", "");
   }
 
-  public static EnrolledPaymentInstrument createUnEnrolledInstrument(
+  public static EnrolledPaymentInstrument create(
           HashPan hashPan,
+          SourceApp app,
           String issuer,
           String network
   ) {
-    return create(hashPan, new HashSet<>(), issuer, network);
+    return create(hashPan, Set.of(app), issuer, network);
+  }
+
+  public static EnrolledPaymentInstrument create(
+          HashPan hashPan,
+          Set<SourceApp> apps
+  ) {
+    return create(hashPan, apps, "", "");
   }
 
   public static EnrolledPaymentInstrument create(
@@ -37,12 +48,13 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
           String issuer,
           String network
   ) {
+    if (apps.isEmpty()) throw new IllegalArgumentException("Apps cannot be empty");
     final var paymentInstrument = new EnrolledPaymentInstrument(
             null,
             hashPan,
             new HashSet<>(),
             null,
-            PaymentInstrumentState.NOT_ENROLLED,
+            PaymentInstrumentState.READY,
             new HashSet<>(),
             issuer,
             network,
@@ -70,8 +82,10 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
   public void enableApp(SourceApp sourceApp) {
     this.state = state == PaymentInstrumentState.REVOKED ? this.state : PaymentInstrumentState.READY;
     if (this.state == PaymentInstrumentState.READY) {
+      if (!this.enabledApps.contains(sourceApp)) {
+        this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
+      }
       this.enabledApps.add(sourceApp);
-      this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
     }
   }
 
@@ -118,10 +132,6 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
     this.hashPanChildren.remove(hashPan);
   }
 
-  public boolean isNotEnrolled() {
-    return this.state == PaymentInstrumentState.NOT_ENROLLED;
-  }
-
   public boolean isReady() {
     return this.state == PaymentInstrumentState.READY;
   }
@@ -138,14 +148,17 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
     final var requireHydrate = domainEvents().stream().anyMatch(PaymentInstrumentEnrolled.class::isInstance) && !enabledApps.isEmpty();
     if (requireHydrate) {
       return tokenFinder.findInstrumentInfo(hashPan)
-              .andThen(info -> {
-                info.getPar().ifPresent(this::associatePar);
-                info.getHashTokens().forEach(this::addHashPanChild);
-              }).toEither()
+              .andThen(this::hydrateTokenAndParInfo)
+              .toEither()
               .mapLeft(it -> new PaymentInstrumentError("Failed to get token and par info"))
               .map(it -> null);
     } else {
       return Either.right(null);
     }
+  }
+
+  private void hydrateTokenAndParInfo(InstrumentTokenInfo instrumentTokenInfo) {
+    instrumentTokenInfo.getPar().ifPresent(this::associatePar);
+    instrumentTokenInfo.getHashTokens().forEach(this::addHashPanChild);
   }
 }
