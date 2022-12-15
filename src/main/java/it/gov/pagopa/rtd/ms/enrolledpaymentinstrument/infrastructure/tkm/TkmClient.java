@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class TkmClient implements InstrumentTokenFinder {
 
   private static final String AUTHORIZATION_HEADER = "Ocp-Apim-Subscription-Key";
-  private static final String IF_MATCH_HEADER = "If-Match";
+  private static final String HASHPAN_HEADER = "hpan";
 
   private final RestTemplate restTemplate;
   private final String apiKey;
@@ -42,7 +42,7 @@ public class TkmClient implements InstrumentTokenFinder {
     if (Objects.nonNull(apiKey) && !apiKey.isBlank()) {
       headers.set(AUTHORIZATION_HEADER, apiKey);
     }
-    headers.set(IF_MATCH_HEADER, hashPan.getValue());
+    headers.set(HASHPAN_HEADER, hashPan.getValue());
 
     return Try.of(() -> restTemplate.exchange(
                     url.toString(),
