@@ -37,7 +37,7 @@ public class TkmClient implements InstrumentTokenFinder {
 
   @Override
   public Try<InstrumentTokenInfo> findInstrumentInfo(HashPan hashPan) {
-    final var url = UriComponentsBuilder.fromPath("/").build();
+    final var url = UriComponentsBuilder.fromPath("/cards").build();
     final var headers = new HttpHeaders();
     if (Objects.nonNull(apiKey) && !apiKey.isBlank()) {
       headers.set(AUTHORIZATION_HEADER, apiKey);
