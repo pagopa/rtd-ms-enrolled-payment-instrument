@@ -5,7 +5,7 @@ import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +30,7 @@ public class TokenManagerCardChanged {
 
   private List<HashTokenEvent> hashTokens;
 
-  private LocalDateTime timestamp;
+  private OffsetDateTime timestamp;
 
   @NotNull
   private CardChangeType changeType;

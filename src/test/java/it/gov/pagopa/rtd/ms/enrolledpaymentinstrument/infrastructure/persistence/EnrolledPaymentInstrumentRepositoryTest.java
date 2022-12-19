@@ -75,7 +75,7 @@ class EnrolledPaymentInstrumentRepositoryTest {
 
   @Test
   void shouldDeleteRightDocument() {
-    final var instrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(), null, null);
+    final var instrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, SourceApp.ID_PAY, null, null);
     repository.delete(instrument);
     assertTrue(repository.findByHashPan(TEST_HASH_PAN.getValue()).isEmpty());
   }
@@ -108,7 +108,7 @@ class EnrolledPaymentInstrumentRepositoryTest {
   @Test
   void mustSaveExportHashPans() {
       final var childHashPan = TestUtils.generateRandomHashPan();
-      final var instrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(), null, null);
+      final var instrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, SourceApp.ID_PAY, null, null);
       instrument.addHashPanChild(childHashPan);
 
       repository.save(instrument);

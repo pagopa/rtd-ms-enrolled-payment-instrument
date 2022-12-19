@@ -8,6 +8,10 @@ server.port: 8080
 revoke-notification:
   bpd-url: ${BASEURL_BPD_DELETE_CARD:#{null}}
 
+instrument-token-finder:
+  url: ${BASEURL_TOKEN_FINDER:#{null}}
+  api-key: ${API_KEY_TOKEN_FINDER:#{null}}
+
 ## Topics and consumer groups
 topics:
   rtd-pi-to-app:

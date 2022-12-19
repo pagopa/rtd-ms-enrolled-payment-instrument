@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Data
 @Getter
-public class PaymentInstrumentEnrolled implements DomainEvent {
+public final class PaymentInstrumentEnrolled implements DomainEvent {
 
   private final HashPan hashPan;
   private final SourceApp application;
