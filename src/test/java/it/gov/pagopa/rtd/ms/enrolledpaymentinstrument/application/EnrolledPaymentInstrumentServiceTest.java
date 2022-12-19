@@ -6,7 +6,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.Enroll
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.PaymentInstrumentError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.InstrumentTokenInfo;
@@ -71,7 +70,7 @@ class EnrolledPaymentInstrumentServiceTest {
 
   @AfterEach
   void cleanUp() {
-    Mockito.reset(repository, enrollAckService);
+    Mockito.reset(repository, enrollAckService, instrumentTokenFinder);
   }
 
   @DisplayName("must enable payment instrument for a specific source app")
@@ -81,9 +80,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var command = new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.ID_PAY.name(),
-        Operation.CREATE,
-        null,
-        null
+        Operation.CREATE
     );
 
     service.handle(command);
@@ -100,9 +97,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var commands = IntStream.range(0, 3).mapToObj(i -> new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         SourceApp.ID_PAY.name(),
-        Operation.CREATE,
-        null,
-        null
+        Operation.CREATE
     )).collect(Collectors.toList());
 
     commands.forEach(command -> service.handle(command));
@@ -117,9 +112,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var command = new EnrollPaymentInstrumentCommand(
             TEST_HASH_PAN.getValue(),
             SourceApp.FA.name(),
-            Operation.CREATE,
-            null,
-            null
+            Operation.CREATE
     );
     service.handle(command);
 
@@ -135,9 +128,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var command = new EnrollPaymentInstrumentCommand(
             TEST_HASH_PAN.getValue(),
             SourceApp.FA.name(),
-            Operation.CREATE,
-            null,
-            null
+            Operation.CREATE
     );
     service.handle(command);
     verify(enrollAckService, times(0)).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
@@ -148,9 +139,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var command = new EnrollPaymentInstrumentCommand(
             TEST_HASH_PAN.getValue(),
             SourceApp.FA.name(),
-            Operation.CREATE,
-            null,
-            null
+            Operation.CREATE
     );
     doReturn(false).when(enrollAckService).confirmEnroll(any(), any(), any());
     assertThrowsExactly(EnrollAckError.class, () -> service.handle(command));
@@ -186,9 +175,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var commands = Arrays.stream(SourceApp.values()).map(app -> new EnrollPaymentInstrumentCommand(
         TEST_HASH_PAN.getValue(),
         app.name(),
-        Operation.DELETE,
-        null,
-        null
+        Operation.DELETE
     ));
 
     when(repository.findByHashPan(any())).thenReturn(Optional.of(fullEnrolledInstrument));
@@ -229,9 +216,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var enrollCommand = new EnrollPaymentInstrumentCommand(
             TestUtils.generateRandomHashPanAsString(),
             SourceApp.ID_PAY.toString(),
-            Operation.CREATE,
-            "",
-            ""
+            Operation.CREATE
     );
     when(instrumentTokenFinder.findInstrumentInfo(any())).thenReturn(Try.success(stubTokenInfo));
 
@@ -245,19 +230,19 @@ class EnrolledPaymentInstrumentServiceTest {
   }
 
   @Test
-  void mustThrowAnExceptionWhenTokenParHydrateFails() {
+  void whenEnrollInstrumentAndTokenFinderFailsThenCompleteEnroll() {
     final var enrollCommand = new EnrollPaymentInstrumentCommand(
             TestUtils.generateRandomHashPanAsString(),
             SourceApp.ID_PAY.toString(),
-            Operation.CREATE,
-            "",
-            ""
+            Operation.CREATE
     );
     when(instrumentTokenFinder.findInstrumentInfo(any())).thenReturn(Try.failure(new RuntimeException("Fail")));
 
-    assertThrows(PaymentInstrumentError.class, () -> service.handle(enrollCommand));
-  }
+    service.handle(enrollCommand);
 
+    verify(repository, times(1)).save(any());
+    verify(enrollAckService, times(1)).confirmEnroll(eq(SourceApp.ID_PAY), any(), any());
+  }
 
 
   @TestConfiguration

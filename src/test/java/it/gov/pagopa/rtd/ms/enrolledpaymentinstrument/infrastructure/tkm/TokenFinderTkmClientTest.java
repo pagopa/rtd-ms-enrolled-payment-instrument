@@ -8,7 +8,9 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import org.junit.Rule;
 import org.junit.jupiter.api.*;
+import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -82,5 +84,25 @@ class TokenFinderTkmClientTest {
 
     assertThat(instrumentTokenFinder.findInstrumentInfo(TestUtils.generateRandomHashPan()).getCause())
             .matches(it -> it.getMessage().contains("Server Error"));
+  }
+
+  @Nested
+  class FakeTokenFinder {
+
+    private InstrumentTokenFinder tokenFinder;
+
+    @BeforeEach
+    void setup() {
+      tokenFinder = InstrumentTokenFinder.fake(LoggerFactory.getLogger("test"));
+    }
+
+    @Test
+    void whenFindInstrumentThenReturnsEmptyParAndTokens() {
+      final var hashPan = TestUtils.generateRandomHashPan();
+      assertThat(tokenFinder.findInstrumentInfo(hashPan))
+              .first()
+              .matches(it -> it.getPar().equals(Optional.of("")))
+              .matches(it -> it.getHashTokens().isEmpty());
+    }
   }
 }
