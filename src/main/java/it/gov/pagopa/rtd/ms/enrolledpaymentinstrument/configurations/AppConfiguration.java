@@ -10,7 +10,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.Instrument
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.tkm.TkmClient;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.tkm.TkmTokenFinder;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -65,7 +65,7 @@ public class AppConfiguration {
   public InstrumentTokenFinder instrumentTokenFinder() {
     return Objects.isNull(baseUrlTokenFinder) ?
             InstrumentTokenFinder.fake(LoggerFactory.getLogger(InstrumentTokenFinder.class)) :
-            TkmClient.fromUrl(baseUrlTokenFinder, apiKeyTokenFinder);
+            TkmTokenFinder.fromUrl(baseUrlTokenFinder, apiKeyTokenFinder);
   }
 
   /**

@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class TkmClient implements InstrumentTokenFinder {
+public class TkmTokenFinder implements InstrumentTokenFinder {
 
   private static final String AUTHORIZATION_HEADER = "Ocp-Apim-Subscription-Key";
   private static final String HASHPAN_HEADER = "hpan";
@@ -26,11 +26,11 @@ public class TkmClient implements InstrumentTokenFinder {
   private final RestTemplate restTemplate;
   private final String apiKey;
 
-  public static TkmClient fromUrl(String url, String apiKey) {
-    return new TkmClient(new RestTemplateBuilder().rootUri(url), apiKey);
+  public static TkmTokenFinder fromUrl(String url, String apiKey) {
+    return new TkmTokenFinder(new RestTemplateBuilder().rootUri(url), apiKey);
   }
 
-  private TkmClient(RestTemplateBuilder restTemplate, String apiKey) {
+  private TkmTokenFinder(RestTemplateBuilder restTemplate, String apiKey) {
     this.restTemplate = restTemplate.build();
     this.apiKey = apiKey;
   }
@@ -51,7 +51,10 @@ public class TkmClient implements InstrumentTokenFinder {
                     TkmInstrumentResponse.class
             ))
             .map(HttpEntity::getBody)
-            .flatMap(this::toDomain);
+            .flatMap(this::toDomain)
+            .peek(tokenInfo -> {
+              log.info("Found InstrumentTokenInfo, par: {}, token to update: {}", tokenInfo.getPar().isPresent(), tokenInfo.getHashTokens().size());
+            });
   }
 
   private Try<InstrumentTokenInfo> toDomain(TkmInstrumentResponse response) {

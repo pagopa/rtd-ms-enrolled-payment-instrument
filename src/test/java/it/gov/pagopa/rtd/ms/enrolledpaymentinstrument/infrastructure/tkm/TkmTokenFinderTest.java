@@ -18,7 +18,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class TokenFinderTkmClientTest {
+class TkmTokenFinderTest {
 
   private static final String PATH_CARD_STUB = "/cards";
   private static final String TEST_API_KEY = "ApiKey";
@@ -32,7 +32,7 @@ class TokenFinderTkmClientTest {
   void setup() {
     wireMockRule.start();
     configureFor("localhost", wireMockRule.port());
-    instrumentTokenFinder = TkmClient.fromUrl(
+    instrumentTokenFinder = TkmTokenFinder.fromUrl(
             "http://localhost:" + wireMockRule.port(),
             TEST_API_KEY
     );
