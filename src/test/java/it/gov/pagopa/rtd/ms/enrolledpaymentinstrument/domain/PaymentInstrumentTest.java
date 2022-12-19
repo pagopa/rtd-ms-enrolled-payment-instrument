@@ -24,6 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class PaymentInstrumentTest {
 
   @Test
+  void whenCreatePaymentInstrumentWithoutAppThenThrowException() {
+    assertThrows(IllegalArgumentException.class, () -> EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of()));
+  }
+
+  @Test
   void whenPaymentInstrumentIsCreatedWithEnabledAppThenMustBeReady() {
     final var paymentInstrument = EnrolledPaymentInstrument.create(
             TestUtils.generateRandomHashPan(),
