@@ -1,17 +1,23 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.tkm;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
 class TkmInstrumentResponse {
 
   @JsonProperty("hpan")
-  final String hashPan;
+  String hashPan;
   @JsonProperty("par")
-  final String par;
+  String par;
   @JsonProperty("htokens")
-  final List<String> hashTokens;
+  List<String> hashTokens;
 }

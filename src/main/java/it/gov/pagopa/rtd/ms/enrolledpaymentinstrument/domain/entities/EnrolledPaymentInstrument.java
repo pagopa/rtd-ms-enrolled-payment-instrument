@@ -150,7 +150,7 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
       return tokenFinder.findInstrumentInfo(hashPan)
               .andThen(this::hydrateTokenAndParInfo)
               .toEither()
-              .mapLeft(it -> new PaymentInstrumentError("Failed to get token and par info"))
+              .mapLeft(it -> new PaymentInstrumentError("Failed to get token and par info", it))
               .map(it -> null);
     } else {
       return Either.right(null);

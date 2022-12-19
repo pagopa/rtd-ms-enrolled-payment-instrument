@@ -39,7 +39,8 @@ public class EnrolledPaymentInstrumentService {
 
     if (command.getOperation() == Operation.CREATE) {
       paymentInstrument.enableApp(sourceApp);
-      paymentInstrument.hydrateTokenAndParInfo(instrumentTokenFinder).getOrElseThrow(Function.identity());
+      paymentInstrument.hydrateTokenAndParInfo(instrumentTokenFinder)
+              .peekLeft(error -> log.warn("Failed to GET token par info: {}", error.getMessage()));
     } else if (command.getOperation() == Operation.DELETE) {
       paymentInstrument.disableApp(sourceApp);
     }
