@@ -9,62 +9,6 @@
 			"name": "TKM Integration",
 			"item": [
 				{
-					"name": "Associate PAR & Token",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"_.clean(pm, pm.collectionVariables.get('test_hpan'));"
-								],
-								"type": "text/javascript"
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"setTimeout(() => {",
-									"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
-									"        pm.test(\"Has Par and Token Associated\", () => {",
-									"            const responseJson = response.json();",
-									"            pm.expect(responseJson.state).to.eql(\"NOT_ENROLLED\");",
-									"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_par'));",
-									"            const token = responseJson.hashPanChildren.find(t => t.value == pm.collectionVariables.get('test_hashToken'));",
-									"            pm.expect(token).to.be.not.null;",
-									"        });",
-									"    });",
-									"}, _.asyncTimeout);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19T12:17:10.177Z\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"INSERT_UPDATE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[\n            {\n               \"htoken\":\"{{test_hashToken}}\",\n               \"haction\":\"INSERT_UPDATE\"\n            }\n         ]\n      }\n   ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url_event_processor}}/tkm-bulk-update",
-							"host": [
-								"{{base_url_event_processor}}"
-							],
-							"path": [
-								"tkm-bulk-update"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Enrolled Instrumnet - Associate PAR & Token",
 					"event": [
 						{
