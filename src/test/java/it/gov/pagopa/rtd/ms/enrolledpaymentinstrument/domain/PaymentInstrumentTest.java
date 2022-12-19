@@ -25,7 +25,7 @@ class PaymentInstrumentTest {
 
   @Test
   void whenCreatePaymentInstrumentWithoutAppThenThrowException() {
-    assertThrows(IllegalArgumentException.class, () -> EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of()));
+    assertThrowsExactly(IllegalArgumentException.class, () -> EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of()));
   }
 
   @Test
