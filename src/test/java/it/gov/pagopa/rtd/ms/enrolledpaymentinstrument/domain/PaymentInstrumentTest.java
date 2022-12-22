@@ -159,12 +159,7 @@ class PaymentInstrumentTest {
     final var hashTokens = IntStream.range(0, 4).mapToObj(i -> TestUtils.generateRandomHashPan()).collect(Collectors.toList());
     final InstrumentTokenFinder tokenFinder = hashPan -> Try.success(new InstrumentTokenInfo(hashPan, "123", hashTokens));
 
-    final var paymentInstrument = EnrolledPaymentInstrument.create(
-            TestUtils.generateRandomHashPan(),
-            Set.of(SourceApp.FA, SourceApp.ID_PAY),
-            "",
-            ""
-    );
+    final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.FA, SourceApp.ID_PAY));
 
     assertThat(paymentInstrument)
             .matches(it -> it.hydrateTokenAndParInfo(tokenFinder).isRight())
@@ -175,12 +170,7 @@ class PaymentInstrumentTest {
   @Test
   void whenHydrateTokenAndParOfInstrumentAlreadyEnrolledThenAvoidToUpdateIt() {
     final InstrumentTokenFinder tokenFinder = hashPan -> Try.success(new InstrumentTokenInfo(hashPan, "123", List.of()));
-    final var paymentInstrument = EnrolledPaymentInstrument.create(
-            TestUtils.generateRandomHashPan(),
-            Set.of(SourceApp.FA, SourceApp.ID_PAY),
-            "",
-            ""
-    );
+    final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), Set.of(SourceApp.FA, SourceApp.ID_PAY));
     paymentInstrument.clearDomainEvents();
     assertThat(paymentInstrument)
             .matches(it -> it.hydrateTokenAndParInfo(tokenFinder).isRight())
@@ -192,9 +182,7 @@ class PaymentInstrumentTest {
     final InstrumentTokenFinder tokenFinder = hashPan -> Try.failure(new RuntimeException("Failed"));
     final var paymentInstrument = EnrolledPaymentInstrument.create(
             TestUtils.generateRandomHashPan(),
-            Set.of(SourceApp.FA, SourceApp.ID_PAY),
-            "",
-            ""
+            Set.of(SourceApp.FA, SourceApp.ID_PAY)
     );
     final var updateOrError = paymentInstrument.hydrateTokenAndParInfo(tokenFinder);
     assertThat(updateOrError.getLeft()).isInstanceOf(PaymentInstrumentError.class);

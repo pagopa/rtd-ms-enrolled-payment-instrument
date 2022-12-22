@@ -145,7 +145,7 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
   }
 
   public Either<PaymentInstrumentError, Void> hydrateTokenAndParInfo(InstrumentTokenFinder tokenFinder) {
-    final var requireHydrate = domainEvents().stream().anyMatch(PaymentInstrumentEnrolled.class::isInstance) && !enabledApps.isEmpty();
+    final var requireHydrate = domainEvents().stream().anyMatch(PaymentInstrumentEnrolled.class::isInstance);
     if (requireHydrate) {
       return tokenFinder.findInstrumentInfo(hashPan)
               .andThen(this::hydrateTokenAndParInfo)
