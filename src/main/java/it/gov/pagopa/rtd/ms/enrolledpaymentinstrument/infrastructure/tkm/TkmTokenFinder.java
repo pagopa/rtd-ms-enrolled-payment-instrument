@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TkmTokenFinder implements InstrumentTokenFinder {
 
+  private static final String CARD_ENDPOINT = "/cards";
   private static final String AUTHORIZATION_HEADER = "Ocp-Apim-Subscription-Key";
   private static final String HASHPAN_HEADER = "hpan";
 
@@ -37,7 +38,7 @@ public class TkmTokenFinder implements InstrumentTokenFinder {
 
   @Override
   public Try<InstrumentTokenInfo> findInstrumentInfo(HashPan hashPan) {
-    final var url = UriComponentsBuilder.fromPath("/cards").build();
+    final var url = UriComponentsBuilder.fromPath(CARD_ENDPOINT).build();
     final var headers = new HttpHeaders();
     if (Objects.nonNull(apiKey) && !apiKey.isBlank()) {
       headers.set(AUTHORIZATION_HEADER, apiKey);
