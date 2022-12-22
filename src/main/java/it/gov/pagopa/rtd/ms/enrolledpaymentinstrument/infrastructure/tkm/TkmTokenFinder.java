@@ -52,9 +52,7 @@ public class TkmTokenFinder implements InstrumentTokenFinder {
             ))
             .map(HttpEntity::getBody)
             .flatMap(this::toDomain)
-            .peek(tokenInfo -> {
-              log.info("Found InstrumentTokenInfo, par: {}, token to update: {}", tokenInfo.getPar().isPresent(), tokenInfo.getHashTokens().size());
-            });
+            .peek(tokenInfo -> log.info("Found InstrumentTokenInfo, par: {}, token to update: {}", tokenInfo.getPar().isPresent(), tokenInfo.getHashTokens().size()));
   }
 
   private Try<InstrumentTokenInfo> toDomain(TkmInstrumentResponse response) {
