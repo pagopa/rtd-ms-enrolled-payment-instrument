@@ -1,0 +1,75 @@
+microservice-chart:
+  namespace: "rtd"
+  nameOverride: ""
+  fullnameOverride: ""
+
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8080
+    initialDelaySeconds: 60
+    failureThreshold: 6
+    periodSeconds: 10
+
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8080
+    initialDelaySeconds: 60
+    failureThreshold: 6
+    periodSeconds: 10
+
+  podAnnotations: { }
+
+  deployment:
+    create: true
+
+  service:
+    create: true
+    type: ClusterIP
+    ports:
+      - 8080
+
+  ingress:
+    create: true
+    path: /enrolledpaymentinstrumentmanager/(.*)
+    servicePort: 8080
+
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+
+  envSecret:
+    MONGODB_CONNECTION_URI: mongo-db-connection-uri
+    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
+    KAFKA_RTD_PI_TO_APP_SASL_JAAS_CONFIG: evh-rtd-pi-to-app-rtd-pi-to-app-producer-policy-rtd
+    KAFKA_RTD_SPLIT_SASL_JAAS_CONFIG: evh-rtd-split-by-pi-rtd-split-by-pi-consumer-policy-rtd
+    API_KEY_TOKEN_FINDER: pagopa-platform-apim-api-key-primary
+
+  envConfigMapExternals:
+    rtd-enrolled-payment-instrument:
+      JAVA_TOOL_OPTIONS: JAVA_TOOL_OPTIONS
+      APPLICATIONINSIGHTS_ROLE_NAME: APPLICATIONINSIGHTS_ROLE_NAME
+      APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL
+      APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED
+      MONGODB_NAME: MONGODB_NAME
+      BASEURL_BPD_DELETE_CARD: BASEURL_BPD_DELETE_CARD
+      BASEURL_TOKEN_FINDER: BASEURL_TOKEN_FINDER
+
+    rtd-pi-to-app-producer:
+      KAFKA_RTD_PI_TO_APP: KAFKA_RTD_PI_TO_APP
+      KAFKA_RTD_PI_TO_APP_BROKER: KAFKA_RTD_PI_TO_APP_BROKER
+      KAFKA_RTD_PI_TO_APP_PARTITION_COUNT: KAFKA_RTD_PI_TO_APP_PARTITION_COUNT
+
+    rtd-split-by-pi-consumer:
+      KAFKA_RTD_SPLIT_TOPIC: KAFKA_RTD_SPLIT_TOPIC
+      KAFKA_RTD_SPLIT_BROKER: KAFKA_RTD_SPLIT_BROKER
+      KAFKA_RTD_SPLIT_CONSUMER_GROUP: KAFKA_RTD_SPLIT_CONSUMER_GROUP
