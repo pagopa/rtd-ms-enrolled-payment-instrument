@@ -30,6 +30,7 @@ variables:
   ${{ if or(startsWith(variables['Build.SourceBranch'], 'refs/heads/develop'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/TAE'), startsWith(variables['Build.SourceBranch'], 'refs/heads/RTD')) ) }}:
     environment: 'DEV'
     isToDeploy: true
+    postmanEnvFile: 'rtd_dev.postman_environment.json'
     dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
@@ -39,6 +40,7 @@ variables:
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
     environment: 'UAT'
     isToDeploy: true
+    postmanEnvFile: 'rtd_uat.postman_environment.json'
     dockerRegistryServiceConnection: '$(UAT_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
@@ -48,6 +50,7 @@ variables:
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}:
     environment: 'PROD'
     isToDeploy: true
+    postmanEnvFile: ''
     dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
@@ -189,7 +192,7 @@ stages:
             displayName: 'download postman environment'
             name: postman_env
             inputs:
-              secureFile: rtd-ingress-env.json
+              secureFile: $(postmanEnvFile)
           - task: CmdLine@2
             displayName: Run newman
             continueOnError: true # Useful to avoid the skipping of result publishing task
