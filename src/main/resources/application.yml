@@ -3,6 +3,16 @@ logging:
     root: INFO
     org.apache.kafka: WARN
 
+management:
+  metrics.export.defaults.enabled: false
+  info.defaults.enabled: false
+  endpoints.enabled-by-default: false
+  endpoint:
+    health:
+      enabled: true
+      probes:
+        enabled: true
+
 # bpd-url null means fake mode
 revoke-notification:
   bpd-url: ${BASEURL_BPD_DELETE_CARD:#{null}}
