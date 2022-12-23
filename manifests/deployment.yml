@@ -18,13 +18,15 @@ spec:
           ports:
             - containerPort: 8080
           imagePullPolicy: Always
+          env:
+            - name: API_KEY_TOKEN_FINDER
+              valueFrom:
+                secretKeyRef:
+                  name: pagopa-platform-api-key
+                  key: API_KEY
           envFrom:
             - secretRef:
-                name: rtd-enrolled-pi-events
-            - secretRef:
                 name: rtd-tkm-write-update-consumer
-            - secretRef:
-                name: rtd-revoke-pi-producer
             - secretRef:
                 name: mongo-credentials
             - secretRef:

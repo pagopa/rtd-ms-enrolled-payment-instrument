@@ -38,30 +38,32 @@ public class TkmPaymentInstrumentService {
   }
 
   public void handle(@Valid TkmUpdateCommand command) {
-    final var hashPan = HashPan.create(command.getHashPan());
-    final var paymentInstrument = repository.findByHashPan(command.getHashPan())
-            .orElse(EnrolledPaymentInstrument.createUnEnrolledInstrument(hashPan, "", ""));
+    final var paymentInstrumentOrEmpty = repository.findByHashPan(command.getHashPan());
+    if (paymentInstrumentOrEmpty.isPresent()) {
+      final var paymentInstrument = paymentInstrumentOrEmpty.get();
+      final var updateAndRemove = Optional.ofNullable(command.getTokens())
+              .orElse(Collections.emptyList())
+              .stream()
+              .collect(Collectors.groupingByConcurrent(
+                      TkmUpdateCommand.TkmTokenCommand::getAction,
+                      Collectors.mapping(value -> HashPan.create(value.getHashPan()), Collectors.toSet())
+              ));
 
-    final var updateAndRemove = Optional.ofNullable(command.getTokens())
-            .orElse(Collections.emptyList())
-            .stream()
-            .collect(Collectors.groupingByConcurrent(
-                    TkmUpdateCommand.TkmTokenCommand::getAction,
-                    Collectors.mapping(value -> HashPan.create(value.getHashPan()), Collectors.toSet())
-            ));
+      final var toUpdate = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.UPDATE, Collections.emptySet());
+      final var toDelete = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.DELETE, Collections.emptySet());
 
-    final var toUpdate = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.UPDATE, Collections.emptySet());
-    final var toDelete = updateAndRemove.getOrDefault(TkmUpdateCommand.TkmTokenCommand.Action.DELETE, Collections.emptySet());
+      log.info("Token to update {}, to delete {}", toUpdate.size(), toDelete.size());
 
-    log.info("Token to update {}, to delete {}", toUpdate.size(), toDelete.size());
+      paymentInstrument.associatePar(command.getPar());
 
-    paymentInstrument.associatePar(command.getPar());
+      toUpdate.forEach(paymentInstrument::addHashPanChild);
+      toDelete.forEach(paymentInstrument::removeHashPanChild);
 
-    toUpdate.forEach(paymentInstrument::addHashPanChild);
-    toDelete.forEach(paymentInstrument::removeHashPanChild);
-
-    domainEventPublisher.handle(paymentInstrument);
-    repository.save(paymentInstrument);
+      domainEventPublisher.handle(paymentInstrument);
+      repository.save(paymentInstrument);
+    } else {
+      log.info("Received tkm update event for non existing instrument");
+    }
   }
 
   public void handle(@Valid TkmRevokeCommand command) {
