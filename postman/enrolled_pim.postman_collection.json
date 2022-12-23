@@ -558,7 +558,7 @@
 					"",
 					"Object.prototype.clean = (that, paymentInstrumentId) => {",
 					"    return that.sendRequest({",
-					"        url: `${pm.collectionVariables.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
+					"        url: `${pm.environment.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
 					"        method: 'DELETE'",
 					"    });",
 					"};",
@@ -566,7 +566,7 @@
 					"Object.prototype.getPaymentInstrument = (that, paymentInstrumentId, callback) => {",
 					"    // pre-put a sendercode-apikey association",
 					"    that.sendRequest({",
-					"            url: `${pm.collectionVariables.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
+					"            url: `${pm.environment.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
 					"            method: 'GET'",
 					"        },",
 					"        (error, response) => {",
@@ -720,11 +720,6 @@
 		{
 			"key": "test_expected_par",
 			"value": "5001bwx51bthoz7estewlzpdqg8mp",
-			"type": "default"
-		},
-		{
-			"key": "base_url_enrolledpaymentinstrument",
-			"value": "http://10.1.0.250/enrolledpaymentinstrumentmanager",
 			"type": "default"
 		}
 	]
