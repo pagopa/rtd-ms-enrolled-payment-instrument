@@ -10,7 +10,7 @@ test.kafka.topic-rtd-to-app: rtd-pi-to-app
 spring:
   config:
     activate:
-      on-profile: test
+      on-profile: kafka-test
 
   cloud:
     function:

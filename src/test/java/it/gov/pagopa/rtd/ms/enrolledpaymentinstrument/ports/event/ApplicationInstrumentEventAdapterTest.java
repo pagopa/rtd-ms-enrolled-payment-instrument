@@ -14,18 +14,16 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
@@ -39,22 +37,21 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.MessageHandlingException;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
+import java.util.List;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@ActiveProfiles("test")
-@EmbeddedKafka(topics = {"${test.kafka.topic}"}, partitions = 1, bootstrapServersProperty = "spring.embedded.kafka.brokers")
-@Import({KafkaTestConfiguration.class, KafkaConfiguration.class})
-@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class, MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
-@ExtendWith(MockitoExtension.class)
+@ActiveProfiles("kafka-test")
+@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@ImportAutoConfiguration(ValidationAutoConfiguration.class)
+@Import({TokenManagerEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})
+@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
 class ApplicationInstrumentEventAdapterTest {
 
   private static final String DEFAULT_APPLICATION = "ID_PAY";
@@ -77,11 +74,13 @@ class ApplicationInstrumentEventAdapterTest {
     kafkaTemplate = new KafkaTemplate<>(
             new DefaultKafkaProducerFactory<>(KafkaTestUtils.producerProps(broker), new StringSerializer(), new JsonSerializer<>())
     );
+    broker.addTopicsWithResults(topic);
   }
 
   @AfterEach
-  void teardown() {
+  void teardown(@Autowired EmbeddedKafkaBroker broker) {
     kafkaTemplate.destroy();
+    broker.doWithAdmin(admin -> admin.deleteTopics(List.of(topic)));
   }
 
   @Test

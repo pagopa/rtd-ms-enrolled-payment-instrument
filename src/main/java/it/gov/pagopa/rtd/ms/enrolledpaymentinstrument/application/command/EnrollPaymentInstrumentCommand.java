@@ -27,4 +27,12 @@ public class EnrollPaymentInstrumentCommand {
     CREATE,
     DELETE
   }
+
+  public EnrollPaymentInstrumentCommand(
+          String hashPan,
+          String sourceApp,
+          Operation operation
+  ) {
+     this(hashPan, sourceApp, operation, null, null);
+  }
 }
