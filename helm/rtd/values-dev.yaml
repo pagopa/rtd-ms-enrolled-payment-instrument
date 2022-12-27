@@ -17,6 +17,7 @@ microservice-chart:
 
   envSecret:
     aks-api-url: cstar-d-weu-dev01-aks-apiserver-url
+    API_KEY_TOKEN_FINDER: pagopa-platform-apim-api-key-primary-tkm
 
   #  autoscaling:
   #    enable: false

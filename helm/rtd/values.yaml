@@ -52,7 +52,6 @@ microservice-chart:
     APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
     KAFKA_RTD_PI_TO_APP_SASL_JAAS_CONFIG: evh-rtd-pi-to-app-rtd-pi-to-app-producer-policy-rtd
     KAFKA_RTD_SPLIT_SASL_JAAS_CONFIG: evh-rtd-split-by-pi-rtd-split-by-pi-consumer-policy-rtd
-    API_KEY_TOKEN_FINDER: pagopa-platform-apim-api-key-primary
 
   envConfigMapExternals:
     rtd-enrolled-payment-instrument:
