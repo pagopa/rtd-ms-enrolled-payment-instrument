@@ -28,7 +28,6 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UnknownFormatConversionException;
 
@@ -63,7 +62,7 @@ public class AppConfiguration {
 
   @Bean
   public InstrumentTokenFinder instrumentTokenFinder() {
-    return Objects.isNull(baseUrlTokenFinder) ?
+    return ObjectUtils.isEmpty(baseUrlTokenFinder) ?
             InstrumentTokenFinder.fake(LoggerFactory.getLogger(InstrumentTokenFinder.class)) :
             TkmTokenFinder.fromUrl(baseUrlTokenFinder, apiKeyTokenFinder);
   }
