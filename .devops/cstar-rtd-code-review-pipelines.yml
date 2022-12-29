@@ -7,6 +7,8 @@ pr:
   branches:
     include:
       - main
+      - develop
+      - uat
   paths:
     include:
       - '.devops/cstar-rtd-code-review-pipelines.yml'
