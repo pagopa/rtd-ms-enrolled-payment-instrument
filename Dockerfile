@@ -1,11 +1,11 @@
-FROM maven:3.8.4-jdk-11-slim as buildtime
+FROM amazoncorretto:11 as buildtime
 
 WORKDIR /build
 COPY . .
 
 RUN mvn clean package
 
-FROM adoptopenjdk/openjdk11:alpine-jre as runtime
+FROM amazoncorretto:11 as runtime
 
 VOLUME /tmp
 WORKDIR /app
