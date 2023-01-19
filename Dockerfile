@@ -1,4 +1,4 @@
-FROM amazoncorretto:11 as buildtime
+FROM maven:3.8.7-amazoncorretto-11 as buildtime
 
 WORKDIR /build
 COPY . .
