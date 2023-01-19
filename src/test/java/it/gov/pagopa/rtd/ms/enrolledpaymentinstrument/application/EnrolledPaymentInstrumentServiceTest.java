@@ -119,8 +119,9 @@ class EnrolledPaymentInstrumentServiceTest {
     verify(enrollAckService).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
   }
 
+  // idempotency of card enrollment
   @Test
-  void whenCommandEnableExistingAppThenNoSendAck() {
+  void whenCommandEnableExistingAppThenSendAck() {
     final var fullEnrolledInstrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, Set.of(SourceApp.values()), null, null);
     fullEnrolledInstrument.clearDomainEvents();
     when(repository.findByHashPan(any())).thenReturn(Optional.of(fullEnrolledInstrument));
@@ -131,7 +132,7 @@ class EnrolledPaymentInstrumentServiceTest {
             Operation.CREATE
     );
     service.handle(command);
-    verify(enrollAckService, times(0)).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
+    verify(enrollAckService, times(1)).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
   }
 
   @Test

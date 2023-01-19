@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import java.util.Objects;
 
 @Data
 @Getter
@@ -19,15 +20,25 @@ public class CloudEvent<T> {
   @NotBlank
   private String type;
 
+  private String correlationId;
+
   @Valid
   private T data;
 
   public static class CloudEventBuilder<T> {
     private String type;
+    private String correlationId;
     private T data;
 
     public CloudEventBuilder<T> withType(String type) {
       this.type = type;
+      return this;
+    }
+
+    public CloudEventBuilder<T> withCorrelationId(String correlationId) {
+      if (Objects.nonNull(correlationId)) {
+        this.correlationId = correlationId;
+      }
       return this;
     }
 
@@ -37,7 +48,7 @@ public class CloudEvent<T> {
     }
 
     public CloudEvent<T> build() {
-      return new CloudEvent<>(type, data);
+      return new CloudEvent<>(type, correlationId, data);
     }
   }
 }

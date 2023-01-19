@@ -2,7 +2,9 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.CloudEventConsumer;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.ValidatedConsumer;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.ApplicationInstrumentEventAdapter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.TokenManagerEventAdapter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
@@ -18,8 +20,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
-import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
-import org.springframework.util.backoff.ExponentialBackOff;
 import org.springframework.util.backoff.FixedBackOff;
 
 import javax.validation.Validator;
@@ -49,9 +49,10 @@ public class KafkaConfiguration {
   @Bean
   Consumer<CloudEvent<ApplicationInstrumentAdded>> applicationInstrumentAddedConsumer(
           Validator validator,
+          CorrelationIdService correlationIdService,
           ApplicationInstrumentEventAdapter eventAdapter
   ) {
-    return new ValidatedConsumer<>(validator, eventAdapter.addedEventConsumer());
+    return new ValidatedConsumer<>(validator, new CloudEventConsumer<>(correlationIdService, eventAdapter.addedEventConsumer()));
   }
 
   @Bean
