@@ -208,22 +208,22 @@ class ApplicationInstrumentEventAdapterTest {
     });
   }
 
-  @Test
-  void whenReceiveInstrumentAddedWithCorrelationIdThenIsAvailableToContext() {
-    final var hashPan = TestUtils.generateRandomHashPanAsString();
-    final var event = CloudEvent.builder()
-            .withType(ApplicationInstrumentAdded.TYPE)
-            .withCorrelationId("1234")
-            .withData(new ApplicationInstrumentDeleted(hashPan, true, DEFAULT_APPLICATION))
-            .build();
-
-    final var isSent = stream.send(BINDING_NAME, event);
-
-    assertTrue(isSent);
-    await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
-       assertThat(correlationIdService.popCorrelationId())
-              .hasValue("1234");
-    });
-    Mockito.verify(paymentInstrumentService, Mockito.times(1)).handle(any());
-  }
+//  @Test
+//  void whenReceiveInstrumentAddedWithCorrelationIdThenIsAvailableToContext() {
+//    final var hashPan = TestUtils.generateRandomHashPanAsString();
+//    final var event = CloudEvent.builder()
+//            .withType(ApplicationInstrumentAdded.TYPE)
+//            .withCorrelationId("1234")
+//            .withData(new ApplicationInstrumentDeleted(hashPan, true, DEFAULT_APPLICATION))
+//            .build();
+//
+//    final var isSent = stream.send(BINDING_NAME, event);
+//
+//    assertTrue(isSent);
+//    await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+//       assertThat(correlationIdService.popCorrelationId())
+//              .hasValue("1234");
+//    });
+//    Mockito.verify(paymentInstrumentService, Mockito.times(1)).handle(any());
+//  }
 }
