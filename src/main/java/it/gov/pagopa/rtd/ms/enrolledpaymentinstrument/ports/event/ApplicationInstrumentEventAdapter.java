@@ -17,14 +17,9 @@ import java.util.function.Consumer;
 public class ApplicationInstrumentEventAdapter {
 
     private final EnrolledPaymentInstrumentService paymentInstrumentService;
-    private final CorrelationIdService correlationIdService;
 
-    public ApplicationInstrumentEventAdapter(
-            EnrolledPaymentInstrumentService paymentInstrumentService,
-            CorrelationIdService correlationIdService
-    ) {
+    public ApplicationInstrumentEventAdapter(EnrolledPaymentInstrumentService paymentInstrumentService) {
         this.paymentInstrumentService = paymentInstrumentService;
-        this.correlationIdService = correlationIdService;
     }
 
     public Consumer<CloudEvent<ApplicationInstrumentAdded>> addedEventConsumer() {
