@@ -3,9 +3,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common;
 
 import org.springframework.data.annotation.Transient;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Abstraction over most important concept of DDD. Also allow to use Domain Events to de-coupling business logic
@@ -16,13 +14,13 @@ import java.util.List;
 public abstract class AggregateRoot {
 
   @Transient
-  private final List<DomainEvent> domainEvents;
+  private final Set<DomainEvent> domainEvents;
 
   protected AggregateRoot() {
-    this(new ArrayList<>());
+    this(new HashSet<>());
   }
 
-  protected AggregateRoot(List<DomainEvent> domainEvents) {
+  protected AggregateRoot(Set<DomainEvent> domainEvents) {
     this.domainEvents = domainEvents;
   }
 
@@ -30,8 +28,8 @@ public abstract class AggregateRoot {
     domainEvents.add(event);
   }
 
-  public List<DomainEvent> domainEvents() {
-    return Collections.unmodifiableList(domainEvents);
+  public Set<DomainEvent> domainEvents() {
+    return Collections.unmodifiableSet(domainEvents);
   }
 
   public void clearDomainEvents() {

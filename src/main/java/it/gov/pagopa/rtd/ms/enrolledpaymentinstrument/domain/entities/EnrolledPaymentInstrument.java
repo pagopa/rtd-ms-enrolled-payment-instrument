@@ -82,9 +82,7 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
   public void enableApp(SourceApp sourceApp) {
     this.state = state == PaymentInstrumentState.REVOKED ? this.state : PaymentInstrumentState.READY;
     if (this.state == PaymentInstrumentState.READY) {
-      if (!this.enabledApps.contains(sourceApp)) {
-        this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
-      }
+      this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
       this.enabledApps.add(sourceApp);
     }
   }
