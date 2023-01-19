@@ -184,6 +184,16 @@ stages:
                     install: true
                     waitForExecution: true
                     arguments: "--timeout 5m00s --debug"
+                - task: KubernetesManifest@0
+                  displayName: Patch with BuildId
+                  inputs:
+                    kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
+                    namespace: '$(deployNamespace)'
+                    action: patch
+                    kind: deployment
+                    name: '$(helmReleaseName)-microservice-chart'
+                    mergeStrategy: strategic
+                    patch: '{"spec":{"template":{"metadata":{"annotations":{"buildNumber":"$(Build.BuildId)"}}}}}'
 
   - stage: 'Component_Test'
     displayName: 'Component test on ${{ variables.environment }}'
