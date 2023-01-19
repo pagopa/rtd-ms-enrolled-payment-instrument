@@ -9,9 +9,6 @@ pr:
       - main
       - develop
       - uat
-  paths:
-    include:
-      - '.devops/cstar-rtd-code-review-pipelines.yml'
 
 pool:
   #vmImage: 'ubuntu-latest'
