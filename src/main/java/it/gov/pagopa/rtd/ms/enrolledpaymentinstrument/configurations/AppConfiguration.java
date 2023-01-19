@@ -8,6 +8,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckS
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.tkm.TkmTokenFinder;
@@ -46,8 +47,13 @@ public class AppConfiguration {
   private String apiKeyTokenFinder;
 
   @Bean
-  public EnrollAckService enrollAckService(StreamBridge bridge) {
-    return new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING);
+  public CorrelationIdService correlationIdService() {
+    return CorrelationIdService.create();
+  }
+
+  @Bean
+  public EnrollAckService enrollAckService(StreamBridge bridge, CorrelationIdService correlationIdService) {
+    return new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING, correlationIdService);
   }
 
   @Bean

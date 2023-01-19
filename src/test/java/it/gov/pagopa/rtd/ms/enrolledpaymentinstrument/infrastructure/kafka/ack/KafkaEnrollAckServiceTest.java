@@ -7,6 +7,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,8 @@ class KafkaEnrollAckServiceTest {
 
   @Autowired
   private StreamBridge bridge;
+  @Autowired
+  private CorrelationIdService correlationIdService;
   private KafkaEnrollAckService kafkaEnrollAckService;
 
   private TestKafkaConsumerSetup.TestConsumer testConsumer;
@@ -58,7 +61,7 @@ class KafkaEnrollAckServiceTest {
   void setUp(@Autowired EmbeddedKafkaBroker broker) {
     broker.addTopicsWithResults(topic);
     testConsumer = TestKafkaConsumerSetup.setup(broker, topic);
-    kafkaEnrollAckService = new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING);
+    kafkaEnrollAckService = new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING, correlationIdService);
     mapper = new ObjectMapper();
   }
 
@@ -75,6 +78,7 @@ class KafkaEnrollAckServiceTest {
     final var hashPan = TestUtils.generateRandomHashPan();
     final var ackTimestamp = new Date();
     final var type = new TypeReference<CloudEvent<EnrollAck>>() {};
+    correlationIdService.setCorrelationId("1234");
     kafkaEnrollAckService.confirmEnroll(SourceApp.ID_PAY, hashPan, ackTimestamp);
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
@@ -85,7 +89,8 @@ class KafkaEnrollAckServiceTest {
               .matches(it -> it.getType().equals(EnrollAck.TYPE))
               .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
               .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp))
-              .matches(it -> Objects.equals(it.getData().getApplication(), SourceApp.ID_PAY));
+              .matches(it -> Objects.equals(it.getData().getApplication(), SourceApp.ID_PAY))
+              .matches(it -> Objects.equals(it.getCorrelationId(), "1234"));
     });
   }
 }
