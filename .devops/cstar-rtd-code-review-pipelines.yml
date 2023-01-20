@@ -7,9 +7,8 @@ pr:
   branches:
     include:
       - main
-  paths:
-    include:
-      - '.devops/cstar-rtd-code-review-pipelines.yml'
+      - develop
+      - uat
 
 pool:
   #vmImage: 'ubuntu-latest'

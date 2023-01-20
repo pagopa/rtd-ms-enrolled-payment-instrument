@@ -170,7 +170,14 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>1.32</version>
+                <version>1.33</version>
+            </dependency>
+
+            <!-- fix jackson core vulnerability -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>2.13.4.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

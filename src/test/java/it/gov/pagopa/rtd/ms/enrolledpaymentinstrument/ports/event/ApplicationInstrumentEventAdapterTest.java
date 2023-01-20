@@ -8,6 +8,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollA
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentDeleted;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -17,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -42,9 +45,12 @@ import org.springframework.test.context.ActiveProfiles;
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
@@ -65,6 +71,10 @@ class ApplicationInstrumentEventAdapterTest {
 
   @Autowired
   EnrolledPaymentInstrumentService paymentInstrumentService;
+
+  @Autowired
+  @Spy
+  CorrelationIdService correlationIdService;
 
   private KafkaTemplate<String, CloudEvent<?>> kafkaTemplate;
 
@@ -135,11 +145,11 @@ class ApplicationInstrumentEventAdapterTest {
 
   @Test
   void whenReceivedMalformedEventThenRejectIt() {
-    Mockito.doNothing().when(paymentInstrumentService).handle(Mockito.any());
+    Mockito.doNothing().when(paymentInstrumentService).handle(any());
     kafkaTemplate.send(topic, CloudEvent.builder().withType("").withData("").build());
 
     await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(Mockito.any());
+      Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(any());
     });
   }
 
@@ -151,12 +161,12 @@ class ApplicationInstrumentEventAdapterTest {
             .build();
     Mockito.doThrow(exception)
             .when(paymentInstrumentService)
-            .handle(Mockito.any());
+            .handle(any());
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(Mockito.any());
+      Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(any());
     });
   }
 
@@ -170,12 +180,12 @@ class ApplicationInstrumentEventAdapterTest {
             .doThrow(DuplicateKeyException.class)
             .doNothing()
             .when(paymentInstrumentService)
-            .handle(Mockito.any());
+            .handle(any());
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(Mockito.any());
+      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any());
     });
   }
 
@@ -189,12 +199,12 @@ class ApplicationInstrumentEventAdapterTest {
             .doThrow(EnrollAckError.class)
             .doNothing()
             .when(paymentInstrumentService)
-            .handle(Mockito.any());
+            .handle(any());
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(Mockito.any());
+      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any());
     });
   }
 }

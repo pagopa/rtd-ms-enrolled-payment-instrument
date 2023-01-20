@@ -29,23 +29,23 @@ variables:
   # If the branch is develop or a feature branch starting with CEN, deploy in DEV environment
   ${{ if or(startsWith(variables['Build.SourceBranch'], 'refs/heads/develop'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/TAE'), startsWith(variables['Build.SourceBranch'], 'refs/heads/RTD')) ) }}:
     environment: 'DEV'
-    isToDeploy: true
+    isToDeploy: false
     postmanEnvFile: 'rtd_dev.postman_environment.json'
     dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(DEV_AGENT_POOL)
-    componentTest: true
+    componentTest: false
 
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
     environment: 'UAT'
-    isToDeploy: true
+    isToDeploy: false
     postmanEnvFile: 'rtd_uat.postman_environment.json'
     dockerRegistryServiceConnection: '$(UAT_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(UAT_AGENT_POOL)
-    componentTest: true
+    componentTest: false
 
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}:
     environment: 'PROD'
