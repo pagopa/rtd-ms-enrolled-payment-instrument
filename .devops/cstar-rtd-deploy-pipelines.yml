@@ -1,12 +1,18 @@
 # Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
+parameters:
+  - name: 'executeBuild'
+    displayName: 'Launch maven and docker build'
+    type: boolean
+    default: true
+
 trigger:
   branches:
     include:
-      - main
       - develop
       - uat
+#      - main
   paths:
     include:
       - src/*
@@ -23,44 +29,50 @@ variables:
 
   imageRepository: '$(K8S_IMAGE_REPOSITORY_NAME)'
   deployNamespace: '$(DEPLOY_NAMESPACE)'
+  helmReleaseName : '$(HELM_RELEASE_NAME)'
   settingsXmlROsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
   settingsXmlSecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
+  canDeploy: true
 
   # If the branch is develop or a feature branch starting with CEN, deploy in DEV environment
-  ${{ if or(startsWith(variables['Build.SourceBranch'], 'refs/heads/develop'), or(startsWith(variables['Build.SourceBranch'], 'refs/heads/TAE'), startsWith(variables['Build.SourceBranch'], 'refs/heads/RTD')) ) }}:
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/develop') }}:
     environment: 'DEV'
-    isToDeploy: false
+    componentTest: true
     postmanEnvFile: 'rtd_dev.postman_environment.json'
     dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(DEV_AGENT_POOL)
-    componentTest: false
 
-  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
+  ${{ elseif startsWith(variables['Build.SourceBranch'], 'refs/heads/uat') }}:
     environment: 'UAT'
-    isToDeploy: false
+    componentTest: true
     postmanEnvFile: 'rtd_uat.postman_environment.json'
     dockerRegistryServiceConnection: '$(UAT_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(UAT_AGENT_POOL)
-    componentTest: false
 
-  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/main') }}:
-    environment: 'PROD'
-    isToDeploy: true
-    postmanEnvFile: ''
-    dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
-    kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
-    containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
-    selfHostedAgentPool: $(PROD_AGENT_POOL)
-    componentTest: false
+#  ${{ elseif or(startsWith(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.ENV, 'PROD')) }}:
+#    environment: 'PROD'
+#    dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
+#    kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
+#    containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
+#    selfHostedAgentPool: $(PROD_AGENT_POOL)
+
+  ${{ else }}:
+    environment: 'DEV'
+    componentTest: true
+    postmanEnvFile: 'rtd_dev.postman_environment.json'
+    dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(DEV_AGENT_POOL)
 
 stages:
-  - stage: Release
+  - stage: 'pom_version'
     displayName: Release
-    condition: eq(variables.isToDeploy, true)
+    condition: eq(variables.canDeploy, true)
     jobs:
       - job: POM
         displayName: POM
@@ -70,17 +82,17 @@ stages:
           - task: Bash@3
             displayName: Get POM version
             name: getpomversion
-            condition: and(succeeded(), eq(variables.isToDeploy, true))
+            condition: and(succeeded(), eq(variables.canDeploy, true))
             inputs:
               targetType: 'inline'
               script: |
                 version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
                 echo "##vso[task.setvariable variable=outputpomversion;isOutput=true]$version"
               failOnStderr: true
-  - stage: 'Build'
+
+  - stage: 'build'
     displayName: 'Build_and_Publish_to_${{ variables.environment }}'
-    dependsOn: Release
-    condition: and(succeeded(), eq(variables.isToDeploy, true))
+    dependsOn: 'pom_version'
     variables:
       pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
     jobs:
@@ -90,8 +102,8 @@ stages:
           vmImage: $(vmImageNameDefault)
         steps:
           - task: Docker@2
+            condition: and(succeeded(), ${{ parameters.executeBuild }})
             displayName: 'Publish_image_to_${{ variables.environment }}'
-            condition: succeeded()
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
               repository: '$(imageRepository)'
@@ -100,18 +112,27 @@ stages:
                 $(Build.BuildId)
                 latest
                 $(pomversion)
+  - stage: 'publish_artifact_helm'
+    displayName: 'Publish_artifact_Helm'
+    dependsOn: ['build']
+    jobs:
+      - job: Publish_artifact_helm
+        displayName: Publish_artifact_helm
+        pool:
+          vmImage: $(vmImageNameDefault)
+        steps:
           - task: PublishPipelineArtifact@1
             displayName: 'Publish Artifact manifests'
-            condition: and(succeeded(), eq(variables.isToDeploy, true))
+            condition: succeeded()
             inputs:
-              targetPath: '$(Build.Repository.LocalPath)/manifests'
-              artifact: 'manifests'
+              targetPath: '$(Build.Repository.LocalPath)/helm/rtd'
+              artifact: 'helm'
               publishLocation: 'pipeline'
 
-  - stage: 'Deploy'
+  - stage: 'deploy'
     displayName: 'Deploy to ${{ variables.environment }} K8S'
-    dependsOn: [ 'Release', 'Build' ]
-    condition: and(succeeded(), eq(variables.isToDeploy, true))
+    dependsOn: ['publish_artifact_helm']
+    condition: and(succeeded(), eq(variables.canDeploy, true))
     variables:
       pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
     jobs:
@@ -128,51 +149,55 @@ stages:
                 - task: DownloadPipelineArtifact@2
                   inputs:
                     buildType: 'current'
-                    artifactName: 'manifests'
-                    targetPath: '$(Pipeline.Workspace)/manifests'
-
+                    artifactName: 'helm'
+                    targetPath: '$(Pipeline.Workspace)/helm/rtd'
                 - task: Bash@3
-                  displayName: Generate Kustomization
-                  name: generateKustomization
+                  name: helm_dependency_build
+                  displayName: Helm dependency build
                   inputs:
+                    workingDirectory: '$(Pipeline.Workspace)/helm/rtd'
                     targetType: 'inline'
                     script: |
-                      cd $(Pipeline.Workspace)/manifests
-                      rm -rf kustomization.*
-                      curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-                      ./kustomize create --autodetect
-                      ./kustomize edit set image rtd-ms-enrolledpaymentinstrument=$(containerRegistry)/$(imageRepository):latest
-                      rm -rf kustomize
-                      cd $(Pipeline.Workspace)
+                      helm repo add pagopa-microservice https://pagopa.github.io/aks-microservice-chart-blueprint
+                      helm dep build
                     failOnStderr: true
-                - task: KubernetesManifest@0
-                  displayName: Customize Manifest
-                  name: customizeManifest
+                - task: Bash@3
+                  name: helm_template
+                  displayName: Helm template
                   inputs:
-                    action: bake
-                    renderType: kustomize
-                    kustomizationPath: $(Pipeline.Workspace)/manifests
-                - task: KubernetesManifest@0
-                  displayName: Deploy to Kubernetes Cluster
+                    workingDirectory: '$(Pipeline.Workspace)/helm/rtd'
+                    targetType: 'inline'
+                    script: |
+                      helm template . -f values-${{ lower(variables.environment) }}.yaml
+                    failOnStderr: true
+                - task: HelmDeploy@0
+                  displayName: Helm upgrade
                   inputs:
-                    action: deploy
-                    rolloutStatusTimeout: 180
-                    kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
-                    namespace: '$(deployNamespace)'
-                    manifests: $(customizeManifest.manifestsBundle)
-                    containers: "${variables.containerRegistry}/${variables.imageRepository}:${variables.pomversion}"
-                - task: Kubernetes@1
-                  displayName: Rollout Restart
-                  condition: eq(variables.componentTest, true)
-                  inputs:
-                    connectionType: 'Kubernetes Service Connection'
                     kubernetesServiceEndpoint: ${{ variables.kubernetesServiceConnection }}
                     namespace: '$(deployNamespace)'
-                    command: 'rollout'
-                    arguments: 'restart deploy rtd-ms-enrolledpaymentinstrument'
+                    command: upgrade
+                    chartType: filepath
+                    chartPath: $(Pipeline.Workspace)/helm/rtd
+                    chartName: ${{ variables.helmReleaseName }}
+                    releaseName: ${{ variables.helmReleaseName }}
+                    valueFile: "$(Pipeline.Workspace)/helm/rtd/values-${{ lower(variables.environment) }}.yaml"
+                    install: true
+                    waitForExecution: true
+                    arguments: "--timeout 5m00s --debug"
+                - task: KubernetesManifest@0
+                  displayName: Patch with BuildId
+                  inputs:
+                    kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
+                    namespace: '$(deployNamespace)'
+                    action: patch
+                    kind: deployment
+                    name: '$(helmReleaseName)-microservice-chart'
+                    mergeStrategy: strategic
+                    patch: '{"spec":{"template":{"metadata":{"annotations":{"buildNumber":"$(Build.BuildId)"}}}}}'
 
   - stage: 'Component_Test'
     displayName: 'Component test on ${{ variables.environment }}'
+    dependsOn: [ 'deploy' ]
     condition: eq(variables.componentTest, true)
     jobs:
       - job: 'Run_Postman_collection_on_${{ variables.environment }}'

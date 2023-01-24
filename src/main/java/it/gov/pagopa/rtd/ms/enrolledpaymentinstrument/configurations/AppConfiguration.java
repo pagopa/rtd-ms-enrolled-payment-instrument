@@ -3,15 +3,16 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentDao;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories.EnrolledPaymentInstrumentRepositoryImpl;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.tkm.TkmTokenFinder;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +21,6 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.util.ObjectUtils;
 
 import javax.validation.ConstraintViolationException;
@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.UnknownFormatConversionException;
 
 @Configuration
-@EnableMongoRepositories(basePackages = "it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.repositories")
 public class AppConfiguration {
 
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
@@ -41,16 +40,20 @@ public class AppConfiguration {
   @Value("${revoke-notification.bpd-url:}")
   private String baseUrlBpdDeleteCard;
 
+  @Value("${instrument-token-finder.url:#{null}}")
+  private String baseUrlTokenFinder;
+
+  @Value("${instrument-token-finder.api-key:}")
+  private String apiKeyTokenFinder;
+
   @Bean
-  public EnrolledPaymentInstrumentRepository enrolledPaymentInstrumentRepository(
-          EnrolledPaymentInstrumentDao dao
-  ) {
-    return new EnrolledPaymentInstrumentRepositoryImpl(dao);
+  public CorrelationIdService correlationIdService() {
+    return CorrelationIdService.create();
   }
 
   @Bean
-  public EnrollAckService enrollAckService(StreamBridge bridge) {
-    return new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING);
+  public EnrollAckService enrollAckService(StreamBridge bridge, CorrelationIdService correlationIdService) {
+    return new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING, correlationIdService);
   }
 
   @Bean
@@ -61,6 +64,13 @@ public class AppConfiguration {
                     BPDRevokeNotificationService.fromUrl(baseUrlBpdDeleteCard),
             new KafkaRevokeNotificationService(RTD_TO_APP_BINDING, bridge)
     ));
+  }
+
+  @Bean
+  public InstrumentTokenFinder instrumentTokenFinder() {
+    return ObjectUtils.isEmpty(baseUrlTokenFinder) ?
+            InstrumentTokenFinder.fake(LoggerFactory.getLogger(InstrumentTokenFinder.class)) :
+            TkmTokenFinder.fromUrl(baseUrlTokenFinder, apiKeyTokenFinder);
   }
 
   /**
