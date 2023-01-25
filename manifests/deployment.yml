@@ -22,7 +22,7 @@ spec:
             - name: API_KEY_TOKEN_FINDER
               valueFrom:
                 secretKeyRef:
-                  name: pagopa-platform-api-key
+                  name: pagopa-platform-api-key-tkm
                   key: API_KEY
           envFrom:
             - secretRef:
