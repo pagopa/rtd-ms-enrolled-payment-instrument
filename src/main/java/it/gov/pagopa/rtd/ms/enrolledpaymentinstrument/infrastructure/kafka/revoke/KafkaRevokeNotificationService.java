@@ -8,7 +8,6 @@ import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.support.MessageBuilder;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Set;
 
 public class KafkaRevokeNotificationService implements InstrumentRevokeNotificationService {
@@ -30,6 +29,11 @@ public class KafkaRevokeNotificationService implements InstrumentRevokeNotificat
             .withType(RevokeNotification.TYPE)
             .withData(new RevokeNotification(taxCode, hashPan.getValue(), new Date(), apps))
             .build();
-    return streamBridge.send(producerBinding, MessageBuilder.withPayload(cloudEvent).build());
+    return streamBridge.send(
+            producerBinding,
+            MessageBuilder.withPayload(cloudEvent)
+                    .setHeader("partitionKey", hashPan.getValue())
+                    .build()
+    );
   }
 }
