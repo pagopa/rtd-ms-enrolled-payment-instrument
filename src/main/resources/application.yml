@@ -60,6 +60,8 @@ spring:
           content-type: application/json
           binder: kafka-to-app-binder
           producer:
+            partitionKeyExpression: headers.partitionKey
+            partitionCount: ${KAFKA_RTD_PI_TO_APP_PARTITION_COUNT:1}
             sync: true
 
       kafka:
