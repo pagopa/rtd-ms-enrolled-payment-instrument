@@ -188,6 +188,30 @@ class PaymentInstrumentTest {
     assertThat(updateOrError.getLeft()).isInstanceOf(PaymentInstrumentError.class);
   }
 
+  @Test
+  void whenIsReadyAndExportedThenPaymentInstrumentExportedEventIsFired() {
+    final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), SourceApp.ID_PAY);
+    paymentInstrument.markAsExported();
+    assertThat(paymentInstrument.domainEvents()).contains(new PaymenInstrumentExported(paymentInstrument.getHashPan().getValue()));
+  }
+
+  @Test
+  void whenIsNotReadyAndTryToExportThenNoRelatedEventIsFired() {
+    final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), SourceApp.ID_PAY);
+    paymentInstrument.revokeInstrument();
+    paymentInstrument.markAsExported();
+    assertThat(paymentInstrument.domainEvents()).doesNotContain(new PaymenInstrumentExported(paymentInstrument.getHashPan().getValue()));
+  }
+
+  @Test
+  void whenEnrollAppAndIsAlreadyExportedThenFireExportedEvent() {
+    final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), SourceApp.ID_PAY);
+    paymentInstrument.markAsExported();
+    paymentInstrument.clearDomainEvents();
+    paymentInstrument.enableApp(SourceApp.FA);
+    assertThat(paymentInstrument.domainEvents()).contains(new PaymenInstrumentExported(paymentInstrument.getHashPan().getValue()));
+  }
+
   static class RandomPaymentInstrumentProvider implements ArgumentsProvider {
 
     @Override

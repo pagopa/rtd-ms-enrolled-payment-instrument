@@ -86,6 +86,9 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
     if (this.state == PaymentInstrumentState.READY) {
       this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
       this.enabledApps.add(sourceApp);
+      if(this.exported) {
+        this.registerEvent(new PaymenInstrumentExported(hashPan.getValue()));
+      }
     }
   }
 
