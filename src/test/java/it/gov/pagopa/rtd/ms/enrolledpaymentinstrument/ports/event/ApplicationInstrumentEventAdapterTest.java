@@ -145,11 +145,11 @@ class ApplicationInstrumentEventAdapterTest {
 
   @Test
   void whenReceivedMalformedEventThenRejectIt() {
-    Mockito.doNothing().when(paymentInstrumentService).handle(any());
+    Mockito.doNothing().when(paymentInstrumentService).handle(any(EnrollPaymentInstrumentCommand.class));
     kafkaTemplate.send(topic, CloudEvent.builder().withType("").withData("").build());
 
     await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(any());
+      Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
@@ -161,12 +161,12 @@ class ApplicationInstrumentEventAdapterTest {
             .build();
     Mockito.doThrow(exception)
             .when(paymentInstrumentService)
-            .handle(any());
+            .handle(any(EnrollPaymentInstrumentCommand.class));
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(any());
+      Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
@@ -180,12 +180,12 @@ class ApplicationInstrumentEventAdapterTest {
             .doThrow(DuplicateKeyException.class)
             .doNothing()
             .when(paymentInstrumentService)
-            .handle(any());
+            .handle(any(EnrollPaymentInstrumentCommand.class));
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any());
+      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
@@ -199,12 +199,12 @@ class ApplicationInstrumentEventAdapterTest {
             .doThrow(EnrollAckError.class)
             .doNothing()
             .when(paymentInstrumentService)
-            .handle(any());
+            .handle(any(EnrollPaymentInstrumentCommand.class));
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any());
+      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 }
