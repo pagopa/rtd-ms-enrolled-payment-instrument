@@ -87,7 +87,7 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
       this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
       this.enabledApps.add(sourceApp);
       if(this.exported) {
-        this.registerEvent(new PaymenInstrumentExported(hashPan.getValue()));
+        this.registerEvent(new PaymentInstrumentExported(hashPan.getValue()));
       }
     }
   }
@@ -151,7 +151,7 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
     // only ready card can be marked as exported
     if (state == PaymentInstrumentState.READY) {
       exported = true;
-      registerEvent(new PaymenInstrumentExported(hashPan.getValue()));
+      registerEvent(new PaymentInstrumentExported(hashPan.getValue()));
     }
   }
 
