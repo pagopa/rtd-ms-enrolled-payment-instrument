@@ -192,7 +192,7 @@ class PaymentInstrumentTest {
   void whenIsReadyAndExportedThenPaymentInstrumentExportedEventIsFired() {
     final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), SourceApp.ID_PAY);
     paymentInstrument.markAsExported();
-    assertThat(paymentInstrument.domainEvents()).contains(new PaymenInstrumentExported(paymentInstrument.getHashPan().getValue()));
+    assertThat(paymentInstrument.domainEvents()).contains(new PaymentInstrumentExported(paymentInstrument.getHashPan().getValue()));
   }
 
   @Test
@@ -200,7 +200,7 @@ class PaymentInstrumentTest {
     final var paymentInstrument = EnrolledPaymentInstrument.create(TestUtils.generateRandomHashPan(), SourceApp.ID_PAY);
     paymentInstrument.revokeInstrument();
     paymentInstrument.markAsExported();
-    assertThat(paymentInstrument.domainEvents()).doesNotContain(new PaymenInstrumentExported(paymentInstrument.getHashPan().getValue()));
+    assertThat(paymentInstrument.domainEvents()).doesNotContain(new PaymentInstrumentExported(paymentInstrument.getHashPan().getValue()));
   }
 
   @Test
@@ -209,7 +209,7 @@ class PaymentInstrumentTest {
     paymentInstrument.markAsExported();
     paymentInstrument.clearDomainEvents();
     paymentInstrument.enableApp(SourceApp.FA);
-    assertThat(paymentInstrument.domainEvents()).contains(new PaymenInstrumentExported(paymentInstrument.getHashPan().getValue()));
+    assertThat(paymentInstrument.domainEvents()).contains(new PaymentInstrumentExported(paymentInstrument.getHashPan().getValue()));
   }
 
   static class RandomPaymentInstrumentProvider implements ArgumentsProvider {

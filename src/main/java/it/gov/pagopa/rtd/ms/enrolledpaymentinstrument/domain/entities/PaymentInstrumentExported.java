@@ -4,6 +4,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEvent;
 import lombok.Data;
 
 @Data
-public class PaymenInstrumentExported implements DomainEvent {
+public class PaymentInstrumentExported implements DomainEvent {
   private final String hashPan;
 }
