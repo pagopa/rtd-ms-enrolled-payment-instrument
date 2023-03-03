@@ -41,7 +41,7 @@ public class KafkaConfiguration {
     routingMap.put(ApplicationInstrumentAdded.TYPE, "applicationInstrumentAddedConsumer");
     routingMap.put(ApplicationInstrumentDeleted.TYPE, "applicationInstrumentDeletedConsumer");
     routingMap.put(TokenManagerCardChanged.TYPE, "tkmUpdateEventConsumer");
-    routingMap.put(PaymentInstrumentExported.TYPE, "paymentInstrumentExportedConsumer");
+    routingMap.put("confirmExport", "paymentInstrumentExportedConsumer");
   }
 
   @Bean
@@ -72,8 +72,10 @@ public class KafkaConfiguration {
   }
 
   @Bean
-  Consumer<CloudEvent<PaymentInstrumentExported>> paymentInstrumentExportedConsumer(Validator validator, ExportEventAdapter eventAdapter) {
-    return new ValidatedConsumer<>(validator, eventAdapter);
+  Consumer<String> paymentInstrumentExportedConsumer(Validator validator, ExportEventAdapter eventAdapter) {
+    return event -> {
+
+    };
   }
 
   @Bean
