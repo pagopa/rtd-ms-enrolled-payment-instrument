@@ -60,7 +60,7 @@ class TokenManagerEventAdapterTest {
   @Autowired
   private TkmPaymentInstrumentService tkmPaymentInstrumentService;
 
-  private KafkaTemplate<String, CloudEvent<TokenManagerCardChanged>> kafkaTemplate;
+  private KafkaTemplate<String, CloudEvent<?>> kafkaTemplate;
 
   @BeforeEach
   void setup(@Autowired EmbeddedKafkaBroker broker) {

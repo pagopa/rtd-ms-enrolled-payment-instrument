@@ -73,7 +73,7 @@ public class KafkaConfiguration {
 
   @Bean
   Consumer<CloudEvent<PaymentInstrumentExported>> paymentInstrumentExportedConsumer(Validator validator, ExportEventAdapter eventAdapter) {
-    return new ValidatedConsumer<>(validator, eventAdapter.paymentInstrumentExportedConsumer());
+    return new ValidatedConsumer<>(validator, eventAdapter);
   }
 
   @Bean

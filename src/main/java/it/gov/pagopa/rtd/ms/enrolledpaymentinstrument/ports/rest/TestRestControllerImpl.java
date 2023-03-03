@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.rest;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.PaymentInstrumentExported;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,18 @@ public class TestRestControllerImpl implements TestRestController {
                     .build()
     );
     log.info("TokenManagerCardChanged sent {}", sent);
+  }
+
+  @Override
+  public void sendExportEvent(PaymentInstrumentExported event) {
+    log.info("Sending PaymentInstrumentExported: {}", event);
+    final var sent = streamBridge.send(
+            RTD_PRODUCER_BINDING,
+            MessageBuilder.withPayload(event)
+                    .setHeader("partitionKey", event.getPaymentInstrumentId())
+                    .build()
+    );
+    log.info("PaymentInstrumentExported sent {}", sent);
   }
 
   @Override
