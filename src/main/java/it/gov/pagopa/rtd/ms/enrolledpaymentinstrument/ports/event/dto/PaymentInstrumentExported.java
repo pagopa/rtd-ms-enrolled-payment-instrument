@@ -12,7 +12,7 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 public final class PaymentInstrumentExported {
 
-  public static final String TYPE = "ConfirmExport";
+  public static final String TYPE = "confirmExport";
 
   @NotNull
   @NotBlank
