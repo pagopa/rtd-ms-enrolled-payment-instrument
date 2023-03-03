@@ -6,9 +6,11 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.CloudEventC
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.ValidatedConsumer;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.ApplicationInstrumentEventAdapter;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.ExportEventAdapter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.TokenManagerEventAdapter;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentDeleted;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.PaymentInstrumentExported;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes.PaymentInstrumentEventRouter;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ public class KafkaConfiguration {
     routingMap.put(ApplicationInstrumentAdded.TYPE, "applicationInstrumentAddedConsumer");
     routingMap.put(ApplicationInstrumentDeleted.TYPE, "applicationInstrumentDeletedConsumer");
     routingMap.put(TokenManagerCardChanged.TYPE, "tkmUpdateEventConsumer");
+    routingMap.put(PaymentInstrumentExported.TYPE, "paymentInstrumentExportedConsumer");
   }
 
   @Bean
@@ -66,6 +69,11 @@ public class KafkaConfiguration {
   @Bean
   Consumer<CloudEvent<TokenManagerCardChanged>> tkmUpdateEventConsumer(Validator validator, TokenManagerEventAdapter eventAdapter) {
     return new ValidatedConsumer<>(validator, eventAdapter);
+  }
+
+  @Bean
+  Consumer<CloudEvent<PaymentInstrumentExported>> paymentInstrumentExportedConsumer(Validator validator, ExportEventAdapter eventAdapter) {
+    return new ValidatedConsumer<>(validator, eventAdapter.paymentInstrumentExportedConsumer());
   }
 
   @Bean
