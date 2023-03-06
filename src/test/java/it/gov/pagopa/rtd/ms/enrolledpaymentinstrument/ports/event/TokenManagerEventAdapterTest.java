@@ -40,6 +40,7 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.Duration;
 import java.util.List;
 
+import static it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration.NUMBER_OF_RETRIES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,7 +61,7 @@ class TokenManagerEventAdapterTest {
   @Autowired
   private TkmPaymentInstrumentService tkmPaymentInstrumentService;
 
-  private KafkaTemplate<String, CloudEvent<TokenManagerCardChanged>> kafkaTemplate;
+  private KafkaTemplate<String, CloudEvent<?>> kafkaTemplate;
 
   @BeforeEach
   void setup(@Autowired EmbeddedKafkaBroker broker) {
@@ -128,7 +129,7 @@ class TokenManagerEventAdapterTest {
 
   @ParameterizedTest
   @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
-  void whenUpdateCommandFailWithWriteConflictsThenRetryContinuously(Class<? extends Exception> exception) {
+  void whenUpdateCommandFailWithWriteConflictsThenRetryUntilMaxAttempts(Class<? extends Exception> exception) {
     Mockito.doThrow(exception)
             .when(tkmPaymentInstrumentService)
             .handle(Mockito.any(TkmUpdateCommand.class));
@@ -142,7 +143,7 @@ class TokenManagerEventAdapterTest {
     );
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(tkmPaymentInstrumentService, Mockito.atLeast(3)).handle(Mockito.any(TkmUpdateCommand.class));
+      Mockito.verify(tkmPaymentInstrumentService, Mockito.atLeast(NUMBER_OF_RETRIES)).handle(Mockito.any(TkmUpdateCommand.class));
     });
   }
 

@@ -52,6 +52,7 @@ spring:
           binder: kafka-split-by-pi-binder
           consumer:
             max-attempts: 1
+            default-retryable: false
             ackEachRecord: true
             ackMode: 'RECORD'
 
