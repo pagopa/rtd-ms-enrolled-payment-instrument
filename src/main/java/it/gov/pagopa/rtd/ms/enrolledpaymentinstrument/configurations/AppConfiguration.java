@@ -23,14 +23,12 @@ import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.util.ObjectUtils;
 
-import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
-import java.util.UnknownFormatConversionException;
 
 @Configuration
 public class AppConfiguration {
@@ -93,18 +91,4 @@ public class AppConfiguration {
             EnrollAckError.class
     );
   }
-
-  /**
-   * A list of non-transient exceptions. Tipically validation and schema error
-   * where no recovery operation are available.
-   */
-  @Bean("fatalExceptions")
-  Set<Class<? extends Exception>> consumerFatalExceptions() {
-    return Set.of(
-            IllegalArgumentException.class,
-            ConstraintViolationException.class,
-            UnknownFormatConversionException.class
-    );
-  }
-
 }

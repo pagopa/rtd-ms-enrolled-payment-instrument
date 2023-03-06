@@ -15,16 +15,23 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManag
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.routes.PaymentInstrumentEventRouter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.classify.BinaryExceptionClassifier;
 import org.springframework.cloud.function.context.MessageRoutingCallback;
+import org.springframework.cloud.stream.annotation.StreamRetryTemplate;
 import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.retry.backoff.UniformRandomBackOffPolicy;
+import org.springframework.retry.policy.BinaryExceptionClassifierRetryPolicy;
+import org.springframework.retry.policy.SimpleRetryPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.util.backoff.FixedBackOff;
 
 import javax.validation.Validator;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +41,8 @@ import java.util.function.Consumer;
 @Slf4j
 public class KafkaConfiguration {
 
-  private static final Long FIXED_BACKOFF_INTERVAL = 3000L;
+  private static final Long BACKOFF_MIN_INTERVAL = 200L; // ms
+  public static final int NUMBER_OF_RETRIES = 5;
   private static final Map<String, String> routingMap = new HashMap<>();
 
   static {
@@ -88,20 +96,17 @@ public class KafkaConfiguration {
 
   @Bean
   DefaultErrorHandler errorHandler(
-          Set<Class<? extends Exception>> retryableExceptions,
-          Set<Class<? extends Exception>> fatalExceptions
+          Set<Class<? extends Exception>> retryableExceptions
   ) {
     // previously called seek to error handler
     // this error handler allow to always retry the retryable exceptions
     // like db connection error or write error. While allow to set
     // not retryable exceptions like validation error which cannot be recovered with a retry.
     final var errorHandler = new DefaultErrorHandler(
-            new FixedBackOff(FIXED_BACKOFF_INTERVAL, FixedBackOff.UNLIMITED_ATTEMPTS)
+            new FixedBackOff(BACKOFF_MIN_INTERVAL, NUMBER_OF_RETRIES)
     );
     errorHandler.defaultFalse();
     retryableExceptions.forEach(errorHandler::addRetryableExceptions);
-    fatalExceptions.forEach(errorHandler::addNotRetryableExceptions);
     return errorHandler;
   }
-
 }
