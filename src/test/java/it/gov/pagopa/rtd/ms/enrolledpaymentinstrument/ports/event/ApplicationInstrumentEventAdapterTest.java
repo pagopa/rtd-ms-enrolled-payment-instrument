@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,16 +44,14 @@ import org.springframework.test.context.ActiveProfiles;
 import javax.validation.ConstraintViolationException;
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
-@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 1)
 @ImportAutoConfiguration(ValidationAutoConfiguration.class)
 @Import({TokenManagerEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
@@ -155,7 +152,7 @@ class ApplicationInstrumentEventAdapterTest {
 
   @ParameterizedTest
   @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
-  void whenServiceFailWithWriteConflictsThenRetryContinuously(Class<? extends Exception> exception) {
+  void whenServiceFailWithWriteConflictsThenRetryUntilMaxRetry(Class<? extends Exception> exception) {
     final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
             .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
             .build();
@@ -171,7 +168,7 @@ class ApplicationInstrumentEventAdapterTest {
   }
 
   @Test
-  void whenServiceFailsWithTransientErrorThenRetryUntilSucceed() {
+  void whenServiceFailsWithTransientErrorThenRetryUntilSucceedOrMaxRetry() {
     final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
             .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
             .build();
@@ -190,7 +187,7 @@ class ApplicationInstrumentEventAdapterTest {
   }
 
   @Test
-  void whenServiceFailToAckThenRetryUntilSucceed() {
+  void whenServiceFailToAckThenRetryUntilSucceedOrMaxAttempts() {
     final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
             .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
             .build();
