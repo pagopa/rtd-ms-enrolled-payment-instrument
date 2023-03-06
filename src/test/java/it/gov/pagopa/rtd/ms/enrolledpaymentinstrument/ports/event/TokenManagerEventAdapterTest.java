@@ -40,14 +40,13 @@ import org.springframework.test.context.ActiveProfiles;
 import java.time.Duration;
 import java.util.List;
 
-import static it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration.NUMBER_OF_RETRIES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
-@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 1)
 @ImportAutoConfiguration(ValidationAutoConfiguration.class)
 @Import({TokenManagerEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
@@ -128,7 +127,7 @@ class TokenManagerEventAdapterTest {
   }
 
   @ParameterizedTest
-  @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
+  @ValueSource(classes = {DuplicateKeyException.class, OptimisticLockingFailureException.class})
   void whenUpdateCommandFailWithWriteConflictsThenRetryUntilMaxAttempts(Class<? extends Exception> exception) {
     Mockito.doThrow(exception)
             .when(tkmPaymentInstrumentService)
@@ -143,7 +142,7 @@ class TokenManagerEventAdapterTest {
     );
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(tkmPaymentInstrumentService, Mockito.atLeast(NUMBER_OF_RETRIES)).handle(Mockito.any(TkmUpdateCommand.class));
+      Mockito.verify(tkmPaymentInstrumentService, Mockito.atLeast(3)).handle(Mockito.any(TkmUpdateCommand.class));
     });
   }
 
@@ -167,7 +166,7 @@ class TokenManagerEventAdapterTest {
 
   @ParameterizedTest
   @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
-  void whenRevokeCommandFailWithWriteConflictsThenRetryContinuously(Class<? extends Exception> exception) {
+  void whenRevokeCommandFailWithWriteConflictsThenRetryUntilMaxAttempts(Class<? extends Exception> exception) {
     Mockito.doThrow(exception)
             .when(tkmPaymentInstrumentService)
             .handle(Mockito.any(TkmRevokeCommand.class));
@@ -186,7 +185,7 @@ class TokenManagerEventAdapterTest {
   }
 
   @Test
-  void whenFailToNotifyRevokeThenRetryContinuously() {
+  void whenFailToNotifyRevokeThenRetryUntilMaxAttempts() {
     Mockito.doThrow(FailedToNotifyRevoke.class)
             .when(tkmPaymentInstrumentService)
             .handle(Mockito.any(TkmRevokeCommand.class));
