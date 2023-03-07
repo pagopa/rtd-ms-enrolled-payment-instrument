@@ -53,9 +53,6 @@ spring:
           consumer:
             max-attempts: 1
             default-retryable: false
-            ackEachRecord: true
-            ackMode: 'RECORD'
-
         rtdToApp-out-0:
           destination: ${topics.rtd-pi-to-app.topic}
           content-type: application/json
@@ -64,12 +61,6 @@ spring:
             partitionKeyExpression: headers.partitionKey
             partitionCount: ${KAFKA_RTD_PI_TO_APP_PARTITION_COUNT:1}
             sync: true
-
-      kafka:
-        binder:
-          configuration:
-            security.protocol: SASL_SSL
-            sasl.mechanism: PLAIN
 
       binders:
         kafka-to-app-binder:
@@ -90,8 +81,22 @@ spring:
               auto-create-topics: false
               brokers: ${KAFKA_RTD_SPLIT_BROKER:localhost:29095}
               configuration:
-                max.poll.records: 1
                 sasl.jaas.config: ${KAFKA_RTD_SPLIT_SASL_JAAS_CONFIG}
               consumerProperties:
                 key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                 value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+      kafka:
+        binder:
+          configuration:
+            security.protocol: SASL_SSL
+            sasl.mechanism: PLAIN
+        bindings:
+          functionRouter-in-0:
+            consumer:
+              ackMode: RECORD
+              commonErrorHandlerBeanName: errorHandler
+              configuration:
+                max.poll.records: ${MAX_POLL_RECORD:1}
+
+

@@ -20,7 +20,6 @@ import org.springframework.cloud.stream.config.ListenerContainerCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
-import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 
@@ -78,13 +77,8 @@ public class KafkaConfiguration {
   }
 
   @Bean
-  ListenerContainerCustomizer<AbstractMessageListenerContainer<?, ?>> listenerCustomization(
-          DefaultErrorHandler errorHandler
-  ) {
-    return (container, dest, group) -> {
-      container.getContainerProperties().setAckMode(ContainerProperties.AckMode.RECORD);
-      container.setCommonErrorHandler(errorHandler);
-    };
+  ListenerContainerCustomizer<AbstractMessageListenerContainer<?, ?>> listenerCustomization() {
+    return (container, dest, group) -> log.info("Spring cloud stream configuration {}", container.getContainerProperties());
   }
 
   @Bean
