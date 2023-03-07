@@ -25,7 +25,7 @@ spring:
           binder: kafka-binder
           consumer:
             max-attempts: 1
-
+            default-retryable: false
         rtdToApp-out-0:
           destination: ${test.kafka.topic-rtd-to-app}
           content-type: application/json
@@ -46,7 +46,14 @@ spring:
                 consumerProperties:
                   key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
                   value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
+      kafka:
+        bindings:
+          functionRouter-in-0:
+            consumer:
+              ackMode: RECORD
+              commonErrorHandlerBeanName: errorHandler
+              configuration:
+                max.poll.records: ${MAX_POLL_RECORD:1}
 ---
 spring:
   config:

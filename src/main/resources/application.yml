@@ -67,7 +67,6 @@ spring:
           type: kafka
           environment.spring.cloud.stream.kafka:
             binder:
-              auto-create-topics: false
               brokers: ${KAFKA_RTD_PI_TO_APP_BROKER:localhost:29095}
               sync: true
               requiredAcks: all
@@ -78,7 +77,6 @@ spring:
           type: kafka
           environment.spring.cloud.stream.kafka:
             binder:
-              auto-create-topics: false
               brokers: ${KAFKA_RTD_SPLIT_BROKER:localhost:29095}
               configuration:
                 sasl.jaas.config: ${KAFKA_RTD_SPLIT_SASL_JAAS_CONFIG}
@@ -88,6 +86,7 @@ spring:
 
       kafka:
         binder:
+          auto-create-topics: false
           configuration:
             security.protocol: SASL_SSL
             sasl.mechanism: PLAIN
