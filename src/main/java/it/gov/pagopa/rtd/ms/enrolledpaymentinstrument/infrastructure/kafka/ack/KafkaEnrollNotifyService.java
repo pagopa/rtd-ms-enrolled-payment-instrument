@@ -39,7 +39,6 @@ public class KafkaEnrollNotifyService implements EnrollNotifyService {
             .withType(PaymentInstrumentExported.TYPE)
             .withData(payload)
             .build();
-    return true;
-    //return streamBridge.send(binding, MessageBuilder.withPayload(event).setHeader("partitionKey", hashPan.getValue()).build());
+    return streamBridge.send(binding, MessageBuilder.withPayload(event).setHeader("partitionKey", hashPan.getValue()).build());
   }
 }
