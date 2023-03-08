@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.ExportCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
-import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -53,4 +53,15 @@ public class EnrolledPaymentInstrumentService {
     }
   }
 
+  public void handle(@Valid ExportCommand command) {
+    final var paymentInstrumentOrEmpty = repository.findByHashPan(command.getHashPan());
+    if (paymentInstrumentOrEmpty.isPresent()) {
+      final var paymentInstrument = paymentInstrumentOrEmpty.get();
+      paymentInstrument.markAsExported();
+      domainEventPublisher.handle(paymentInstrument);
+      repository.save(paymentInstrument);
+    } else {
+      log.warn("Received export command for non existing payment instrument");
+    }
+  }
 }

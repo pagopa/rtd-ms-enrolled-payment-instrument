@@ -4,6 +4,7 @@ import io.vavr.control.Try;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.ExportCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
@@ -31,6 +32,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.validation.ConstraintViolationException;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -243,6 +245,24 @@ class EnrolledPaymentInstrumentServiceTest {
 
     verify(repository, times(1)).save(any());
     verify(enrollAckService, times(1)).confirmEnroll(eq(SourceApp.ID_PAY), any(), any());
+  }
+
+  @Test
+  void whenHandleExportCommandForExistingPaymentInstrumentThenIsMarkedAsExported() {
+    final var captor = ArgumentCaptor.forClass(EnrolledPaymentInstrument.class);
+    final var exportCommand = new ExportCommand(TestUtils.generateRandomHashPan().getValue(), OffsetDateTime.now());
+    when(repository.findByHashPan(any())).thenReturn(Optional.of(EnrolledPaymentInstrument.create(HashPan.create(exportCommand.getHashPan()), SourceApp.ID_PAY)));
+    service.handle(exportCommand);
+    verify(repository, times(1)).save(captor.capture());
+
+    assertThat(captor.getValue().isExported()).isTrue();
+  }
+
+  @Test
+  void whenHandleExportCommandForNonExistingInstrumentThenIsNotUpdated() {
+    final var exportCommand = new ExportCommand(TestUtils.generateRandomHashPan().getValue(), OffsetDateTime.now());
+    service.handle(exportCommand);
+    verify(repository, times(0)).save(any());
   }
 
 

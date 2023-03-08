@@ -58,6 +58,7 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
             new HashSet<>(),
             issuer,
             network,
+            false,
             0
     );
     apps.forEach(paymentInstrument::enableApp);
@@ -72,6 +73,7 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
   private Set<SourceApp> enabledApps;
   private String issuer;
   private String network;
+  private boolean exported;
   private final int version;
 
   /**
@@ -84,6 +86,9 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
     if (this.state == PaymentInstrumentState.READY) {
       this.registerEvent(new PaymentInstrumentEnrolled(hashPan, sourceApp));
       this.enabledApps.add(sourceApp);
+      if(this.exported) {
+        this.registerEvent(new PaymentInstrumentExported(hashPan.getValue()));
+      }
     }
   }
 
@@ -140,6 +145,14 @@ public class EnrolledPaymentInstrument extends AggregateRoot {
 
   public boolean shouldBeDeleted() {
     return this.state == PaymentInstrumentState.DELETE;
+  }
+
+  public void markAsExported() {
+    // only ready card can be marked as exported
+    if (state == PaymentInstrumentState.READY) {
+      exported = true;
+      registerEvent(new PaymentInstrumentExported(hashPan.getValue()));
+    }
   }
 
   public Either<PaymentInstrumentError, Void> hydrateTokenAndParInfo(InstrumentTokenFinder tokenFinder) {

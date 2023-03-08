@@ -6,7 +6,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import org.springframework.cloud.stream.function.StreamBridge;
-
+import org.springframework.messaging.support.MessageBuilder;
 import java.util.Date;
 
 public class KafkaEnrollAckService implements EnrollAckService {
@@ -24,11 +24,11 @@ public class KafkaEnrollAckService implements EnrollAckService {
   @Override
   public boolean confirmEnroll(SourceApp app, HashPan hashPan, Date enrollDate) {
     final var payload = new EnrollAck(hashPan.getValue(), enrollDate, app);
-    return streamBridge.send(binding, CloudEvent.<EnrollAck>builder()
+    final var event = CloudEvent.<EnrollAck>builder()
             .withType(EnrollAck.TYPE)
             .withData(payload)
             .withCorrelationId(correlationIdService.popCorrelationId().orElse(null))
-            .build()
-    );
+            .build();
+    return streamBridge.send(binding, MessageBuilder.withPayload(event).setHeader("partitionKey", hashPan.getValue()).build());
   }
 }

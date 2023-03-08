@@ -31,13 +31,14 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
-@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 3)
 @ImportAutoConfiguration(ValidationAutoConfiguration.class)
 @Import({KafkaTestConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
@@ -84,6 +85,19 @@ class KafkaRevokeNotificationServiceTest {
               .allMatch(notification -> Objects.equals("taxCode", notification.getFiscalCode()))
               .allMatch(notification -> Objects.equals(hashPan.getValue(), notification.getHashPan()))
               .allSatisfy(notification -> assertThat(notification.getApplications()).hasSameElementsAs(Set.of(SourceApp.values())));
+    });
+  }
+
+  @Test
+  void whenPublishApplicationInstrumentEventThenShouldBeProducedOnDifferentPartitions() {
+    final var hashPans = IntStream.range(0, 10).mapToObj(i -> TestUtils.generateRandomHashPan());
+
+    hashPans.forEach(it -> revokeNotificationService.notifyRevoke(Set.of(SourceApp.ID_PAY), "taxCode", it));
+
+    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+      final var records = consumer.poll(Duration.ZERO);
+      assertThat(records).hasSize(10);
+      assertThat(records.partitions()).hasSize(3);
     });
   }
 }

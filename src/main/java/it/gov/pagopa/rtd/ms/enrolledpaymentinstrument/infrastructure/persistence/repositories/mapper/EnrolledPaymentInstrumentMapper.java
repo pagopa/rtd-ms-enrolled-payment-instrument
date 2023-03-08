@@ -26,6 +26,7 @@ public class EnrolledPaymentInstrumentMapper {
             apps,
             entity.getIssuer(),
             entity.getNetwork(),
+            entity.isExported(),
             entity.getVersion()
     );
   }
@@ -48,6 +49,7 @@ public class EnrolledPaymentInstrumentMapper {
             .updatedAt(LocalDateTime.now())
             .insertUser(UPSERT_USER)
             .updateUser(UPSERT_USER)
+            .exported(domain.isExported())
             .version(domain.getVersion())
             .build();
   }
