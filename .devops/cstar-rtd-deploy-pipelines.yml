@@ -12,7 +12,7 @@ trigger:
     include:
       - develop
       - uat
-#      - main
+      - main
   paths:
     include:
       - src/*
@@ -53,12 +53,12 @@ variables:
     containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(UAT_AGENT_POOL)
 
-#  ${{ elseif or(startsWith(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.ENV, 'PROD')) }}:
-#    environment: 'PROD'
-#    dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
-#    kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
-#    containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
-#    selfHostedAgentPool: $(PROD_AGENT_POOL)
+  ${{ elseif or(startsWith(variables['Build.SourceBranch'], 'refs/heads/main'), eq(parameters.ENV, 'PROD')) }}:
+    environment: 'PROD'
+    dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(PROD_AGENT_POOL)
 
   ${{ else }}:
     environment: 'DEV'
@@ -87,14 +87,14 @@ stages:
               targetType: 'inline'
               script: |
                 version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-                echo "##vso[task.setvariable variable=outputpomversion;isOutput=true]$version"
+                echo "##vso[task.setvariable variable=outputPomVersion;isOutput=true]$version"
               failOnStderr: true
 
   - stage: 'build'
     displayName: 'Build_and_Publish_to_${{ variables.environment }}'
     dependsOn: 'pom_version'
     variables:
-      pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
+      pomVersion: $[ stageDependencies.pom_version.POM.outputs['getpomversion.outputPomVersion'] ]
     jobs:
       - job: Build
         displayName: Build
@@ -111,7 +111,7 @@ stages:
               tags: |
                 $(Build.BuildId)
                 latest
-                $(pomversion)
+                $(pomVersion)
   - stage: 'publish_artifact_helm'
     displayName: 'Publish_artifact_Helm'
     dependsOn: ['build']
@@ -134,7 +134,7 @@ stages:
     dependsOn: ['publish_artifact_helm']
     condition: and(succeeded(), eq(variables.canDeploy, true))
     variables:
-      pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
+      pomVersion: $[ stageDependencies.pom_version.POM.outputs['getpomversion.outputPomVersion'] ]
     jobs:
       - deployment: 'Deploy_to_${{ variables.environment }}'
         displayName: 'Deploy to ${{ variables.environment }} K8S'
