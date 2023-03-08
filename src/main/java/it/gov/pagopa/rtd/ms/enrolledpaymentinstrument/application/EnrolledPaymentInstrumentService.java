@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -49,7 +50,7 @@ public class EnrolledPaymentInstrumentService {
       paymentInstrument.enableApp(sourceApp);
       paymentInstrument.hydrateTokenAndParInfo(instrumentTokenFinder)
               .peekLeft(error -> log.warn("Failed to GET token par info: {}", error.getMessage()));
-      if (immediateConfirmExport) {
+      if (Objects.equals(true, immediateConfirmExport)) {
         paymentInstrument.markAsExported();
       }
     } else if (command.getOperation() == Operation.DELETE) {
