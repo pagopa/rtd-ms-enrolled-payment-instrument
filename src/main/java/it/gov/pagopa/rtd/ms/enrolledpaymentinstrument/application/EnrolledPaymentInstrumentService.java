@@ -10,6 +10,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -23,11 +24,18 @@ public class EnrolledPaymentInstrumentService {
   private final EnrolledPaymentInstrumentRepository repository;
   private final InstrumentTokenFinder instrumentTokenFinder;
   private final DomainEventPublisher domainEventPublisher;
+  private final Boolean immediateConfirmExport;
 
-  public EnrolledPaymentInstrumentService(EnrolledPaymentInstrumentRepository repository, InstrumentTokenFinder instrumentTokenFinder, DomainEventPublisher domainEventPublisher) {
+  public EnrolledPaymentInstrumentService(
+          EnrolledPaymentInstrumentRepository repository,
+          InstrumentTokenFinder instrumentTokenFinder,
+          DomainEventPublisher domainEventPublisher,
+          @Value("${immediate-confirm-export}") Boolean immediateConfirmExport
+  ) {
     this.repository = repository;
     this.instrumentTokenFinder = instrumentTokenFinder;
     this.domainEventPublisher = domainEventPublisher;
+    this.immediateConfirmExport = immediateConfirmExport;
   }
 
   public void handle(@Valid EnrollPaymentInstrumentCommand command) {
@@ -41,6 +49,9 @@ public class EnrolledPaymentInstrumentService {
       paymentInstrument.enableApp(sourceApp);
       paymentInstrument.hydrateTokenAndParInfo(instrumentTokenFinder)
               .peekLeft(error -> log.warn("Failed to GET token par info: {}", error.getMessage()));
+      if (immediateConfirmExport) {
+        paymentInstrument.markAsExported();
+      }
     } else if (command.getOperation() == Operation.DELETE) {
       paymentInstrument.disableApp(sourceApp);
     }

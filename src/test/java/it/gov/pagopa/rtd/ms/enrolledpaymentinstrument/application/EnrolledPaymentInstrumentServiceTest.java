@@ -312,7 +312,7 @@ class EnrolledPaymentInstrumentServiceTest {
 
     @Bean
     EnrolledPaymentInstrumentService service(@Autowired DomainEventPublisher eventPublisher) {
-      return new EnrolledPaymentInstrumentService(repository, instrumentTokenFinder, eventPublisher);
+      return new EnrolledPaymentInstrumentService(repository, instrumentTokenFinder, eventPublisher, false);
     }
   }
 

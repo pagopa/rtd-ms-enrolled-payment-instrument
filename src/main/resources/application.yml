@@ -3,6 +3,8 @@ logging:
     root: INFO
     org.apache.kafka: WARN
 
+immediate-confirm-export: ${IMMEDIATE_CONFIRM_EXPORT:false}
+
 management:
   metrics.export.defaults.enabled: false
   info.defaults.enabled: false
