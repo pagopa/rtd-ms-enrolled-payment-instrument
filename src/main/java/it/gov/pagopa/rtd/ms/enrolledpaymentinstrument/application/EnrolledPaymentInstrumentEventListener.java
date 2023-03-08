@@ -1,7 +1,9 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.ExportError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentEnrolled;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentExported;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -27,6 +29,15 @@ public class EnrolledPaymentInstrumentEventListener {
       log.info("Enroll ack successfully confirmed");
     } else {
       throw new EnrollAckError("Failing during ack " + event.getHashPan().getValue() + " from " + event.getApplication());
+    }
+  }
+
+  @EventListener
+  public void handlePaymentInstrumentExported(PaymentInstrumentExported event) {
+    if (enrollAckService.confirmExport(event.getHashPan())) {
+      log.info("Notified payment instrument exported {}", event);
+    } else {
+      throw new ExportError("Failed to notify export for " + event.getHashPan().getValue());
     }
   }
 }

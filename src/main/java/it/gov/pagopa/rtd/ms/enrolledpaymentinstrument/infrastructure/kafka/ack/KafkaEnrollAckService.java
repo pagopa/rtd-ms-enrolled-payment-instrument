@@ -31,4 +31,14 @@ public class KafkaEnrollAckService implements EnrollAckService {
             .build();
     return streamBridge.send(binding, MessageBuilder.withPayload(event).setHeader("partitionKey", hashPan.getValue()).build());
   }
+
+  @Override
+  public boolean confirmExport(HashPan hashPan) {
+    final var payload = new PaymentInstrumentExported(hashPan.getValue());
+    final var event = CloudEvent.builder()
+            .withType(PaymentInstrumentExported.TYPE)
+            .withData(payload)
+            .build();
+    return streamBridge.send(binding, MessageBuilder.withPayload(event).setHeader("partitionKey", hashPan.getValue()).build());
+  }
 }

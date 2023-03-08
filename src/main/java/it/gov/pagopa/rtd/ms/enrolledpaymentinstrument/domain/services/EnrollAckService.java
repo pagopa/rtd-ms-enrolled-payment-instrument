@@ -7,4 +7,5 @@ import java.util.Date;
 
 public interface EnrollAckService {
   boolean confirmEnroll(SourceApp app, HashPan hashPan, Date enrollDate);
+  boolean confirmExport(HashPan hashPan);
 }

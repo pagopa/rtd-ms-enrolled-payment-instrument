@@ -5,5 +5,5 @@ import lombok.Data;
 
 @Data
 public class PaymentInstrumentExported implements DomainEvent {
-  private final String hashPan;
+  private final HashPan hashPan;
 }

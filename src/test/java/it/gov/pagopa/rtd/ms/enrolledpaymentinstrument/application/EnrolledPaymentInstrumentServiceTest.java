@@ -65,6 +65,7 @@ class EnrolledPaymentInstrumentServiceTest {
   @BeforeEach
   void setup() {
     doReturn(true).when(enrollAckService).confirmEnroll(any(), any(), any());
+    doReturn(true).when(enrollAckService).confirmExport(any());
     doReturn(Try.success(new InstrumentTokenInfo(TestUtils.generateRandomHashPan(), "", List.of())))
             .when(instrumentTokenFinder)
             .findInstrumentInfo(any());
