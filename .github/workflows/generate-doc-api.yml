@@ -3,6 +3,9 @@ name: AsyncAPI doc generation
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches:
+      - develop
 
 jobs:
   generate:
@@ -12,9 +15,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Generating HTML from AsyncAPI spec
-        uses: asyncapi/github-action-for-generator@v2.1.11
+        uses: asyncapi/github-action-for-generator@v2.0.0
         with:
-          template: @asyncapi/html-template@v0.28.3
+          template: '@asyncapi/html-template@v0.28.3'
           filepath: specs/asyncapi.yml
           output: generated-html
 
