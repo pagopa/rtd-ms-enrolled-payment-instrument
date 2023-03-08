@@ -5,7 +5,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 
 import java.util.Date;
 
-public interface EnrollAckService {
+public interface EnrollNotifyService {
   boolean confirmEnroll(SourceApp app, HashPan hashPan, Date enrollDate);
-  boolean confirmExport(HashPan hashPan);
+  boolean confirmExport(HashPan hashPan, Date at);
 }

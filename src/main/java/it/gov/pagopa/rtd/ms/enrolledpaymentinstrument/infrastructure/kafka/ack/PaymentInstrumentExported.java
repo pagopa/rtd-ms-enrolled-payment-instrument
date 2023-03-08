@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 @Data
 @Getter
 @NoArgsConstructor
@@ -16,4 +18,6 @@ public final class PaymentInstrumentExported {
 
   @JsonProperty("hpan")
   private String hashPan;
+
+  private Date timestamp;
 }

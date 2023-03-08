@@ -4,7 +4,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollA
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.ExportError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentEnrolled;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentExported;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollNotifyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -17,9 +17,9 @@ import java.util.Date;
 @Slf4j
 public class EnrolledPaymentInstrumentEventListener {
 
-  private final EnrollAckService enrollAckService;
+  private final EnrollNotifyService enrollAckService;
 
-  public EnrolledPaymentInstrumentEventListener(EnrollAckService enrollAckService) {
+  public EnrolledPaymentInstrumentEventListener(EnrollNotifyService enrollAckService) {
     this.enrollAckService = enrollAckService;
   }
 
@@ -34,7 +34,7 @@ public class EnrolledPaymentInstrumentEventListener {
 
   @EventListener
   public void handlePaymentInstrumentExported(PaymentInstrumentExported event) {
-    if (enrollAckService.confirmExport(event.getHashPan())) {
+    if (enrollAckService.confirmExport(event.getHashPan(), new Date())) {
       log.info("Notified payment instrument exported {}", event);
     } else {
       throw new ExportError("Failed to notify export for " + event.getHashPan().getValue());

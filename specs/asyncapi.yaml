@@ -33,6 +33,7 @@ channels:
       bindings:
         kafka:
           topic: rtd-to-app
+
 components:
   messages:
     EnrollRequest:

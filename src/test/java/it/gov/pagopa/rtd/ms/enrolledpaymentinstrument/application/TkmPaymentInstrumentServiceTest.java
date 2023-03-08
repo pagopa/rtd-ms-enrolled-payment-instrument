@@ -9,7 +9,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPa
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollNotifyService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -263,15 +263,15 @@ class TkmPaymentInstrumentServiceTest {
     InstrumentRevokeNotificationService revokeNotificationService;
 
     @Bean
-    EnrollAckService enrollAckService() {
-      return new EnrollAckService() {
+    EnrollNotifyService enrollAckService() {
+      return new EnrollNotifyService() {
         @Override
         public boolean confirmEnroll(SourceApp app, HashPan hashPan, Date enrollDate) {
           return true;
         }
 
         @Override
-        public boolean confirmExport(HashPan hashPan) {
+        public boolean confirmExport(HashPan hashPan, Date at) {
           return true;
         }
       };
