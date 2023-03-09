@@ -82,4 +82,5 @@ public class EnrolledPaymentInstrumentEntity {
 
   @Field(name = "hashPanExports")
   private List<HashPan> hashPanExports;
+  
 }
