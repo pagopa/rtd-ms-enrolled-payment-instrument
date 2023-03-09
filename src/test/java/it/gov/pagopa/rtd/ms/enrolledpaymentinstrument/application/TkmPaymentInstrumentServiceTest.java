@@ -9,7 +9,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPa
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollNotifyService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,10 +26,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.validation.ConstraintViolationException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -266,8 +263,18 @@ class TkmPaymentInstrumentServiceTest {
     InstrumentRevokeNotificationService revokeNotificationService;
 
     @Bean
-    EnrollAckService enrollAckService() {
-      return (app, hashPan, enrollDate) -> true;
+    EnrollNotifyService enrollAckService() {
+      return new EnrollNotifyService() {
+        @Override
+        public boolean confirmEnroll(SourceApp app, HashPan hashPan, Date enrollDate) {
+          return true;
+        }
+
+        @Override
+        public boolean confirmExport(HashPan hashPan, Date at) {
+          return true;
+        }
+      };
     }
 
     @Bean

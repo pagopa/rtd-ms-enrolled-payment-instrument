@@ -6,13 +6,14 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.Enroll
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.ExportCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.ExportError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.DomainEventPublisher;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.InstrumentTokenInfo;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.repositories.EnrolledPaymentInstrumentRepository;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollNotifyService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +55,7 @@ class EnrolledPaymentInstrumentServiceTest {
   private EnrolledPaymentInstrumentRepository repository;
 
   @Autowired
-  private EnrollAckService enrollAckService;
+  private EnrollNotifyService enrollAckService;
 
   @Autowired
   private InstrumentTokenFinder instrumentTokenFinder;
@@ -65,6 +66,7 @@ class EnrolledPaymentInstrumentServiceTest {
   @BeforeEach
   void setup() {
     doReturn(true).when(enrollAckService).confirmEnroll(any(), any(), any());
+    doReturn(true).when(enrollAckService).confirmExport(any(), any());
     doReturn(Try.success(new InstrumentTokenInfo(TestUtils.generateRandomHashPan(), "", List.of())))
             .when(instrumentTokenFinder)
             .findInstrumentInfo(any());
@@ -259,12 +261,41 @@ class EnrolledPaymentInstrumentServiceTest {
   }
 
   @Test
+  void whenHandleExportCommandForExistingPaymentInstrumentThenSendPaymentInstrumentExported() {
+    final var exportCommand = new ExportCommand(TestUtils.generateRandomHashPan().getValue(), OffsetDateTime.now());
+    when(repository.findByHashPan(any())).thenReturn(Optional.of(EnrolledPaymentInstrument.create(HashPan.create(exportCommand.getHashPan()), SourceApp.ID_PAY)));
+    service.handle(exportCommand);
+    verify(enrollAckService, times(1)).confirmExport(any(), any());
+  }
+
+  @Test
+  void whenHandleExportCommandForAnExportedPaymentInstrumentThenSendPaymentInstrumentExported() {
+    final var exportCommand = new ExportCommand(TestUtils.generateRandomHashPan().getValue(), OffsetDateTime.now());
+    final var paymentInstrument = EnrolledPaymentInstrument.create(HashPan.create(exportCommand.getHashPan()), SourceApp.ID_PAY);
+    paymentInstrument.markAsExported();
+    paymentInstrument.clearDomainEvents();
+    when(repository.findByHashPan(any())).thenReturn(Optional.of(paymentInstrument));
+    service.handle(exportCommand);
+    verify(enrollAckService, times(1)).confirmExport(any(), any());
+  }
+
+  @Test
   void whenHandleExportCommandForNonExistingInstrumentThenIsNotUpdated() {
     final var exportCommand = new ExportCommand(TestUtils.generateRandomHashPan().getValue(), OffsetDateTime.now());
     service.handle(exportCommand);
     verify(repository, times(0)).save(any());
   }
 
+  @Test
+  void whenNotifyExportFailThenThrowsException() {
+    final var command = new ExportCommand(
+            TEST_HASH_PAN.getValue(),
+            OffsetDateTime.now()
+    );
+    when(repository.findByHashPan(any())).thenReturn(Optional.of(EnrolledPaymentInstrument.create(HashPan.create(command.getHashPan()), SourceApp.ID_PAY)));
+    doReturn(false).when(enrollAckService).confirmExport(any(), any());
+    assertThrowsExactly(ExportError.class, () -> service.handle(command));
+  }
 
   @TestConfiguration
   @Import({DomainEventPublisher.class, EnrolledPaymentInstrumentEventListener.class})
@@ -274,14 +305,14 @@ class EnrolledPaymentInstrumentServiceTest {
     private EnrolledPaymentInstrumentRepository repository;
 
     @MockBean
-    private EnrollAckService enrollAckService;
+    private EnrollNotifyService enrollAckService;
 
     @MockBean
     private InstrumentTokenFinder instrumentTokenFinder;
 
     @Bean
     EnrolledPaymentInstrumentService service(@Autowired DomainEventPublisher eventPublisher) {
-      return new EnrolledPaymentInstrumentService(repository, instrumentTokenFinder, eventPublisher);
+      return new EnrolledPaymentInstrumentService(repository, instrumentTokenFinder, eventPublisher, false);
     }
   }
 
