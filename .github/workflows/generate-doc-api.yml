@@ -15,11 +15,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Generating HTML from AsyncAPI spec
-        uses: asyncapi/github-action-for-generator@v2.0.0
-        with:
-          template: '@asyncapi/html-template@v0.28.3'
-          filepath: specs/asyncapi.yml
-          output: generated-html
+        run: npx @asyncapi/generator specs/asyncapi.yml @asyncapi/html-template -o generated-html
 
       - name: Deploy GH page
         uses: JamesIves/github-pages-deploy-action@3.4.2
