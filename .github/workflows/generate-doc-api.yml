@@ -2,22 +2,20 @@ name: AsyncAPI doc generation
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches:
-      - develop
+      - main
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: ⬇️ Checkout repo
         uses: actions/checkout@v2
 
-      - name: Generating HTML from AsyncAPI spec
+      - name: 📄 Generating HTML from AsyncAPI spec
         run: npx @asyncapi/generator specs/asyncapi.yml @asyncapi/html-template -o generated-html
 
-      - name: Deploy GH page
+      - name: 🚀 Deploy GH page
         uses: JamesIves/github-pages-deploy-action@3.4.2
         with:
           ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
