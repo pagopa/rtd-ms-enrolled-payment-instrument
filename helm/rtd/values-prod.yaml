@@ -17,6 +17,7 @@ microservice-chart:
 
   envConfig:
     IMMEDIATE_CONFIRM_EXPORT: "false"
+    KAFKA_RTD_SPLIT_BY_PI_CONCURRENCY: "4"
 
   envSecret:
     aks-api-url: cstar-p-weu-prod01-aks-apiserver-url

@@ -53,6 +53,7 @@ spring:
           content-type: application/json
           binder: kafka-split-by-pi-binder
           consumer:
+            concurrency: ${KAFKA_RTD_SPLIT_BY_PI_CONCURRENCY:1}
             max-attempts: 1
             default-retryable: false
         rtdToApp-out-0:
