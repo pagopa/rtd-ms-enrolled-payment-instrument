@@ -5,7 +5,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentState;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -33,6 +32,8 @@ public class EnrolledPaymentInstrumentMapper {
 
   public EnrolledPaymentInstrumentEntity toEntity(EnrolledPaymentInstrument domain) {
     final var hashPanChildren = domain.getHashPanChildren().stream().map(HashPan::getValue).collect(Collectors.toList());
+    final var hashPanExports = new ArrayList<>(domain.getHashPanChildren());
+    hashPanExports.add(domain.getHashPan());
     return EnrolledPaymentInstrumentEntity.builder()
             .id(domain.getId())
             .hashPan(domain.getHashPan().getValue())
@@ -42,6 +43,7 @@ public class EnrolledPaymentInstrumentMapper {
             .apps(domain.getEnabledApps().stream().map(Enum::name).collect(Collectors.toList()))
             .network(domain.getNetwork())
             .issuer(domain.getIssuer())
+            .hashPanExports(hashPanExports)
             .insertAt(domain.getId() != null ? null : LocalDateTime.now())
             .updatedAt(LocalDateTime.now())
             .insertUser(UPSERT_USER)

@@ -79,4 +79,7 @@ public class EnrolledPaymentInstrumentEntity {
 
   @Version
   private int version;
+
+  @Field(name = "hashPanExports")
+  private List<HashPan> hashPanExports;
  }
