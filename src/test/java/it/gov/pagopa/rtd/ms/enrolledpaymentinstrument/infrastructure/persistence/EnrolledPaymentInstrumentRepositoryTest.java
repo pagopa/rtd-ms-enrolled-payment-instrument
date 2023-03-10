@@ -104,4 +104,15 @@ class EnrolledPaymentInstrumentRepositoryTest {
     repository.save(instrument1);
     assertThrowsExactly(OptimisticLockingFailureException.class, () -> repository.save(instrument2));
   }
+
+  @Test
+  void mustSaveExportHashPans() {
+    final var childHashPan = TestUtils.generateRandomHashPan();
+    final var instrument = EnrolledPaymentInstrument.create(TEST_HASH_PAN, SourceApp.ID_PAY, null, null);
+    instrument.addHashPanChild(childHashPan);
+
+    repository.save(instrument);
+    assertThat(dao.findByHashPan(TEST_HASH_PAN.getValue()).orElseThrow().getHashPanExports())
+        .hasSameElementsAs(List.of(childHashPan, TEST_HASH_PAN));
+  }
 }
