@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 public class KafkaConfiguration {
 
   private static final Long BACKOFF_MIN_INTERVAL = 200L; // ms
-  public static final int NUMBER_OF_RETRIES = Integer.MAX_VALUE;
+  public static final int NUMBER_OF_RETRIES = 10;
   private static final Map<String, String> routingMap = new HashMap<>();
 
   static {

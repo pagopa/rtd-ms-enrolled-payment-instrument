@@ -35,6 +35,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Duration;
@@ -43,9 +44,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
+@DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)
 @EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 1)
 @ImportAutoConfiguration(ValidationAutoConfiguration.class)
 @Import({TokenManagerEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})

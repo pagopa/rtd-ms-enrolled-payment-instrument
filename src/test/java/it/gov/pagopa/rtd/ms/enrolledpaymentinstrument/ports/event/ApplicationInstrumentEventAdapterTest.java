@@ -1,5 +1,13 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
+
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
@@ -11,6 +19,9 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfig
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentDeleted;
+import java.time.Duration;
+import java.util.List;
+import javax.validation.ConstraintViolationException;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,18 +50,12 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.MessageHandlingException;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-
-import javax.validation.ConstraintViolationException;
-import java.time.Duration;
-import java.util.List;
-
-import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
+@DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)
 @EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 1)
 @ImportAutoConfiguration(ValidationAutoConfiguration.class)
 @Import({TokenManagerEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})
@@ -146,7 +151,7 @@ class ApplicationInstrumentEventAdapterTest {
     kafkaTemplate.send(topic, CloudEvent.builder().withType("").withData("").build());
 
     await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(any(EnrollPaymentInstrumentCommand.class));
+      Mockito.verify(paymentInstrumentService, times(0)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
@@ -182,7 +187,7 @@ class ApplicationInstrumentEventAdapterTest {
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
+      Mockito.verify(paymentInstrumentService, times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
@@ -201,7 +206,7 @@ class ApplicationInstrumentEventAdapterTest {
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
+      Mockito.verify(paymentInstrumentService, times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 }
