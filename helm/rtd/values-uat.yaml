@@ -16,7 +16,7 @@ microservice-chart:
       cpu: "500m"
 
   envConfig:
-    IMMEDIATE_CONFIRM_EXPORT: "false"
+    IMMEDIATE_CONFIRM_EXPORT: "true"
     KAFKA_RTD_SPLIT_BY_PI_CONCURRENCY: "4"
 
   envSecret:
