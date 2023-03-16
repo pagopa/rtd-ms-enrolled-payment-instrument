@@ -7,6 +7,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpd
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.HashTokenChangeType;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.PaymentInstrumentExported;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
 import org.springframework.messaging.Message;
 
@@ -51,6 +52,12 @@ public final class TestUtils {
                     generateRandomHashPan().getValue(),
                     random.nextDouble() < 0.5 ? HashTokenChangeType.DELETE : HashTokenChangeType.INSERT_UPDATE
             ))
+            .collect(Collectors.toList());
+  }
+
+  public static List<PaymentInstrumentExported> generateRandomPaymentInstrumentExportedEvent(int which) {
+    return IntStream.range(0, which)
+            .mapToObj(i -> new PaymentInstrumentExported(generateRandomHashPanAsString()))
             .collect(Collectors.toList());
   }
 

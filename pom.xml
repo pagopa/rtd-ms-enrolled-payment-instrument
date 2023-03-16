@@ -12,14 +12,14 @@
 
     <groupId>it.gov.pagopa.rtd.ms</groupId>
     <artifactId>rtd-ms-enrolled-payment-instrument</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <java.version>11</java.version>
         <spring-cloud.version>2021.0.4</spring-cloud.version>
-        <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/*</sonar.exclusions>
+        <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/*,**/StreamHealthIndicator.java</sonar.exclusions>
     </properties>
 
     <dependencies>
@@ -227,6 +227,7 @@
                         <exclude>**/*Configuration.java</exclude>
                         <exclude>**/*Application.java</exclude>
                         <exclude>**/ports/rest/**/*</exclude>
+                        <exclude>**/StreamHealthIndicator.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>

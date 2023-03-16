@@ -2,14 +2,15 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations;
 
 import com.mongodb.MongoException;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.EnrollAckError;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.ExportError;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.errors.FailedToNotifyRevoke;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.ChainRevokeNotificationService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.EnrollNotifyService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.BPDRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollAckService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack.KafkaEnrollNotifyService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke.KafkaRevokeNotificationService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.tkm.TkmTokenFinder;
 import org.slf4j.LoggerFactory;
@@ -23,14 +24,12 @@ import org.springframework.dao.RecoverableDataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.util.ObjectUtils;
 
-import javax.validation.ConstraintViolationException;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
-import java.util.UnknownFormatConversionException;
 
 @Configuration
 public class AppConfiguration {
@@ -52,8 +51,8 @@ public class AppConfiguration {
   }
 
   @Bean
-  public EnrollAckService enrollAckService(StreamBridge bridge, CorrelationIdService correlationIdService) {
-    return new KafkaEnrollAckService(bridge, RTD_TO_APP_BINDING, correlationIdService);
+  public EnrollNotifyService enrollNotifyService(StreamBridge bridge, CorrelationIdService correlationIdService) {
+    return new KafkaEnrollNotifyService(bridge, RTD_TO_APP_BINDING, correlationIdService);
   }
 
   @Bean
@@ -90,21 +89,8 @@ public class AppConfiguration {
             DuplicateKeyException.class,
             OptimisticLockingFailureException.class,
             FailedToNotifyRevoke.class,
-            EnrollAckError.class
+            EnrollAckError.class,
+            ExportError.class
     );
   }
-
-  /**
-   * A list of non-transient exceptions. Tipically validation and schema error
-   * where no recovery operation are available.
-   */
-  @Bean("fatalExceptions")
-  Set<Class<? extends Exception>> consumerFatalExceptions() {
-    return Set.of(
-            IllegalArgumentException.class,
-            ConstraintViolationException.class,
-            UnknownFormatConversionException.class
-    );
-  }
-
 }

@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "94ab34f6-a859-498a-a50c-687426f66930",
+		"_postman_id": "82bc54cc-30d0-44ee-a2f9-39bfd04680e6",
 		"name": "payment instrument manager tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -510,7 +510,7 @@
 							"        pm.test(\"Has Ready Status\", () => {",
 							"            const responseJson = response.json();",
 							"            pm.expect(responseJson.state).to.eql(\"READY\");",
-							"            pm.expect(responseJson.enabledApps).to.include(\"FA\");",
+							"            pm.expect(responseJson.enabledApps).to.include(\"ID_PAY\");",
 							"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan'));",
 							"        });",
 							"    });",
@@ -554,7 +554,7 @@
 					"\"use sandbox2\";",
 					"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
 					"",
-					"Object.prototype.asyncTimeout = 700; // milliseconds",
+					"Object.prototype.asyncTimeout = 1000; // milliseconds",
 					"",
 					"Object.prototype.clean = (that, paymentInstrumentId) => {",
 					"    return that.sendRequest({",

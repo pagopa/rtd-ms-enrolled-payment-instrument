@@ -53,6 +53,10 @@ microservice-chart:
     KAFKA_RTD_PI_TO_APP_SASL_JAAS_CONFIG: evh-rtd-pi-to-app-rtd-pi-to-app-producer-policy-rtd
     KAFKA_RTD_SPLIT_SASL_JAAS_CONFIG: evh-rtd-split-by-pi-rtd-split-by-pi-consumer-policy-rtd
 
+  envConfig:
+    MAX_POOL_SIZE: "50"
+    APPLICATIONINSIGHTS_PREVIEW_PROFILER_ENABLED: "false"
+
   envConfigMapExternals:
     rtd-enrolled-payment-instrument:
       JAVA_TOOL_OPTIONS: JAVA_TOOL_OPTIONS
