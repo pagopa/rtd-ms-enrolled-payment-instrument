@@ -55,7 +55,7 @@ class EnrolledPaymentInstrumentServiceTest {
   private EnrolledPaymentInstrumentRepository repository;
 
   @Autowired
-  private EnrollNotifyService enrollAckService;
+  private EnrollNotifyService enrollNotifyService;
 
   @Autowired
   private InstrumentTokenFinder instrumentTokenFinder;
@@ -65,8 +65,8 @@ class EnrolledPaymentInstrumentServiceTest {
 
   @BeforeEach
   void setup() {
-    doReturn(true).when(enrollAckService).confirmEnroll(any(), any(), any());
-    doReturn(true).when(enrollAckService).confirmExport(any(), any());
+    doReturn(true).when(enrollNotifyService).confirmEnroll(any(), any(), any());
+    doReturn(true).when(enrollNotifyService).confirmExport(any(), any());
     doReturn(Try.success(new InstrumentTokenInfo(TestUtils.generateRandomHashPan(), "", List.of())))
             .when(instrumentTokenFinder)
             .findInstrumentInfo(any());
@@ -74,7 +74,7 @@ class EnrolledPaymentInstrumentServiceTest {
 
   @AfterEach
   void cleanUp() {
-    Mockito.reset(repository, enrollAckService, instrumentTokenFinder);
+    Mockito.reset(repository, enrollNotifyService, instrumentTokenFinder);
   }
 
   @DisplayName("must enable payment instrument for a specific source app")
@@ -120,7 +120,7 @@ class EnrolledPaymentInstrumentServiceTest {
     );
     service.handle(command);
 
-    verify(enrollAckService).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
+    verify(enrollNotifyService).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
   }
 
   // idempotency of card enrollment
@@ -136,7 +136,7 @@ class EnrolledPaymentInstrumentServiceTest {
             Operation.CREATE
     );
     service.handle(command);
-    verify(enrollAckService, times(1)).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
+    verify(enrollNotifyService, times(1)).confirmEnroll(eq(SourceApp.FA), eq(TEST_HASH_PAN), any());
   }
 
   @Test
@@ -146,7 +146,7 @@ class EnrolledPaymentInstrumentServiceTest {
             SourceApp.FA.name(),
             Operation.CREATE
     );
-    doReturn(false).when(enrollAckService).confirmEnroll(any(), any(), any());
+    doReturn(false).when(enrollNotifyService).confirmEnroll(any(), any(), any());
     assertThrowsExactly(EnrollAckError.class, () -> service.handle(command));
   }
 
@@ -246,7 +246,7 @@ class EnrolledPaymentInstrumentServiceTest {
     service.handle(enrollCommand);
 
     verify(repository, times(1)).save(any());
-    verify(enrollAckService, times(1)).confirmEnroll(eq(SourceApp.ID_PAY), any(), any());
+    verify(enrollNotifyService, times(1)).confirmEnroll(eq(SourceApp.ID_PAY), any(), any());
   }
 
   @Test
@@ -265,7 +265,7 @@ class EnrolledPaymentInstrumentServiceTest {
     final var exportCommand = new ExportCommand(TestUtils.generateRandomHashPan().getValue(), OffsetDateTime.now());
     when(repository.findByHashPan(any())).thenReturn(Optional.of(EnrolledPaymentInstrument.create(HashPan.create(exportCommand.getHashPan()), SourceApp.ID_PAY)));
     service.handle(exportCommand);
-    verify(enrollAckService, times(1)).confirmExport(any(), any());
+    verify(enrollNotifyService, times(1)).confirmExport(any(), any());
   }
 
   @Test
@@ -276,7 +276,7 @@ class EnrolledPaymentInstrumentServiceTest {
     paymentInstrument.clearDomainEvents();
     when(repository.findByHashPan(any())).thenReturn(Optional.of(paymentInstrument));
     service.handle(exportCommand);
-    verify(enrollAckService, times(1)).confirmExport(any(), any());
+    verify(enrollNotifyService, times(1)).confirmExport(any(), any());
   }
 
   @Test
@@ -293,7 +293,7 @@ class EnrolledPaymentInstrumentServiceTest {
             OffsetDateTime.now()
     );
     when(repository.findByHashPan(any())).thenReturn(Optional.of(EnrolledPaymentInstrument.create(HashPan.create(command.getHashPan()), SourceApp.ID_PAY)));
-    doReturn(false).when(enrollAckService).confirmExport(any(), any());
+    doReturn(false).when(enrollNotifyService).confirmExport(any(), any());
     assertThrowsExactly(ExportError.class, () -> service.handle(command));
   }
 
@@ -305,7 +305,7 @@ class EnrolledPaymentInstrumentServiceTest {
     private EnrolledPaymentInstrumentRepository repository;
 
     @MockBean
-    private EnrollNotifyService enrollAckService;
+    private EnrollNotifyService enrollNotifyService;
 
     @MockBean
     private InstrumentTokenFinder instrumentTokenFinder;

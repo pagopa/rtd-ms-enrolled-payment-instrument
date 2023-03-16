@@ -263,7 +263,7 @@ class TkmPaymentInstrumentServiceTest {
     InstrumentRevokeNotificationService revokeNotificationService;
 
     @Bean
-    EnrollNotifyService enrollAckService() {
+    EnrollNotifyService enrollNotifyService() {
       return new EnrollNotifyService() {
         @Override
         public boolean confirmEnroll(SourceApp app, HashPan hashPan, Date enrollDate) {

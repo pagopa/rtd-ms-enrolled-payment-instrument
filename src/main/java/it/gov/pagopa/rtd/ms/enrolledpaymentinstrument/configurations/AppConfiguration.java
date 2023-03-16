@@ -51,7 +51,7 @@ public class AppConfiguration {
   }
 
   @Bean
-  public EnrollNotifyService enrollAckService(StreamBridge bridge, CorrelationIdService correlationIdService) {
+  public EnrollNotifyService enrollNotifyService(StreamBridge bridge, CorrelationIdService correlationIdService) {
     return new KafkaEnrollNotifyService(bridge, RTD_TO_APP_BINDING, correlationIdService);
   }
 

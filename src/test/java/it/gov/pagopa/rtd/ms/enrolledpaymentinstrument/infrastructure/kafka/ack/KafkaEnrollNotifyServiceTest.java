@@ -56,7 +56,7 @@ class KafkaEnrollNotifyServiceTest {
   private StreamBridge bridge;
   @Autowired
   private CorrelationIdService correlationIdService;
-  private KafkaEnrollNotifyService kafkaEnrollAckService;
+  private KafkaEnrollNotifyService kafkaEnrollNotifyService;
 
   private TestKafkaConsumerSetup.TestConsumer testConsumer;
   private ObjectMapper mapper;
@@ -65,7 +65,7 @@ class KafkaEnrollNotifyServiceTest {
   void setUp(@Autowired EmbeddedKafkaBroker broker) {
     broker.addTopicsWithResults(topic);
     testConsumer = TestKafkaConsumerSetup.setup(broker, topic);
-    kafkaEnrollAckService = new KafkaEnrollNotifyService(bridge, RTD_TO_APP_BINDING, correlationIdService);
+    kafkaEnrollNotifyService = new KafkaEnrollNotifyService(bridge, RTD_TO_APP_BINDING, correlationIdService);
     mapper = new ObjectMapper();
   }
 
@@ -83,7 +83,7 @@ class KafkaEnrollNotifyServiceTest {
     final var ackTimestamp = new Date();
     final var type = new TypeReference<CloudEvent<EnrollAck>>() {};
     correlationIdService.setCorrelationId("1234");
-    kafkaEnrollAckService.confirmEnroll(SourceApp.ID_PAY, hashPan, ackTimestamp);
+    kafkaEnrollNotifyService.confirmEnroll(SourceApp.ID_PAY, hashPan, ackTimestamp);
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
@@ -102,7 +102,7 @@ class KafkaEnrollNotifyServiceTest {
   void whenPublishApplicationInstrumentEventThenShouldBeProducedOnDifferentPartitions() {
     final var hashPans = IntStream.range(0, 10).mapToObj(i -> TestUtils.generateRandomHashPan());
 
-    hashPans.forEach(it -> kafkaEnrollAckService.confirmEnroll(SourceApp.ID_PAY, it, new Date()));
+    hashPans.forEach(it -> kafkaEnrollNotifyService.confirmEnroll(SourceApp.ID_PAY, it, new Date()));
 
     await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var records = testConsumer.getConsumerRecords();
@@ -118,7 +118,7 @@ class KafkaEnrollNotifyServiceTest {
     final var hashPan = TestUtils.generateRandomHashPan();
     final var timestamp = new Date();
     final var type = new TypeReference<CloudEvent<PaymentInstrumentExported>>() {};
-    kafkaEnrollAckService.confirmExport(hashPan, timestamp);
+    kafkaEnrollNotifyService.confirmExport(hashPan, timestamp);
 
     await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);

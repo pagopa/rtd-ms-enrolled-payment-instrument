@@ -17,15 +17,15 @@ import java.util.Date;
 @Slf4j
 public class EnrolledPaymentInstrumentEventListener {
 
-  private final EnrollNotifyService enrollAckService;
+  private final EnrollNotifyService enrollNotifyService;
 
-  public EnrolledPaymentInstrumentEventListener(EnrollNotifyService enrollAckService) {
-    this.enrollAckService = enrollAckService;
+  public EnrolledPaymentInstrumentEventListener(EnrollNotifyService enrollNotifyService) {
+    this.enrollNotifyService = enrollNotifyService;
   }
 
   @EventListener
   public void handlePaymentInstrumentEnrolled(PaymentInstrumentEnrolled event) {
-    if (enrollAckService.confirmEnroll(event.getApplication(), event.getHashPan(), new Date())) {
+    if (enrollNotifyService.confirmEnroll(event.getApplication(), event.getHashPan(), new Date())) {
       log.info("Enroll ack successfully confirmed");
     } else {
       throw new EnrollAckError("Failing during ack " + event.getHashPan().getValue() + " from " + event.getApplication());
@@ -34,7 +34,7 @@ public class EnrolledPaymentInstrumentEventListener {
 
   @EventListener
   public void handlePaymentInstrumentExported(PaymentInstrumentExported event) {
-    if (enrollAckService.confirmExport(event.getHashPan(), new Date())) {
+    if (enrollNotifyService.confirmExport(event.getHashPan(), new Date())) {
       log.info("Notified payment instrument exported {}", event);
     } else {
       throw new ExportError("Failed to notify export for " + event.getHashPan().getValue());
