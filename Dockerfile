@@ -5,7 +5,7 @@ COPY . .
 
 RUN mvn clean package
 
-FROM adoptopenjdk/openjdk11:alpine-jre as runtime
+FROM amazoncorretto:11.0.18-al2023 as runtime
 
 VOLUME /tmp
 WORKDIR /app
