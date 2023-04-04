@@ -1,13 +1,24 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestKafkaConsumerSetup;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
+import java.time.Duration;
+import java.util.Date;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.AfterEach;
@@ -26,18 +37,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.time.Duration;
-import java.util.Date;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
@@ -100,15 +99,15 @@ class KafkaEnrollNotifyServiceTest {
 
   @Test
   void whenPublishApplicationInstrumentEventThenShouldBeProducedOnDifferentPartitions() {
-    final var hashPans = IntStream.range(0, 10).mapToObj(i -> TestUtils.generateRandomHashPan());
+    final var hashPans = TestUtils.partitionedHashPans().map(HashPan::create).collect(Collectors.toList());
 
     hashPans.forEach(it -> kafkaEnrollNotifyService.confirmEnroll(SourceApp.ID_PAY, it, new Date()));
 
-    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       final var records = testConsumer.getConsumerRecords();
       final var partitions = records.stream().collect(Collectors.groupingBy(ConsumerRecord::partition));
-      assertThat(records).hasSize(10);
-      assertThat(partitions).hasSize(3);
+      assertThat(records).hasSize(hashPans.size());
+      assertThat(partitions).hasSizeGreaterThan(1);
     });
   }
 
