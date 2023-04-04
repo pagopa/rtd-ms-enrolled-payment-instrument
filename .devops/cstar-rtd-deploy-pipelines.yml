@@ -17,6 +17,8 @@ trigger:
     include:
       - src/*
       - pom.xml
+      - helm/*
+      - Dockerfile
 
 pr: none
 
@@ -34,7 +36,7 @@ variables:
   settingsXmlSecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
   canDeploy: true
 
-  # If the branch is develop or a feature branch starting with CEN, deploy in DEV environment
+  # If the branch is develop, deploy in DEV environment
   ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/develop') }}:
     environment: 'DEV'
     componentTest: true
