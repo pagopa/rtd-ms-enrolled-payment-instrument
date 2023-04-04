@@ -9,6 +9,7 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChange
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.HashTokenChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.PaymentInstrumentExported;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
+import java.util.stream.Stream;
 import org.springframework.messaging.Message;
 
 import java.util.List;
@@ -73,6 +74,19 @@ public final class TestUtils {
             ).collect(Collectors.toList());
   }
 
+  /**
+   * Return a list of fixed hashpan which guarantee kakfa partitions
+   * are equally distribution over 3 partitions.
+   */
+  public static Stream<String> partitionedHashPans() {
+    return Stream.of(
+        "4tX28JnnyCPmjFSjueDsPHUPwJIEo3Sc0rGSNPQz7fZINB08Fc6S0Q1LxChSCkZL",
+        "97VpsIPFFlEqQtf7etwoz4agNUUM5eMzcBc3uo7mA2kxooGloFeHQdEQ8bb7D0c3",
+        "d7aOTEgQbEitJ7vC7qSlbUIaRx1UD74BoPWwxHXMnwHXCaxUFEOV7ZPOy9Gikb1j",
+        "dCuE8niQFo7mgqMMfEAK7s2mRUndIztOT2isiTqYMoL9h0NPfMO9L3JtUjiKTMt8",
+        "DDcLbQwjbd6FwqjT4ZOlb9Ps3W9GKLlF7eQaQOhJB5kmkTjnzv0qaRQNm1kmSGcn"
+    );
+  }
 
   public static <R> Function<Message<String>, R> parseTo(ObjectMapper mapper, Class<R> clazz) {
     return it -> {
