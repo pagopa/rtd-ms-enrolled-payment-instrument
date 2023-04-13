@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "94ab34f6-a859-498a-a50c-687426f66930",
+		"_postman_id": "03e79c22-6ff6-4413-8b1a-c17e4a880cee",
 		"name": "payment instrument manager tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -17,30 +17,10 @@
 								"exec": [
 									"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
 									"",
-									"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
-									"",
 									"_.asyncSeries([",
-									"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
-									"    (cb) => pm.sendRequest({",
-									"        method: 'PUT',",
-									"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-									"        header: {",
-									"            \"Content-Type\": \"application/json\"",
-									"        },",
-									"        body: {",
-									"            mode: 'raw',",
-									"            raw: JSON.stringify({",
-									"                \"application\":\"ID_PAY\",",
-									"                \"operationType\":\"ADD_INSTRUMENT\",",
-									"                \"hpanList\": [",
-									"                    {",
-									"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-									"                    }",
-									"                ]",
-									"            })",
-									"        }",
-									"    }, cb),",
-									"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
+									"    (cb) => _.clean(pm, pm.collectionVariables.get('test_hpan'), cb),",
+									"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), \"ID_PAY\", cb),",
+									"    (cb) => _.waitFor(pm, Math.floor(_.asyncTimeout / 2), cb)",
 									"]);"
 								],
 								"type": "text/javascript"
@@ -50,8 +30,9 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"setTimeout(() => {",
-									"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+									"_.asyncSeries([",
+									"    (cb) => _.waitFor(pm, 10, cb),",
+									"    (_) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
 									"        pm.test(\"Has Par and Token Associated\", () => {",
 									"            const responseJson = response.json();",
 									"            pm.expect(responseJson.state).to.eql(\"READY\");",
@@ -59,8 +40,8 @@
 									"            const token = responseJson.hashPanChildren.find(t => t.value == pm.collectionVariables.get('test_hashToken'));",
 									"            pm.expect(token).to.be.not.null;",
 									"        });",
-									"    });",
-									"}, _.asyncTimeout);"
+									"    })",
+									"]);"
 								],
 								"type": "text/javascript"
 							}
@@ -97,14 +78,11 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"",
-									"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
-									"",
 									"_.asyncSeries([",
-									"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
-									"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), cb),",
+									"    (cb) => _.clean(pm, pm.collectionVariables.get('test_hpan'), cb),",
+									"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), \"ID_PAY\", cb),",
 									"    (cb) => _.addToken(pm, pm.collectionVariables.get('test_hpan'), pm.collectionVariables.get('test_par'), pm.collectionVariables.get('test_hashToken'), cb),",
-									"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
+									"    (cb) => _.waitFor(pm, Math.floor(_.asyncTimeout / 2), cb)",
 									"]);"
 								],
 								"type": "text/javascript"
@@ -114,16 +92,17 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"setTimeout(() => {",
-									"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+									"_.asyncSeries([",
+									"    (cb) => _.waitFor(pm, _.asyncTimeout, cb),",
+									"    (_) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
 									"        pm.test(\"Has Par and Token Deleted\", () => {",
 									"            const responseJson = response.json();",
 									"            pm.expect(responseJson.state).to.eql(\"READY\");",
 									"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_par'));",
 									"            pm.expect(responseJson.hashPanChildren).to.be.empty;",
 									"        });",
-									"    });",
-									"}, _.asyncTimeout);"
+									"    })",
+									"]);"
 								],
 								"type": "text/javascript"
 							}
@@ -160,7 +139,9 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									"_.clean(pm, pm.collectionVariables.get('test_hpan_with_par'));"
+									"_.asyncSeries([",
+									"    (cb) => _.clean(pm, pm.collectionVariables.get('test_hpan_with_par'), cb)",
+									"]);"
 								],
 								"type": "text/javascript"
 							}
@@ -169,16 +150,24 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"setTimeout(() => {",
-									"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan_with_par'), (response) => {",
-									"        pm.test(\"Has par\", () => {",
-									"            const responseJson = response.json();",
-									"            pm.expect(responseJson.state).to.eql(\"READY\");",
-									"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan_with_par'));",
-									"            pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_expected_par'));",
-									"        });",
-									"    });",
-									"}, _.asyncTimeout);"
+									"// PAR uat integration is off",
+									"const skipTest = pm.environment.get(\"base_url\").includes(\"uat\");",
+									"",
+									"if (skipTest) {",
+									"    pm.test.skip(\"Skip Application With Par for UAT\");",
+									"} else {",
+									"    _.asyncSeries([",
+									"        (cb) => _.waitFor(pm, _.asyncTimeout, cb),",
+									"        (_) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan_with_par'), (response) => {",
+									"            pm.test(\"Has par\", () => {",
+									"                const responseJson = response.json();",
+									"                pm.expect(responseJson.state).to.eql(\"READY\");",
+									"                pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan_with_par'));",
+									"                pm.expect(responseJson.par).to.eql(pm.collectionVariables.get('test_expected_par'));",
+									"            });",
+									"        })",
+									"    ]);",
+									"}"
 								],
 								"type": "text/javascript"
 							}
@@ -218,7 +207,7 @@
 									"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
 									"",
 									"_.asyncSeries([",
-									"    (_) => _.clean(pm, pm.collectionVariables.get('test_hpan')),",
+									"    (cb) => _.clean(pm, pm.collectionVariables.get('test_hpan_revoke'), cb),",
 									"    (cb) => pm.sendRequest({ // enroll a card",
 									"        method: 'PUT',",
 									"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
@@ -232,18 +221,13 @@
 									"                \"operationType\":\"ADD_INSTRUMENT\",",
 									"                \"hpanList\": [",
 									"                    {",
-									"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
+									"                        \"hpan\": pm.collectionVariables.get('test_hpan_revoke')",
 									"                    }",
 									"                ]",
 									"            })",
 									"        }",
 									"    }, cb)",
-									"]);",
-									"",
-									"setTimeout(() => {",
-									"    ",
-									"}, _.asyncTimeout);",
-									""
+									"]);"
 								],
 								"type": "text/javascript"
 							}
@@ -269,19 +253,19 @@
 									"                \"operationType\":\"DELETE_INSTRUMENT\",",
 									"                \"hpanList\": [",
 									"                    {",
-									"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
+									"                        \"hpan\": pm.collectionVariables.get('test_hpan_revoke')",
 									"                    }",
 									"                ]",
 									"            })",
 									"        }",
 									"    }, cb),",
-									"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout),",
-									"    (cb) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => cb(null, response))",
-									"], (error, response) => {",
-									"    pm.test(\"Card not found cause revoked\", () => {",
-									"        pm.expect(response[2].code).to.eql(404);",
-									"    });",
-									"});"
+									"    (cb) => _.waitFor(pm, _.asyncTimeout, cb),",
+									"    (_) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan_revoke'), (response) => {",
+									"        pm.test(\"Card not found cause revoked\", () => {",
+									"            pm.expect(response.code).to.eql(404);",
+									"        })",
+									"    })",
+									"]);"
 								],
 								"type": "text/javascript"
 							}
@@ -292,7 +276,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19T12:17:10.177Z\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan}}\",\n         \"action\":\"REVOKE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[]\n      }\n   ]\n}",
+							"raw": "{\n   \"taxCode\":\"{{test_taxCode}}\",\n   \"timestamp\":\"2022-10-19T12:17:10.177Z\",\n   \"cards\":[\n      {\n         \"hpan\":\"{{test_hpan_revoke}}\",\n         \"action\":\"REVOKE\",\n         \"par\":\"{{test_par}}\",\n         \"htokens\":[]\n      }\n   ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -320,7 +304,9 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"_.clean(pm, pm.collectionVariables.get('test_hpan'));"
+							"_.asyncSeries([",
+							"    (cb) => _.clean(pm, pm.collectionVariables.get('test_hpan'), cb)",
+							"]);"
 						],
 						"type": "text/javascript"
 					}
@@ -329,15 +315,16 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"setTimeout(() => {",
-							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"_.asyncSeries([",
+							"    (cb) => _.waitFor(pm, _.asyncTimeout, cb),",
+							"    (_) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
 							"        pm.test(\"Has Ready Status\", () => {",
 							"            const responseJson = response.json();",
 							"            pm.expect(responseJson.state).to.eql(\"READY\");",
 							"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan'));",
 							"        });",
-							"    });",
-							"}, _.asyncTimeout);"
+							"    })",
+							"]);"
 						],
 						"type": "text/javascript"
 					}
@@ -374,31 +361,13 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"_.clean(pm, pm.collectionVariables.get('test_hpan'));",
-							"",
 							"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
 							"",
 							"_.asyncSeries([",
-							"    (cb) => pm.sendRequest({",
-							"        method: 'PUT',",
-							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-							"        header: {",
-							"            \"Content-Type\": \"application/json\"",
-							"        },",
-							"        body: {",
-							"            mode: 'raw',",
-							"            raw: JSON.stringify({",
-							"                \"application\":\"ID_PAY\",",
-							"                \"operationType\":\"ADD_INSTRUMENT\",",
-							"                \"hpanList\": [",
-							"                    {",
-							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-							"                    }",
-							"                ]",
-							"            })",
-							"        }",
-							"    }, cb),",
-							"    (cb) => setTimeout(() => cb(null, null), _.asyncTimeout)",
+							"    (cb) => _.clean(pm, pm.collectionVariables.get('test_hpan'), cb),",
+							"    (cb) => _.waitFor(pm, Math.floor(_.asyncTimeout / 2), cb),",
+							"    (cb) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), cb),",
+							"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), \"ID_PAY\", cb),",
 							"]);"
 						],
 						"type": "text/javascript"
@@ -408,13 +377,14 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"setTimeout(() => {",
-							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"_.asyncSeries([",
+							"    (cb) => _.waitFor(pm, _.asyncTimeout, cb),",
+							"    (_) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
 							"        pm.test(\"Card not found cause deleted by no apps remaining policy\", () => {",
 							"            pm.expect(response.code).to.eql(404);",
 							"        });",
-							"    });",
-							"}, _.asyncTimeout);"
+							"    })",
+							"]);"
 						],
 						"type": "text/javascript"
 					}
@@ -457,45 +427,8 @@
 							"",
 							"// ENROLL over two applications",
 							"_.asyncSeries([",
-							"    (cb) => setTimeout(cb, _.asyncTimeout),",
-							"    (cb) => pm.sendRequest({",
-							"        method: 'PUT',",
-							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-							"        header: {",
-							"            \"Content-Type\": \"application/json\"",
-							"        },",
-							"        body: {",
-							"            mode: 'raw',",
-							"            raw: JSON.stringify({",
-							"                \"application\":\"ID_PAY\",",
-							"                \"operationType\":\"ADD_INSTRUMENT\",",
-							"                \"hpanList\": [",
-							"                    {",
-							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-							"                    }",
-							"                ]",
-							"            })",
-							"        }",
-							"    }, cb),",
-							"    (cb) => pm.sendRequest({",
-							"        method: 'PUT',",
-							"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
-							"        header: {",
-							"            \"Content-Type\": \"application/json\"",
-							"        },",
-							"        body: {",
-							"            mode: 'raw',",
-							"            raw: JSON.stringify({",
-							"                \"application\":\"FA\",",
-							"                \"operationType\":\"ADD_INSTRUMENT\",",
-							"                \"hpanList\": [",
-							"                    {",
-							"                        \"hpan\": pm.collectionVariables.get('test_hpan')",
-							"                    }",
-							"                ]",
-							"            })",
-							"        }",
-							"    }, cb)",
+							"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), \"ID_PAY\", cb),",
+							"    (cb) => _.enrollPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), \"FA\", cb),",
 							"]);"
 						],
 						"type": "text/javascript"
@@ -505,16 +438,17 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"setTimeout(() => {",
-							"    _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
-							"        pm.test(\"Has Ready Status\", () => {",
+							"_.asyncSeries([",
+							"    (cb) => _.waitFor(pm, _.asyncTimeout, cb),",
+							"    (_) => _.getPaymentInstrument(pm, pm.collectionVariables.get('test_hpan'), (response) => {",
+							"        pm.test(\"Has At least one enabled application\", () => {",
 							"            const responseJson = response.json();",
 							"            pm.expect(responseJson.state).to.eql(\"READY\");",
 							"            pm.expect(responseJson.enabledApps).to.include(\"FA\");",
 							"            pm.expect(responseJson.hashPan.value).to.eql(pm.collectionVariables.get('test_hpan'));",
 							"        });",
-							"    });",
-							"}, _.asyncTimeout);"
+							"    })",
+							"]);"
 						],
 						"type": "text/javascript"
 					}
@@ -554,13 +488,17 @@
 					"\"use sandbox2\";",
 					"const base_url_event_processor = pm.variables.replaceIn(\"{{base_url_event_processor}}\");",
 					"",
-					"Object.prototype.asyncTimeout = 700; // milliseconds",
+					"Object.prototype.asyncTimeout = 7; // seconds",
 					"",
-					"Object.prototype.clean = (that, paymentInstrumentId) => {",
+					"Object.prototype.waitFor = (pm, seconds, cb) => {",
+					"    return pm.sendRequest({url: `https://postman-echo.com/delay/${seconds}`}, cb);",
+					"}",
+					"",
+					"Object.prototype.clean = (that, paymentInstrumentId, cb) => {",
 					"    return that.sendRequest({",
 					"        url: `${pm.environment.get('base_url_enrolledpaymentinstrument')}/payment-instrument/${paymentInstrumentId}`,",
 					"        method: 'DELETE'",
-					"    });",
+					"    }, cb);",
 					"};",
 					"",
 					"Object.prototype.getPaymentInstrument = (that, paymentInstrumentId, callback) => {",
@@ -579,7 +517,7 @@
 					"    );",
 					"};",
 					"",
-					"Object.prototype.enrollPaymentInstrument = (that, hashpan, callback) => {",
+					"Object.prototype.enrollPaymentInstrument = (that, hashpan, application, callback) => {",
 					"    that.sendRequest({",
 					"        method: 'PUT',",
 					"        url: `${base_url_event_processor}/rtd-pi-from-app`,",
@@ -589,7 +527,7 @@
 					"        body: {",
 					"            mode: 'raw',",
 					"            raw: JSON.stringify({",
-					"                \"application\":\"ID_PAY\",",
+					"                \"application\": application,",
 					"                \"operationType\":\"ADD_INSTRUMENT\",",
 					"                \"hpanList\": [",
 					"                    {",
@@ -720,6 +658,11 @@
 		{
 			"key": "test_expected_par",
 			"value": "5001bwx51bthoz7estewlzpdqg8mp",
+			"type": "default"
+		},
+		{
+			"key": "test_hpan_revoke",
+			"value": "testa483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c66",
 			"type": "default"
 		}
 	]

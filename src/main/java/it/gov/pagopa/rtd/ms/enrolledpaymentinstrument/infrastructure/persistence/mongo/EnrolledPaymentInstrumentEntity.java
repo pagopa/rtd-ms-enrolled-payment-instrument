@@ -74,9 +74,12 @@ public class EnrolledPaymentInstrumentEntity {
   @Field(name = "updateUser")
   private String updateUser;
 
+  @Field(name = "exported")
+  private boolean exported;
+
   @Version
   private int version;
 
   @Field(name = "hashPanExports")
   private List<HashPan> hashPanExports;
-}
+ }

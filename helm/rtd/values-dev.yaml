@@ -15,6 +15,10 @@ microservice-chart:
       memory: "4Gi"
       cpu: "500m"
 
+  envConfig:
+    IMMEDIATE_CONFIRM_EXPORT: "true"
+    KAFKA_RTD_SPLIT_BY_PI_CONCURRENCY: "4"
+
   envSecret:
     aks-api-url: cstar-d-weu-dev01-aks-apiserver-url
     API_KEY_TOKEN_FINDER: pagopa-platform-apim-api-key-primary-tkm

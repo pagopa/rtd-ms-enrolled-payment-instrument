@@ -1,5 +1,13 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
+import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
+
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
@@ -11,6 +19,9 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfig
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentAdded;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.ApplicationInstrumentDeleted;
+import java.time.Duration;
+import java.util.List;
+import javax.validation.ConstraintViolationException;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +29,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,21 +50,13 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.MessageHandlingException;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-
-import javax.validation.ConstraintViolationException;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
-@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
+@DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)
+@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 1)
 @ImportAutoConfiguration(ValidationAutoConfiguration.class)
 @Import({TokenManagerEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})
 @EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
@@ -145,33 +147,33 @@ class ApplicationInstrumentEventAdapterTest {
 
   @Test
   void whenReceivedMalformedEventThenRejectIt() {
-    Mockito.doNothing().when(paymentInstrumentService).handle(any());
+    Mockito.doNothing().when(paymentInstrumentService).handle(any(EnrollPaymentInstrumentCommand.class));
     kafkaTemplate.send(topic, CloudEvent.builder().withType("").withData("").build());
 
     await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(any());
+      Mockito.verify(paymentInstrumentService, times(0)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
   @ParameterizedTest
   @ValueSource(classes = {OptimisticLockingFailureException.class, DuplicateKeyException.class})
-  void whenServiceFailWithWriteConflictsThenRetryContinuously(Class<? extends Exception> exception) {
+  void whenServiceFailWithWriteConflictsThenRetryUntilMaxRetry(Class<? extends Exception> exception) {
     final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
             .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
             .build();
     Mockito.doThrow(exception)
             .when(paymentInstrumentService)
-            .handle(any());
+            .handle(any(EnrollPaymentInstrumentCommand.class));
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(any());
+      Mockito.verify(paymentInstrumentService, Mockito.atLeast(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
   @Test
-  void whenServiceFailsWithTransientErrorThenRetryUntilSucceed() {
+  void whenServiceFailsWithTransientErrorThenRetryUntilSucceedOrMaxRetry() {
     final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
             .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
             .build();
@@ -180,17 +182,17 @@ class ApplicationInstrumentEventAdapterTest {
             .doThrow(DuplicateKeyException.class)
             .doNothing()
             .when(paymentInstrumentService)
-            .handle(any());
+            .handle(any(EnrollPaymentInstrumentCommand.class));
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any());
+      Mockito.verify(paymentInstrumentService, times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 
   @Test
-  void whenServiceFailToAckThenRetryUntilSucceed() {
+  void whenServiceFailToAckThenRetryUntilSucceedOrMaxAttempts() {
     final var event = CloudEvent.builder().withType(ApplicationInstrumentAdded.TYPE)
             .withData(new ApplicationInstrumentAdded(TestUtils.generateRandomHashPanAsString(), false, DEFAULT_APPLICATION))
             .build();
@@ -199,12 +201,12 @@ class ApplicationInstrumentEventAdapterTest {
             .doThrow(EnrollAckError.class)
             .doNothing()
             .when(paymentInstrumentService)
-            .handle(any());
+            .handle(any(EnrollPaymentInstrumentCommand.class));
 
     kafkaTemplate.send(topic, event);
 
     await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.timeout(15000).times(3)).handle(any());
+      Mockito.verify(paymentInstrumentService, times(3)).handle(any(EnrollPaymentInstrumentCommand.class));
     });
   }
 }

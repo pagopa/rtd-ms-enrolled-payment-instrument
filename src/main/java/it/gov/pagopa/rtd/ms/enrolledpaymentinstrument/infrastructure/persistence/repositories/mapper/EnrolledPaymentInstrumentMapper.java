@@ -5,7 +5,6 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.PaymentInstrumentState;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence.mongo.EnrolledPaymentInstrumentEntity;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -26,6 +25,7 @@ public class EnrolledPaymentInstrumentMapper {
             apps,
             entity.getIssuer(),
             entity.getNetwork(),
+            entity.isExported(),
             entity.getVersion()
     );
   }
@@ -48,6 +48,7 @@ public class EnrolledPaymentInstrumentMapper {
             .updatedAt(LocalDateTime.now())
             .insertUser(UPSERT_USER)
             .updateUser(UPSERT_USER)
+            .exported(domain.isExported())
             .version(domain.getVersion())
             .build();
   }

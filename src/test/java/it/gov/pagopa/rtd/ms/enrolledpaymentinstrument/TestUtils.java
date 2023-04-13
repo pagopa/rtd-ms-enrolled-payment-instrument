@@ -7,7 +7,9 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.TkmUpd
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.CardChangeType;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.HashTokenChangeType;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.PaymentInstrumentExported;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
+import java.util.stream.Stream;
 import org.springframework.messaging.Message;
 
 import java.util.List;
@@ -54,6 +56,12 @@ public final class TestUtils {
             .collect(Collectors.toList());
   }
 
+  public static List<PaymentInstrumentExported> generateRandomPaymentInstrumentExportedEvent(int which) {
+    return IntStream.range(0, which)
+            .mapToObj(i -> new PaymentInstrumentExported(generateRandomHashPanAsString()))
+            .collect(Collectors.toList());
+  }
+
   public static List<TkmUpdateCommand.TkmTokenCommand> generateRandomUpdateTokenCommand(int which) {
     final var random = new Random();
     return IntStream.range(0, which)
@@ -66,6 +74,19 @@ public final class TestUtils {
             ).collect(Collectors.toList());
   }
 
+  /**
+   * Return a list of fixed hashpan which guarantee kakfa partitions
+   * are equally distribution over 3 partitions.
+   */
+  public static Stream<String> partitionedHashPans() {
+    return Stream.of(
+        "4tX28JnnyCPmjFSjueDsPHUPwJIEo3Sc0rGSNPQz7fZINB08Fc6S0Q1LxChSCkZL",
+        "97VpsIPFFlEqQtf7etwoz4agNUUM5eMzcBc3uo7mA2kxooGloFeHQdEQ8bb7D0c3",
+        "d7aOTEgQbEitJ7vC7qSlbUIaRx1UD74BoPWwxHXMnwHXCaxUFEOV7ZPOy9Gikb1j",
+        "dCuE8niQFo7mgqMMfEAK7s2mRUndIztOT2isiTqYMoL9h0NPfMO9L3JtUjiKTMt8",
+        "DDcLbQwjbd6FwqjT4ZOlb9Ps3W9GKLlF7eQaQOhJB5kmkTjnzv0qaRQNm1kmSGcn"
+    );
+  }
 
   public static <R> Function<Message<String>, R> parseTo(ObjectMapper mapper, Class<R> clazz) {
     return it -> {

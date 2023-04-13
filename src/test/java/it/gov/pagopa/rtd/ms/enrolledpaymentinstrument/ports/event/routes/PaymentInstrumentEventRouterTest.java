@@ -32,11 +32,13 @@ class PaymentInstrumentEventRouterTest {
   private static final String TKM_CONSUMER_DESTINATION = "tokenManagerCardChanged";
   private static final String APPLICATION_INSTRUMENT_ADDED_DESTINATION = "applicationInstrumentAddedConsumer";
   private static final String APPLICATION_INSTRUMENT_DELETED_DESTINATION = "applicationInstrumentDeletedConsumer";
+  private static final String PAYMENT_INSTRUMENT_EXPORTED_DESTINATION = "paymentInstrumentExportedConsumer";
 
   static {
     routingMap.put(ApplicationInstrumentAdded.TYPE, APPLICATION_INSTRUMENT_ADDED_DESTINATION);
     routingMap.put(ApplicationInstrumentDeleted.TYPE, APPLICATION_INSTRUMENT_DELETED_DESTINATION);
     routingMap.put(TokenManagerCardChanged.TYPE, TKM_CONSUMER_DESTINATION);
+    routingMap.put(PaymentInstrumentExported.TYPE, PAYMENT_INSTRUMENT_EXPORTED_DESTINATION);
   }
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -97,6 +99,18 @@ class PaymentInstrumentEventRouterTest {
             MessageBuilder.withPayload(objectMapper.writeValueAsBytes(event)).build()
     );
     assertEquals(TKM_CONSUMER_DESTINATION, destination.getFunctionDefinition());
+  }
+
+  @Test
+  void whenReceiveExportedEventPayloadThenRedirectToExportedEventConsumer() throws JsonProcessingException {
+    final var applicationEvent = CloudEvent.builder()
+            .withType(PaymentInstrumentExported.TYPE)
+            .withData(new PaymentInstrumentExported(TestUtils.generateRandomHashPan().getValue()))
+            .build();
+    final var destination = eventRouter.routingResult(
+            MessageBuilder.withPayload(objectMapper.writeValueAsString(applicationEvent)).build()
+    );
+    assertEquals(PAYMENT_INSTRUMENT_EXPORTED_DESTINATION, destination.getFunctionDefinition());
   }
 
   @Test

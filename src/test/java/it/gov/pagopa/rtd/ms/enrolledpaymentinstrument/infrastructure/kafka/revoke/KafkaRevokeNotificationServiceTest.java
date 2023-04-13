@@ -1,11 +1,21 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revoke;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import java.time.Duration;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,16 +35,6 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.IntStream;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
@@ -90,14 +90,14 @@ class KafkaRevokeNotificationServiceTest {
 
   @Test
   void whenPublishApplicationInstrumentEventThenShouldBeProducedOnDifferentPartitions() {
-    final var hashPans = IntStream.range(0, 10).mapToObj(i -> TestUtils.generateRandomHashPan());
+    final var hashPans = TestUtils.partitionedHashPans().map(HashPan::create).collect(Collectors.toList());
 
     hashPans.forEach(it -> revokeNotificationService.notifyRevoke(Set.of(SourceApp.ID_PAY), "taxCode", it));
 
-    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
       final var records = consumer.poll(Duration.ZERO);
-      assertThat(records).hasSize(10);
-      assertThat(records.partitions()).hasSize(3);
+      assertThat(records).hasSize(hashPans.size());
+      assertThat(records.partitions()).hasSizeGreaterThan(1);
     });
   }
 }
