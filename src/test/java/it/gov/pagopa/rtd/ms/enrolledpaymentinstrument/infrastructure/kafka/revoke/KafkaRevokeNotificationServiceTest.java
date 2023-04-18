@@ -2,18 +2,16 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.revo
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.KafkaContainerTestUtils;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.KafkaContainerTestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -28,15 +26,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.messaging.Message;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -46,39 +44,35 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
+@SpringBootTest
 @ExtendWith(SpringExtension.class)
-@Import({KafkaTestConfiguration.class})
+@Import({TestChannelBinderConfiguration.class, KafkaTestConfiguration.class})
 class KafkaRevokeNotificationServiceTest {
 
-  private StreamBridge streamBridge;
+  @Autowired
+  private OutputDestination outputDestination;
+
+  private ObjectMapper objectMapper = new ObjectMapper();
   private KafkaRevokeNotificationService revokeNotificationService;
 
+
   @BeforeEach
-  void setUp() {
-    streamBridge = mock(StreamBridge.class);
+  void setUp(@Autowired StreamBridge streamBridge) {
     revokeNotificationService = new KafkaRevokeNotificationService("rtdToApp-out-0", streamBridge);
   }
 
-  @AfterEach
-  void tearDown() {
-    reset(streamBridge);
-  }
-
   @Test
-  void whenNotifyRevokedCardThenRevokeNotificationProduced() {
-    final var messageCaptor = ArgumentCaptor.forClass(Message.class);
+  void whenNotifyRevokedCardThenRevokeNotificationProduced() throws IOException {
+    final var typeReference = new TypeReference<CloudEvent<RevokeNotification>>() {};
     final var hashPan = TestUtils.generateRandomHashPan();
     revokeNotificationService.notifyRevoke(Set.of(SourceApp.values()), "taxCode", hashPan);
 
-    verify(streamBridge, times(1)).send(any(), messageCaptor.capture());
 
-    assertThat(messageCaptor.getAllValues())
-        .map(it -> (CloudEvent<RevokeNotification>) it.getPayload())
-        .allMatch(it -> Objects.equals(RevokeNotification.TYPE, it.getType()))
-        .map(CloudEvent::getData)
-        .allMatch(notification -> Objects.equals("taxCode", notification.getFiscalCode()))
-        .allMatch(notification -> Objects.equals(hashPan.getValue(), notification.getHashPan()))
-        .allSatisfy(notification -> assertThat(notification.getApplications()).hasSameElementsAs(
+    assertThat(objectMapper.readValue(outputDestination.receive().getPayload(), typeReference))
+        .matches(it -> Objects.equals(RevokeNotification.TYPE, it.getType()))
+        .matches(it -> Objects.equals("taxCode", it.getData().getFiscalCode()))
+        .matches(it -> Objects.equals(hashPan.getValue(), it.getData().getHashPan()))
+        .satisfies(it -> assertThat(it.getData().getApplications()).hasSameElementsAs(
             Set.of(SourceApp.values())));
   }
 

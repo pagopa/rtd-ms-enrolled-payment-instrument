@@ -2,22 +2,17 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.ack;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.KafkaContainerTestUtils;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestKafkaConsumerSetup;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.KafkaContainerTestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestKafkaConsumerSetup;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
@@ -34,14 +29,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Import;
-import org.springframework.messaging.Message;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -53,50 +48,38 @@ import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
-@Import({KafkaTestConfiguration.class})
-//@ActiveProfiles("kafka-test")
-//@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 3)
-//@ImportAutoConfiguration(ValidationAutoConfiguration.class)
-//@Import({KafkaTestConfiguration.class})
-//@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
+@Import({TestChannelBinderConfiguration.class, KafkaTestConfiguration.class})
 class KafkaEnrollNotifyServiceTest {
 
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
-
   @Autowired
   private CorrelationIdService correlationIdService;
-  private StreamBridge bridge;
   private KafkaEnrollNotifyService kafkaEnrollNotifyService;
 
-  private TestKafkaConsumerSetup.TestConsumer testConsumer;
-  private ObjectMapper mapper;
+  @Autowired
+  private OutputDestination outputDestination;
+
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @BeforeEach
-  void setUp() {
-    bridge = mock(StreamBridge.class);
-    kafkaEnrollNotifyService = new KafkaEnrollNotifyService(bridge, RTD_TO_APP_BINDING, correlationIdService);
-  }
-
-  @AfterEach
-  void tearDown() {
-    reset(bridge);
+  void setUp(@Autowired StreamBridge streamBridge) {
+    kafkaEnrollNotifyService = new KafkaEnrollNotifyService(streamBridge, RTD_TO_APP_BINDING, correlationIdService);
   }
 
   @Test
   @SneakyThrows
   void whenSendEnrollAckThenEnrollEnrollAckEventCloudIsProduced() {
+    final var typeReference = new TypeReference<CloudEvent<EnrollAck>>() {};
     final var hashPan = TestUtils.generateRandomHashPan();
     final var ackTimestamp = new Date();
-    final var messageCaptor = ArgumentCaptor.forClass(Message.class);
     correlationIdService.setCorrelationId("1234");
     kafkaEnrollNotifyService.confirmEnroll(SourceApp.ID_PAY, hashPan, ackTimestamp);
 
-    verify(bridge, times(1)).send(any(), messageCaptor.capture());
+    final var sent = objectMapper.readValue(outputDestination.receive().getPayload(), typeReference);
 
-    assertThat(messageCaptor.getValue())
+    assertThat(sent)
         .isNotNull()
-        .extracting(it -> (CloudEvent<EnrollAck>) it.getPayload())
         .matches(it -> it.getType().equals(EnrollAck.TYPE))
         .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
         .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp))
@@ -109,15 +92,11 @@ class KafkaEnrollNotifyServiceTest {
   void whenSendExportConfirmThenPaymentInstrumentExportedEventCloudIsProduced() {
     final var hashPan = TestUtils.generateRandomHashPan();
     final var timestamp = new Date();
-    final var messageCaptor = ArgumentCaptor.forClass(Message.class);
     final var type = new TypeReference<CloudEvent<PaymentInstrumentExported>>() {};
     kafkaEnrollNotifyService.confirmExport(hashPan, timestamp);
 
-    verify(bridge, times(1)).send(any(), messageCaptor.capture());
-
-    assertThat(messageCaptor.getValue())
+    assertThat(objectMapper.readValue(outputDestination.receive().getPayload(), type))
         .isNotNull()
-        .extracting(it -> (CloudEvent<PaymentInstrumentExported>) it.getPayload())
         .matches(it -> it.getType().equals(PaymentInstrumentExported.TYPE))
         .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
         .matches(it -> Objects.equals(it.getData().getTimestamp(), timestamp))
