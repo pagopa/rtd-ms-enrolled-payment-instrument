@@ -1,7 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain;
 
 import io.vavr.control.Try;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.*;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.services.InstrumentTokenFinder;
 import org.junit.jupiter.api.Test;

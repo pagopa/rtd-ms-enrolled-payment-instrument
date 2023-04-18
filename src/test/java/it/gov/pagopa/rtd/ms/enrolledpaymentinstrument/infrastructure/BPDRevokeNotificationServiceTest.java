@@ -2,7 +2,7 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import org.junit.Rule;
 import org.junit.jupiter.api.*;
 

@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument;
+package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -86,6 +86,12 @@ public final class TestUtils {
         "dCuE8niQFo7mgqMMfEAK7s2mRUndIztOT2isiTqYMoL9h0NPfMO9L3JtUjiKTMt8",
         "DDcLbQwjbd6FwqjT4ZOlb9Ps3W9GKLlF7eQaQOhJB5kmkTjnzv0qaRQNm1kmSGcn"
     );
+  }
+
+  public static <R> Function<Message<?>, R> castMessageBody() {
+    return message -> {
+      return (R) message.getPayload();
+    };
   }
 
   public static <R> Function<Message<String>, R> parseTo(ObjectMapper mapper, Class<R> clazz) {

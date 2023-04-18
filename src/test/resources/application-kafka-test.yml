@@ -1,0 +1,56 @@
+immediate-confirm-export: false
+
+test.kafka.topic: rtd-split-by-pi
+test.kafka.topic-tkm: embedded-test-topic-tkm
+test.kafka.topic-wallet-tkm: embedded-test-topic-wallet-tkm
+test.kafka.topic-rtd-to-app: rtd-pi-to-app
+
+spring:
+  config:
+    activate:
+      on-profile: kafka-test
+
+  cloud:
+    function:
+      definition: functionRouter
+    stream:
+      function.routing.enabled: true
+      bindings:
+        functionRouter-in-0:
+          destination: ${test.kafka.topic}
+          group: rtd-split-by-pi-consumer-group
+          content-type: application/json
+          binder: kafka-binder
+          consumer:
+            max-attempts: 1
+            default-retryable: false
+        rtdToApp-out-0:
+          destination: ${test.kafka.topic-rtd-to-app}
+          content-type: application/json
+          binder: kafka-binder
+          producer:
+            sync: true
+            partitionKeyExpression: headers.partitionKey
+            partitionCount: ${test.partitionCount}
+
+      binders:
+        kafka-binder:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka:
+              binder:
+                auto-create-topics: false
+                brokers: ${test.broker}
+                sync: true
+                requiredAcks: all
+                consumerProperties:
+                  key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+                  value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      kafka:
+        bindings:
+          functionRouter-in-0:
+            consumer:
+              ackMode: RECORD
+              commonErrorHandlerBeanName: errorHandler
+              configuration:
+                max.poll.records: ${MAX_POLL_RECORD:1}
