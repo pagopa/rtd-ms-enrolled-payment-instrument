@@ -61,7 +61,7 @@ class PaymentInstrumentEventRouterTest {
     assertThat(tkmEvents)
             .map(it -> CloudEvent.builder().withType(TokenManagerCardChanged.TYPE).withData(it).build())
             .map(it -> eventRouter.routingResult(MessageBuilder.withPayload(objectMapper.writeValueAsString(it)).build()))
-            .allMatch(it -> Objects.equals(TKM_CONSUMER_DESTINATION, it.getFunctionDefinition()));
+            .allMatch(it -> Objects.equals(TKM_CONSUMER_DESTINATION, it));
   }
 
   @Test
@@ -73,7 +73,7 @@ class PaymentInstrumentEventRouterTest {
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsString(applicationEvent)).build()
     );
-    assertEquals(APPLICATION_INSTRUMENT_ADDED_DESTINATION, destination.getFunctionDefinition());
+    assertEquals(APPLICATION_INSTRUMENT_ADDED_DESTINATION, destination);
   }
 
   @Test
@@ -85,7 +85,7 @@ class PaymentInstrumentEventRouterTest {
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsString(applicationEvent)).build()
     );
-    assertEquals(APPLICATION_INSTRUMENT_DELETED_DESTINATION, destination.getFunctionDefinition());
+    assertEquals(APPLICATION_INSTRUMENT_DELETED_DESTINATION, destination);
   }
 
 
@@ -98,7 +98,7 @@ class PaymentInstrumentEventRouterTest {
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsBytes(event)).build()
     );
-    assertEquals(TKM_CONSUMER_DESTINATION, destination.getFunctionDefinition());
+    assertEquals(TKM_CONSUMER_DESTINATION, destination);
   }
 
   @Test
@@ -110,7 +110,7 @@ class PaymentInstrumentEventRouterTest {
     final var destination = eventRouter.routingResult(
             MessageBuilder.withPayload(objectMapper.writeValueAsString(applicationEvent)).build()
     );
-    assertEquals(PAYMENT_INSTRUMENT_EXPORTED_DESTINATION, destination.getFunctionDefinition());
+    assertEquals(PAYMENT_INSTRUMENT_EXPORTED_DESTINATION, destination);
   }
 
   @Test

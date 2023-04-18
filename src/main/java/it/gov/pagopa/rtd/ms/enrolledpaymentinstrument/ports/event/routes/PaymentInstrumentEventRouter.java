@@ -35,13 +35,12 @@ public class PaymentInstrumentEventRouter implements MessageRoutingCallback {
   }
 
   @Override
-  public FunctionRoutingResult routingResult(Message<?> message) {
+  public String routingResult(Message<?> message) {
     try {
       return StringMessageUtils.convertPayloadToString(message)
               .flatMap(this::parseToJson)
               .flatMap(it -> Optional.ofNullable(it.get("type").toString()))
               .flatMap(it -> Optional.ofNullable(routingMap.get(it)))
-              .map(FunctionRoutingResult::new)
               .orElseThrow(() -> new UnknownFormatConversionException("Unknown format " + message.getPayload().getClass()));
 
     } catch (UnknownFormatConversionException exception) {

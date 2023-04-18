@@ -18,10 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
 import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -45,7 +43,7 @@ import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER
 @EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
 @Import({ExportEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})
 @ImportAutoConfiguration(ValidationAutoConfiguration.class)
-@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
+//@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
 class ExportEventAdapterTest {
 
   private static final int DEFAULT_AT_MOST_TIMEOUT = 10; // seconds
