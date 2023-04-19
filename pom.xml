@@ -20,6 +20,7 @@
         <java.version>17</java.version>
         <spring-cloud.version>2022.0.2</spring-cloud.version>
         <testcontainers.version>1.17.6</testcontainers.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
         <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/*,**/StreamHealthIndicator.java</sonar.exclusions>
     </properties>
 
