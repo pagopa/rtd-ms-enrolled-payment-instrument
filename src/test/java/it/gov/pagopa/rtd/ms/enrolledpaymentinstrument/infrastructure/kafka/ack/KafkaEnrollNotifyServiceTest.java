@@ -5,113 +5,89 @@ import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestKafkaConsumerSetup;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.SourceApp;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.kafka.CorrelationIdService;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.KafkaContainerTestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestKafkaConsumerSetup;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import lombok.SneakyThrows;
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.stream.binder.test.OutputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
-import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.containers.KafkaContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest
-@ActiveProfiles("kafka-test")
-@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers", partitions = 3)
-@ImportAutoConfiguration(ValidationAutoConfiguration.class)
-@Import({KafkaTestConfiguration.class})
-@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@Import({TestChannelBinderConfiguration.class, KafkaTestConfiguration.class})
 class KafkaEnrollNotifyServiceTest {
 
   private static final String RTD_TO_APP_BINDING = "rtdToApp-out-0";
 
-  @Value("${test.kafka.topic-rtd-to-app}")
-  private String topic;
-
-  @Autowired
-  private StreamBridge bridge;
   @Autowired
   private CorrelationIdService correlationIdService;
   private KafkaEnrollNotifyService kafkaEnrollNotifyService;
 
-  private TestKafkaConsumerSetup.TestConsumer testConsumer;
-  private ObjectMapper mapper;
+  @Autowired
+  private OutputDestination outputDestination;
+
+  private ObjectMapper objectMapper = new ObjectMapper();
 
   @BeforeEach
-  void setUp(@Autowired EmbeddedKafkaBroker broker) {
-    broker.addTopicsWithResults(topic);
-    testConsumer = TestKafkaConsumerSetup.setup(broker, topic);
-    kafkaEnrollNotifyService = new KafkaEnrollNotifyService(bridge, RTD_TO_APP_BINDING, correlationIdService);
-    mapper = new ObjectMapper();
-  }
-
-  @AfterEach
-  void tearDown(@Autowired EmbeddedKafkaBroker broker) {
-    testConsumer.getContainer().stop();
-    testConsumer.getRecords().clear();
-    broker.doWithAdmin(admin -> admin.deleteTopics(List.of(topic)));
+  void setUp(@Autowired StreamBridge streamBridge) {
+    kafkaEnrollNotifyService = new KafkaEnrollNotifyService(streamBridge, RTD_TO_APP_BINDING, correlationIdService);
   }
 
   @Test
   @SneakyThrows
   void whenSendEnrollAckThenEnrollEnrollAckEventCloudIsProduced() {
+    final var typeReference = new TypeReference<CloudEvent<EnrollAck>>() {};
     final var hashPan = TestUtils.generateRandomHashPan();
     final var ackTimestamp = new Date();
-    final var type = new TypeReference<CloudEvent<EnrollAck>>() {};
     correlationIdService.setCorrelationId("1234");
     kafkaEnrollNotifyService.confirmEnroll(SourceApp.ID_PAY, hashPan, ackTimestamp);
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-      final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
-      assertThat(record)
-              .isNotNull()
-              .extracting(TestUtils.parseTo(mapper, type))
-              .matches(it -> it.getType().equals(EnrollAck.TYPE))
-              .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
-              .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp))
-              .matches(it -> Objects.equals(it.getData().getApplication(), SourceApp.ID_PAY))
-              .matches(it -> Objects.equals(it.getCorrelationId(), "1234"));
-    });
+    final var sent = objectMapper.readValue(outputDestination.receive().getPayload(), typeReference);
+
+    assertThat(sent)
+        .isNotNull()
+        .matches(it -> it.getType().equals(EnrollAck.TYPE))
+        .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
+        .matches(it -> Objects.equals(it.getData().getTimestamp(), ackTimestamp))
+        .matches(it -> Objects.equals(it.getData().getApplication(), SourceApp.ID_PAY))
+        .matches(it -> Objects.equals(it.getCorrelationId(), "1234"));
   }
 
-  @Test
-  void whenPublishApplicationInstrumentEventThenShouldBeProducedOnDifferentPartitions() {
-    final var hashPans = TestUtils.partitionedHashPans().map(HashPan::create).collect(Collectors.toList());
-
-    hashPans.forEach(it -> kafkaEnrollNotifyService.confirmEnroll(SourceApp.ID_PAY, it, new Date()));
-
-    await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(15)).untilAsserted(() -> {
-      final var records = testConsumer.getConsumerRecords();
-      final var partitions = records.stream().collect(Collectors.groupingBy(ConsumerRecord::partition));
-      assertThat(records).hasSize(hashPans.size());
-      assertThat(partitions).hasSizeGreaterThan(1);
-    });
-  }
-
-  @Test
+    @Test
   @SneakyThrows
   void whenSendExportConfirmThenPaymentInstrumentExportedEventCloudIsProduced() {
     final var hashPan = TestUtils.generateRandomHashPan();
@@ -119,15 +95,69 @@ class KafkaEnrollNotifyServiceTest {
     final var type = new TypeReference<CloudEvent<PaymentInstrumentExported>>() {};
     kafkaEnrollNotifyService.confirmExport(hashPan, timestamp);
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
-      final var record = testConsumer.getRecords().poll(100, TimeUnit.MILLISECONDS);
-      assertThat(record)
-              .isNotNull()
-              .extracting(TestUtils.parseTo(mapper, type))
-              .matches(it -> it.getType().equals(PaymentInstrumentExported.TYPE))
-              .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
-              .matches(it -> Objects.equals(it.getData().getTimestamp(), timestamp))
-              .matches(it -> Objects.isNull(it.getCorrelationId()));
-    });
+    assertThat(objectMapper.readValue(outputDestination.receive().getPayload(), type))
+        .isNotNull()
+        .matches(it -> it.getType().equals(PaymentInstrumentExported.TYPE))
+        .matches(it -> Objects.equals(it.getData().getHashPan(), hashPan.getValue()))
+        .matches(it -> Objects.equals(it.getData().getTimestamp(), timestamp))
+        .matches(it -> Objects.isNull(it.getCorrelationId()));
+  }
+
+  @Nested
+  @SpringBootTest
+  @ActiveProfiles("kafka-test")
+  @Testcontainers
+  @EnableAutoConfiguration
+  class KafkaIntegrationPartitionTest {
+    @Container
+    public static final KafkaContainer kafkaContainer = new KafkaContainer(
+        DockerImageName.parse("confluentinc/cp-kafka:5.4.3"))
+        .withEmbeddedZookeeper();
+
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+      registry.add("spring.cloud.stream.kafka.binder.brokers", kafkaContainer::getBootstrapServers);
+      registry.add("test.broker", kafkaContainer::getBootstrapServers);
+      registry.add("test.partitionCount", () -> 3);
+    }
+
+    @Value("${test.kafka.topic-rtd-to-app}")
+    private String topic;
+
+    private AdminClient adminClient;
+    private TestKafkaConsumerSetup.TestConsumer testConsumer;
+
+    @BeforeEach
+    void setUp(@Autowired StreamBridge streamBridge) throws ExecutionException, InterruptedException {
+      adminClient = KafkaContainerTestUtils.createAdminClient(kafkaContainer);
+      adminClient.createTopics(List.of(new NewTopic(topic, 3, (short) 1))).all().get();
+      testConsumer = TestKafkaConsumerSetup.setup(kafkaContainer, topic, 3);
+      kafkaEnrollNotifyService = new KafkaEnrollNotifyService(streamBridge, RTD_TO_APP_BINDING, correlationIdService);
+    }
+
+    @AfterEach
+    void tearDown() {
+      testConsumer.container().stop();
+      testConsumer.records().clear();
+      adminClient.deleteTopics(List.of(topic));
+    }
+
+    @Test
+    void whenPublishApplicationInstrumentEventThenShouldBeProducedOnDifferentPartitions() {
+      final var hashPans = TestUtils.partitionedHashPans().map(HashPan::create)
+          .toList();
+
+      hashPans.forEach(
+          it -> kafkaEnrollNotifyService.confirmEnroll(SourceApp.ID_PAY, it, new Date()));
+
+      await().ignoreException(NoSuchElementException.class).atMost(Duration.ofSeconds(15))
+          .untilAsserted(() -> {
+            final var records = testConsumer.consumerRecords();
+            final var partitions = records.stream()
+                .collect(Collectors.groupingBy(ConsumerRecord::partition));
+            assertThat(records).hasSize(hashPans.size());
+            assertThat(partitions).hasSizeGreaterThan(1);
+          });
+    }
   }
 }

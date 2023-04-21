@@ -1,7 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application;
 
 import io.vavr.control.Try;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.EnrollPaymentInstrumentCommand.Operation;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.ExportCommand;
@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;

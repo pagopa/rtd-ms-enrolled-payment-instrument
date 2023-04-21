@@ -226,7 +226,8 @@
 									"                ]",
 									"            })",
 									"        }",
-									"    }, cb)",
+									"    }, cb),",
+									"    (cb) => _.waitFor(pm, _.asyncTimeout, cb),",
 									"]);"
 								],
 								"type": "text/javascript"
@@ -662,7 +663,7 @@
 		},
 		{
 			"key": "test_hpan_revoke",
-			"value": "testa483de53fb29a6f04f101bf347f83fc57b4f1e7dae88e2afe524465a8c66",
+			"value": "test9e923ae21043fa5810704eab55bda682dc9e036bbf4c50eb732febdff835",
 			"type": "default"
 		}
 	]

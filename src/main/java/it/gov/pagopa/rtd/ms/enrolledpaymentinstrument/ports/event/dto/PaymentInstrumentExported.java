@@ -2,8 +2,8 @@ package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto;
 
 import lombok.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Data
 @Getter
