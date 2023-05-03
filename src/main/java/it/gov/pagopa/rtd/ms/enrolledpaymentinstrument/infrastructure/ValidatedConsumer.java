@@ -1,10 +1,11 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure;
 
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.validation.ConstraintViolationException;
-import javax.validation.Validator;
+
 import java.util.function.Consumer;
 
 @AllArgsConstructor

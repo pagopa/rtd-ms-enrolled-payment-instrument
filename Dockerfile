@@ -1,18 +1,18 @@
-FROM maven:3.8.4-jdk-11-slim as buildtime
+FROM maven:3.9.0-amazoncorretto-17 as buildtime
 
 WORKDIR /build
 COPY . .
 
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
-FROM amazoncorretto:11.0.18-al2023 as runtime
+FROM amazoncorretto:17.0.6-al2023 as runtime
 
 VOLUME /tmp
 WORKDIR /app
 
 COPY --from=buildtime /build/target/*.jar /app/app.jar
 # The agent is enabled at runtime via JAVA_TOOL_OPTIONS.
-ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.8/applicationinsights-agent-3.4.8.jar /app/applicationinsights-agent.jar
+ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.4.11/applicationinsights-agent-3.4.11.jar /app/applicationinsights-agent.jar
 
 EXPOSE 8080
 

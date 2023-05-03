@@ -1,8 +1,6 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.infrastructure.persistence;
 
-
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.MongoDbTest;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.RepositoryConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.EnrolledPaymentInstrument;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.domain.entities.HashPan;
@@ -16,22 +14,29 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.index.Index;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.Set;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @RunWith(SpringRunner.class)
-@MongoDbTest
+@DataMongoTest
+@Testcontainers
 @Import(RepositoryConfiguration.class)
 class EnrolledPaymentInstrumentRepositoryTest {
 
@@ -114,5 +119,13 @@ class EnrolledPaymentInstrumentRepositoryTest {
     repository.save(instrument);
     assertThat(dao.findByHashPan(TEST_HASH_PAN.getValue()).orElseThrow().getHashPanExports())
         .hasSameElementsAs(List.of(childHashPan, TEST_HASH_PAN));
+  }
+
+  @Container
+  public static final MongoDBContainer mongoContainer = new MongoDBContainer("mongo:4.4.4");
+
+  @DynamicPropertySource
+  static void setProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.data.mongodb.uri", mongoContainer::getReplicaSetUrl);
   }
 }

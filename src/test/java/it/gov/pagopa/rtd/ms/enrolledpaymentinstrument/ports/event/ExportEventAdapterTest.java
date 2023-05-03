@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event;
 
-import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.TestUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.EnrolledPaymentInstrumentService;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.application.command.ExportCommand;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.common.CloudEvent;
@@ -8,97 +9,79 @@ import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configs.KafkaTestConfigura
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.configurations.KafkaConfiguration;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.PaymentInstrumentExported;
 import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.ports.event.dto.TokenManagerCardChanged;
-import org.apache.kafka.common.serialization.StringSerializer;
+import it.gov.pagopa.rtd.ms.enrolledpaymentinstrument.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
-import org.springframework.boot.autoconfigure.validation.ValidationAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.stream.test.binder.TestSupportBinderAutoConfiguration;
+import org.springframework.cloud.stream.binder.test.InputDestination;
+import org.springframework.cloud.stream.binder.test.TestChannelBinderConfiguration;
 import org.springframework.context.annotation.Import;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.serializer.JsonSerializer;
-import org.springframework.kafka.test.EmbeddedKafkaBroker;
-import org.springframework.kafka.test.context.EmbeddedKafka;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ActiveProfiles;
-
-import java.time.Duration;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.testcontainers.shaded.com.fasterxml.jackson.core.JsonProcessingException;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 @SpringBootTest
 @ActiveProfiles("kafka-test")
-@DirtiesContext(classMode = AFTER_EACH_TEST_METHOD)
-@EmbeddedKafka(bootstrapServersProperty = "spring.embedded.kafka.brokers")
-@Import({ExportEventAdapter.class, KafkaTestConfiguration.class, KafkaConfiguration.class})
-@ImportAutoConfiguration(ValidationAutoConfiguration.class)
-@EnableAutoConfiguration(exclude = {TestSupportBinderAutoConfiguration.class, EmbeddedMongoAutoConfiguration.class})
+@ExtendWith(SpringExtension.class)
+@Import({
+    TestChannelBinderConfiguration.class,
+    ExportEventAdapter.class,
+    KafkaTestConfiguration.class,
+    KafkaConfiguration.class,
+})
 class ExportEventAdapterTest {
 
-  private static final int DEFAULT_AT_MOST_TIMEOUT = 10; // seconds
-
-  @Value("${test.kafka.topic}")
-  private String topic;
+  private static final String INPUT_TOPIC = "rtd-split-by-pi";
 
   @Autowired
   private EnrolledPaymentInstrumentService paymentInstrumentService;
 
-  private KafkaTemplate<String, CloudEvent<PaymentInstrumentExported>> kafkaTemplate;
-
-  @BeforeEach
-  void setup(@Autowired EmbeddedKafkaBroker broker) {
-    Mockito.reset(paymentInstrumentService);
-    kafkaTemplate = new KafkaTemplate<>(
-            new DefaultKafkaProducerFactory<>(KafkaTestUtils.producerProps(broker), new StringSerializer(), new JsonSerializer<>())
-    );
-    broker.addTopicsWithResults(topic);
-  }
+  @Autowired
+  private InputDestination inputDestination;
 
   @AfterEach
-  void teardown(@Autowired EmbeddedKafkaBroker broker) {
-    kafkaTemplate.destroy();
-    broker.doWithAdmin(admin -> admin.deleteTopics(List.of(topic)));
+  void teardown() {
+    Mockito.reset(paymentInstrumentService);
   }
 
   @Test
-  void whenExportEventThenExecuteValidExportCommand() {
+  void whenExportEventThenExecuteValidExportCommand() throws JsonProcessingException {
     final var captor = ArgumentCaptor.forClass(ExportCommand.class);
     final var event = CloudEvent.<PaymentInstrumentExported>builder()
-            .withType(PaymentInstrumentExported.TYPE)
-            .withData(new PaymentInstrumentExported(TestUtils.generateRandomHashPanAsString()))
-            .build();
-    kafkaTemplate.send(topic, event);
-    await().atMost(Duration.ofSeconds(DEFAULT_AT_MOST_TIMEOUT)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService).handle(captor.capture());
+        .withType(PaymentInstrumentExported.TYPE)
+        .withData(new PaymentInstrumentExported(TestUtils.generateRandomHashPanAsString()))
+        .build();
 
-      assertThat(captor.getValue().getHashPan()).isEqualTo(event.getData().getPaymentInstrumentId());
-      assertThat(captor.getValue().getExportedAt()).isNotNull();
-    });
+    sendMessageAsJson(event, INPUT_TOPIC);
+
+    Mockito.verify(paymentInstrumentService).handle(captor.capture());
+    assertThat(captor.getValue().getHashPan()).isEqualTo(event.getData().getPaymentInstrumentId());
+    assertThat(captor.getValue().getExportedAt()).isNotNull();
   }
 
   @Test
-  void whenExportEventWithMissingMandatoryFieldsThenAdapterShouldNotCallService() {
+  void whenExportEventWithMissingMandatoryFieldsThenAdapterShouldNotCallService()
+      throws JsonProcessingException {
     final var event = CloudEvent.<PaymentInstrumentExported>builder()
-            .withType(TokenManagerCardChanged.TYPE)
-            .withData(new PaymentInstrumentExported(null))
-            .build();
-    kafkaTemplate.send(topic, event);
+        .withType(TokenManagerCardChanged.TYPE)
+        .withData(new PaymentInstrumentExported(null))
+        .build();
 
-    await().during(Duration.ofSeconds(3)).untilAsserted(() -> {
-      Mockito.verify(paymentInstrumentService, Mockito.times(0)).handle(Mockito.any(ExportCommand.class));
-    });
+    sendMessageAsJson(event, INPUT_TOPIC);
+    Mockito.verify(paymentInstrumentService, Mockito.times(0))
+        .handle(Mockito.any(ExportCommand.class));
+  }
+
+  private <T> void sendMessageAsJson(T payload, String inputName) throws JsonProcessingException {
+    inputDestination.send(
+        MessageBuilder.withPayload(new ObjectMapper().writeValueAsString(payload)).build(),
+        inputName
+    );
   }
 }
