@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout repo
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@v2
 
       - name: 📄 Generating HTML from AsyncAPI spec
-        run: npx asyncapi/generator#779831f17d59f24b1cb5a6b50b233dc3108a72ff specs/asyncapi.yml asyncapi/html-template#671f0331215dadfecbcf6e13d6a7d8757aa06f42 -o generated-html
+        run: npx @asyncapi/generator specs/asyncapi.yml @asyncapi/html-template -o generated-html
 
       - name: 🚀 Deploy GH page
-        uses: JamesIves/github-pages-deploy-action@df7931ae4863a570872f88b9300750da4468ac33 #4.4.2
+        uses: JamesIves/github-pages-deploy-action@3.4.2
         with:
           ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
