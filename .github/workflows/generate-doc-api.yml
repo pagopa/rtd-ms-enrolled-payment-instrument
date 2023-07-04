@@ -18,6 +18,5 @@ jobs:
       - name: 🚀 Deploy GH page
         uses: JamesIves/github-pages-deploy-action@df7931ae4863a570872f88b9300750da4468ac33 #4.4.2
         with:
-          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
           FOLDER: generated-html
