@@ -16,8 +16,7 @@ jobs:
         run: npx asyncapi/generator#779831f17d59f24b1cb5a6b50b233dc3108a72ff specs/asyncapi.yml asyncapi/html-template#671f0331215dadfecbcf6e13d6a7d8757aa06f42 -o generated-html
 
       - name: 🚀 Deploy GH page
-        uses: JamesIves/github-pages-deploy-action@df7931ae4863a570872f88b9300750da4468ac33 #4.4.2
+        uses: JamesIves/github-pages-deploy-action@22a6ee251d6f13c6ab1ecb200d974f1a6feb1b8d #4.4.2
         with:
-          ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BRANCH: gh-pages
           FOLDER: generated-html
