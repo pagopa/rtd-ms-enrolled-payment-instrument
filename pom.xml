@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.5</version>
+        <version>3.1.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -18,9 +18,10 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <java.version>17</java.version>
-        <spring-cloud.version>2022.0.2</spring-cloud.version>
-        <testcontainers.version>1.17.6</testcontainers.version>
+        <spring-cloud.version>2022.0.3</spring-cloud.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
         <snakeyaml.version>2.0</snakeyaml.version>
+        <jacoco.version>0.8.10</jacoco.version>
         <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/*,**/StreamHealthIndicator.java</sonar.exclusions>
     </properties>
 
@@ -188,6 +189,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
                 <configuration>
                     <excludes>
                         <exclude>**/*Configuration.java</exclude>
