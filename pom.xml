@@ -18,7 +18,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <java.version>17</java.version>
-        <spring-cloud.version>2022.0.3</spring-cloud.version>
+        <spring-cloud.version>2022.0.4</spring-cloud.version>
         <testcontainers.version>1.18.3</testcontainers.version>
         <snakeyaml.version>2.1</snakeyaml.version>
         <jacoco.version>0.8.10</jacoco.version>
