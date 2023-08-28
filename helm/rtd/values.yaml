@@ -49,8 +49,8 @@ microservice-chart:
   securityContext:
     allowPrivilegeEscalation: false
     runAsNonRoot: true
-    runAsUser: 10000
-    runAsGroup: 10000
+    runAsUser: 65534
+    runAsGroup: 65534
 
   envSecret:
     MONGODB_CONNECTION_URI: mongo-db-connection-uri
