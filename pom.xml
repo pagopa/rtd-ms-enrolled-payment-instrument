@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.2</version>
+        <version>3.1.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -23,6 +23,7 @@
         <snakeyaml.version>2.1</snakeyaml.version>
         <jacoco.version>0.8.10</jacoco.version>
         <sonar.exclusions>**/*Configuration.java,**/*Application.java,**/ports/rest/**/*,**/StreamHealthIndicator.java</sonar.exclusions>
+        <kafka.version>3.5.1</kafka.version>
     </properties>
 
     <dependencies>
